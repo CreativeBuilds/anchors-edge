@@ -421,7 +421,7 @@ class TavernRoom(DefaultRoom):
         super().at_object_creation()
         
         # Set a detailed description of the tavern room
-        self.db.desc = (
+        desc = (
             "You find yourself in a warm, inviting tavern room. Wooden beams cross the ceiling, "
             "their aged surface telling tales of countless years gone by. Soft, golden light "
             "from iron wall sconces bathes the room in a comfortable glow, creating dancing "
@@ -434,3 +434,27 @@ class TavernRoom(DefaultRoom):
             "On the far wall, a ornate mirror hangs, its gilded frame catching the firelight. "
             "The mirror seems to invite you to examine your reflection."
         )
+        # Wrap the description text
+        self.db.desc = fill(desc, width=CLIENT_DEFAULT_WIDTH)
+
+    def return_appearance(self, looker, **kwargs):
+        """
+        Customize the appearance of the tavern room.
+        """
+        # Get the parent class's appearance string
+        appearance = super().return_appearance(looker, **kwargs)
+        
+        # If it's a string (not None), wrap it
+        if appearance:
+            # Split into parts (usually the room name is first)
+            parts = appearance.split('\n\n')
+            
+            # Wrap each part except the room name
+            wrapped_parts = [parts[0]]  # Keep room name as-is
+            for part in parts[1:]:
+                wrapped_parts.append(fill(part, width=CLIENT_DEFAULT_WIDTH))
+            
+            # Rejoin with original spacing
+            appearance = '\n\n'.join(wrapped_parts)
+            
+        return appearance

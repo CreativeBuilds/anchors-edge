@@ -7,14 +7,19 @@ Rooms are simple containers that has no location of their own.
 
 from evennia.objects.objects import DefaultRoom
 
-from .objects import ObjectParent
-
 from datetime import datetime
 import time
 from evennia import TICKER_HANDLER
 import pytz
 import requests
 import json
+
+
+class Room(DefaultRoom):
+    """
+    Rooms are simple containers that has no location of their own.
+    """
+    pass
 
 
 class WeatherAwareRoom(DefaultRoom):
@@ -401,7 +406,7 @@ class DynamicHoldingCell(WeatherAwareRoom):
         # Normal detailed description
         return super().return_appearance(looker, **kwargs)
 
-class TavernRoom(ObjectParent, DefaultRoom):
+class TavernRoom(DefaultRoom):
     """
     A cozy tavern room that serves as the starting point for new characters.
     """

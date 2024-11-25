@@ -33,8 +33,9 @@ from evennia.settings_default import *
 
 # This is the name of your game. Make it catchy!
 SERVERNAME = "anchors-edge"
-START_LOCATION = "#3"
-# TELNET_PORTS = [21602]
+
+# Path to the default room typeclass
+BASE_ROOM_TYPECLASS = "typeclasses.rooms.Room"
 
 ######################################################################
 # Settings given in secret_settings.py override those in this file.

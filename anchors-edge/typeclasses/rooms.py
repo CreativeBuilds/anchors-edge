@@ -13,6 +13,7 @@ from evennia import TICKER_HANDLER
 import pytz
 import requests
 import json
+from textwrap import fill
 
 
 class Room(DefaultRoom):
@@ -322,8 +323,12 @@ class DynamicHoldingCell(WeatherAwareRoom):
             else:
                 return "|M"  # Magenta for overcast
         
-        # Build the appearance string with extra spacing around title
-        appearance = f"\n\n|Y{self.key}|n\n\n"  # Room name in bright yellow with extra spacing
+        # Wrap the appearance text
+        appearance = f"\n\n|Y{self.key}|n\n\n"
+        
+        # Add the main description with wrapping
+        main_desc = self.db.cached_descriptions[current_period] or self.db.desc_base[current_period]
+        appearance += fill(main_desc, width=CLIENT_DEFAULT_WIDTH)
         
         # Add weather status line
         weather_line = (
@@ -332,11 +337,8 @@ class DynamicHoldingCell(WeatherAwareRoom):
             f"{get_cloud_color(cloud_cover)}Cloud Cover: {cloud_cover}%|n"
         )
         
-        # Add the main description
-        appearance += self.db.cached_descriptions[current_period] or self.db.desc_base[current_period]
-        
         appearance += f"\n\n{weather_line}"
-            
+        
         return appearance
     
     def get_brief_desc(self):
@@ -387,6 +389,8 @@ class DynamicHoldingCell(WeatherAwareRoom):
                 brief_desc = response.json()['choices'][0]['message']['content'].strip()
                 # Cache the brief description
                 self.db.brief_desc = brief_desc
+                # Wrap the brief description
+                brief_desc = fill(brief_desc, width=CLIENT_DEFAULT_WIDTH)
                 return f"\n\n|Y{self.key}|n\n\n{brief_desc}\nExits: {', '.join(e.key for e in self.exits)}"
         except Exception as e:
             print(f"OpenRouter API error in brief description: {e}")

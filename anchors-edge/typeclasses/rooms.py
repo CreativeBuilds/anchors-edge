@@ -15,12 +15,40 @@ import requests
 import json
 from textwrap import fill
 
+from evennia.settings_default import CLIENT_DEFAULT_WIDTH
 
 class Room(DefaultRoom):
     """
     Rooms are simple containers that has no location of their own.
     """
-    pass
+    
+    def return_appearance(self, looker, **kwargs):
+        """
+        This is called when looking at the room.
+        """
+        if not looker:
+            return ""
+            
+        # Get the description
+        appearance = super().return_appearance(looker, **kwargs)
+        if not appearance:
+            return ""
+
+        # Split into components
+        parts = appearance.split('\n\n')
+        
+        # Process each part
+        wrapped_parts = []
+        for i, part in enumerate(parts):
+            if i == 0:  # Room name - don't wrap
+                wrapped_parts.append(part)
+            elif "You see:" in part:  # Contents list - don't wrap
+                wrapped_parts.append(part)
+            else:  # Description text - wrap
+                wrapped_parts.append(fill(part, width=CLIENT_DEFAULT_WIDTH))
+                
+        # Rejoin with original spacing
+        return '\n\n'.join(wrapped_parts)
 
 
 class WeatherAwareRoom(DefaultRoom):

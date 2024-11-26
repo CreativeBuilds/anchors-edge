@@ -566,6 +566,9 @@ class NPC(Character):
         }
         total_copper = amount * copper_value[currency_type]
         
+        # Initialize response variable
+        response = None
+        
         # Check for pending transactions
         pending_offers = self.parse_last_offer(source)
         
@@ -594,10 +597,10 @@ class NPC(Character):
                     
                     if items_given:
                         if len(items_given) == 1:
-                            response = f"{self.name} accepts the payment and hands you a {items_given[0]}."
+                            response = f"{self.name} accepts the payment and hands you a fresh {items_given[0]}."
                         else:
                             items_list = ", ".join(items_given[:-1]) + f" and {items_given[-1]}"
-                            response = f"{self.name} accepts the payment and hands you {items_list}."
+                            response = f"{self.name} accepts the payment and hands you fresh {items_list}."
                     else:
                         # Something went wrong, return the money
                         source.add_currency(**{currency_type: amount})
@@ -645,15 +648,20 @@ class NPC(Character):
                 # Wrong amount, return the money
                 source.add_currency(**{currency_type: amount})
                 response = f"{self.name} hands the coins back, 'For those items I'll need {total_cost} copper pieces.'"
+        else:
+            # No pending offers or purchase intent found
+            source.add_currency(**{currency_type: amount})
+            response = f"{self.name} hands the coins back, 'I'm sorry, what would you like to order?'"
         
         # Send the response and remember the interaction
-        self.location.msg_contents(response)
-        if hasattr(source, 'has_account') and source.has_account:
-            self.remember_interaction(
-                source,
-                f"*gives {amount} {currency_type} to {self.key}*",
-                response
-            )
+        if response:  # Only send if we have a response
+            self.location.msg_contents(response)
+            if hasattr(source, 'has_account') and source.has_account:
+                self.remember_interaction(
+                    source,
+                    f"*gives {amount} {currency_type} to {self.key}*",
+                    response
+                )
 
     def at_object_receive(self, moved_obj, source_location, **kwargs):
         """Called when this object receives another object"""
@@ -1126,6 +1134,9 @@ class Willow(OpenrouterCharacter):
         }
         total_copper = amount * copper_value[currency_type]
         
+        # Initialize response variable
+        response = None
+        
         # Check for pending transactions
         pending_offers = self.parse_last_offer(source)
         
@@ -1205,15 +1216,20 @@ class Willow(OpenrouterCharacter):
                 # Wrong amount, return the money
                 source.add_currency(**{currency_type: amount})
                 response = f"{self.name} hands the coins back, 'For those items I'll need {total_cost} copper pieces.'"
+        else:
+            # No pending offers or purchase intent found
+            source.add_currency(**{currency_type: amount})
+            response = f"{self.name} hands the coins back, 'I'm sorry, what would you like to order?'"
         
         # Send the response and remember the interaction
-        self.location.msg_contents(response)
-        if hasattr(source, 'has_account') and source.has_account:
-            self.remember_interaction(
-                source,
-                f"*gives {amount} {currency_type} to {self.key}*",
-                response
-            )
+        if response:  # Only send if we have a response
+            self.location.msg_contents(response)
+            if hasattr(source, 'has_account') and source.has_account:
+                self.remember_interaction(
+                    source,
+                    f"*gives {amount} {currency_type} to {self.key}*",
+                    response
+                )
 
     def update_desc(self):
         """

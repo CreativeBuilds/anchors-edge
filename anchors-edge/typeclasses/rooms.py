@@ -652,22 +652,49 @@ class TavernRoom(WeatherAwareRoom):
 
     def apply_weather_effects(self, desc, weather_code, wind_speed, cloud_cover):
         """Apply tavern-specific weather effects to the description"""
+        current_period = self.get_time_period()
+        
+        # Start with the base description
+        modified_desc = desc
+        
+        # Build weather effects
+        weather_effects = []
         
         # Add rain sounds if it's raining
         if weather_code in [51, 53, 55, 61, 63, 65, 80, 81, 82]:
-            desc = desc.replace("The air carries", self.db.weather_effects["rain"])
+            weather_effects.append("The gentle patter of rain against the windows mingles with the sounds within")
         
         # Add wind sounds for strong winds
         if wind_speed > 15:
-            desc = desc.replace("The air carries", self.db.weather_effects["wind"])
+            weather_effects.append("The wind whistles softly through the window frames")
         
         # Add thunder effects
         if weather_code in [95, 96, 99]:
-            desc = desc.replace("The air carries", self.db.weather_effects["thunder"])
+            weather_effects.append("Occasional rumbles of thunder can be heard in the distance")
+        
+        # Combine weather effects with appropriate conjunctions
+        if weather_effects:
+            weather_text = ""
+            if len(weather_effects) == 1:
+                weather_text = f"{weather_effects[0]}. "
+            elif len(weather_effects) == 2:
+                weather_text = f"{weather_effects[0]} and {weather_effects[1]}. "
+            else:
+                weather_text = f"{', '.join(weather_effects[:-1])}, and {weather_effects[-1]}. "
+            
+            # Find the sentence about the air's scent
+            air_scent_index = modified_desc.find("The air carries")
+            if air_scent_index != -1:
+                # Insert weather effects before the air scent
+                modified_desc = (
+                    f"{modified_desc[:air_scent_index]}"
+                    f"{weather_text}"
+                    f"{modified_desc[air_scent_index:]}"
+                )
         
         # Modify lighting for very cloudy conditions during day
-        if cloud_cover > 80 and self.get_time_period() == "day":
-            desc = desc.replace("Bright sunlight streams", 
-                              f"{self.db.weather_effects['cloudy_light']} {self.db.weather_effects['cloudy_sun']}")
+        if cloud_cover > 80 and current_period == "day":
+            modified_desc = modified_desc.replace("Bright sunlight streams", 
+                                               "Muted daylight filters")
             
-        return desc
+        return modified_desc

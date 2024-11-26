@@ -12,6 +12,7 @@ import time
 from evennia import TICKER_HANDLER
 import pytz
 import requests
+import random
 
 from evennia.settings_default import CLIENT_DEFAULT_WIDTH
 
@@ -698,3 +699,41 @@ class TavernRoom(WeatherAwareRoom):
                                                "Muted daylight filters")
             
         return modified_desc
+
+    def at_object_receive(self, moved_obj, source_location, **kwargs):
+        """Called when an object enters the room"""
+        # Check if it's a drink being dropped
+        if hasattr(moved_obj, 'db') and moved_obj.db.is_drink:
+            # Get the barmaid
+            if hasattr(self.db, 'barmaid') and self.db.barmaid:
+                # Determine if it's placed on a table or bar
+                if random.random() < 0.6:  # 60% chance for table
+                    self.msg_contents(f"{moved_obj.name} is placed on a nearby table.")
+                else:
+                    self.msg_contents(f"{moved_obj.name} is placed on the bar.")
+                    
+                # Only schedule cleanup if drink is nearly empty
+                if moved_obj.db.health <= 3:
+                    from evennia import utils
+                    utils.delay(10, self.cleanup_drink, moved_obj)
+    
+    def cleanup_drink(self, drink_obj):
+        """Have Willow clean up the drink"""
+        if not drink_obj or not drink_obj.location == self:
+            return
+            
+        # Double check the drink is still nearly empty when cleanup occurs
+        if drink_obj.db.health > 3:
+            return
+            
+        if hasattr(self.db, 'barmaid') and self.db.barmaid:
+            willow = self.db.barmaid
+            # Generate cleanup message
+            messages = [
+                f"{willow.name} swings by and collects the nearly empty {drink_obj.name}.",
+                f"{willow.name} efficiently clears away the mostly finished {drink_obj.name}.",
+                f"{willow.name} gathers up the almost empty {drink_obj.name} while tidying the tavern.",
+                f"{willow.name} picks up the nearly finished {drink_obj.name} and takes it behind the bar."
+            ]
+            self.msg_contents(random.choice(messages))
+            drink_obj.delete()

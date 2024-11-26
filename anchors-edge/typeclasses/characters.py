@@ -1108,6 +1108,14 @@ class Willow(OpenrouterCharacter):
             ]
         }
         
+        # Add cleanup responses
+        self.db.cleanup_responses = [
+            "Would anyone like another round?",
+            "Just keeping things tidy!",
+            "Another drink, perhaps?",
+            "Let me know if you need anything else!"
+        ]
+        
         # call the update_desc function to set the initial description
         self.update_desc()
         

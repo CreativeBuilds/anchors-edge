@@ -502,16 +502,51 @@ class TavernRoom(WeatherAwareRoom):
     """
     def at_object_creation(self):
         """Called when the room is first created"""
-        super().at_object_creation()
+        # Initialize base descriptions first
+        self.db.desc_base = {
+            "dawn": ("You find yourself in a warm, inviting tavern room as dawn's first light peeks through the windows. "
+                    "Wooden beams cross the ceiling, their aged surface telling tales of countless years gone by. "
+                    "The iron wall sconces are being extinguished one by one as morning light gradually fills the room. "
+                    "The air carries the comforting scent of pine wood and lingering hearth smoke.\n‎\n"
+                    "A polished wooden bar runs along one wall, its surface worn smooth by countless patrons. "
+                    "Several sturdy wooden tables and chairs are scattered about, each bearing the marks of years of use. "
+                    "A large fireplace dominates one wall, its embers still glowing from the night before.\n‎\n‎"
+                    "On the far wall, a ornate mirror hangs, its gilded frame catching the early morning light. "
+                    "The mirror seems to invite you to examine your reflection."),
+
+            "day": ("You find yourself in a warm, inviting tavern room. Wooden beams cross the ceiling, their aged "
+                   "surface telling tales of countless years gone by. Bright sunlight streams through the windows, "
+                   "mixing with the warm glow from iron wall sconces. The air carries the comforting scent of pine "
+                   "wood and fresh bread from the kitchen.\n‎\n‎"
+                   "A polished wooden bar runs along one wall, its surface worn smooth by countless patrons. "
+                   "Several sturdy wooden tables and chairs are scattered about, each bearing the marks of years of use. "
+                   "A large fireplace dominates one wall, maintained with a modest flame that provides a cozy atmosphere.\n‎\n‎"
+                   "On the far wall, a ornate mirror hangs, its gilded frame gleaming in the daylight. "
+                   "The mirror seems to invite you to examine your reflection."),
+
+            "dusk": ("You find yourself in a warm, inviting tavern room as evening settles in. Wooden beams cross "
+                    "the ceiling, their aged surface telling tales of countless years gone by. The golden light of "
+                    "sunset mingles with the growing warmth of freshly lit iron wall sconces. The air carries the "
+                    "comforting scent of pine wood and hearth smoke.\n‎\n‎"
+                    "A polished wooden bar runs along one wall, its surface worn smooth by countless patrons. "
+                    "Several sturdy wooden tables and chairs are scattered about, each bearing the marks of years of use. "
+                    "A large fireplace dominates one wall, its flames building up to ward off the coming night.\n‎\n‎"
+                    "On the far wall, a ornate mirror hangs, its gilded frame catching the last rays of sunlight. "
+                    "The mirror seems to invite you to examine your reflection."),
+
+            "night": ("You find yourself in a warm, inviting tavern room. Wooden beams cross the ceiling, their aged "
+                     "surface telling tales of countless years gone by. Soft, golden light from iron wall sconces "
+                     "bathes the room in a comfortable glow, creating dancing shadows in the corners. The air carries "
+                     "the comforting scent of pine wood and hearth smoke.\n‎\n‎"
+                     "A polished wooden bar runs along one wall, its surface worn smooth by countless patrons. "
+                     "Several sturdy wooden tables and chairs are scattered about, each bearing the marks of years of use. "
+                     "A large fireplace dominates one wall, its crackling flames providing both warmth and light.\n‎\n‎"
+                     "On the far wall, a ornate mirror hangs, its gilded frame catching the firelight. "
+                     "The mirror seems to invite you to examine your reflection.")
+        }
         
-        # Initialize desc_base as a dictionary with default descriptions
-        if not hasattr(self.db, 'desc_base') or self.db.desc_base is None:
-            self.db.desc_base = {
-                "dawn": "Default dawn description.",
-                "day": "Default day description.",
-                "dusk": "Default dusk description.",
-                "night": "Default night description."
-            }
+        # Then call parent's at_object_creation which will use these descriptions
+        super().at_object_creation()
         
         # Delete all characters in the room that aren't players
         for char in self.contents:
@@ -521,7 +556,7 @@ class TavernRoom(WeatherAwareRoom):
         # Create Willow using the new NPC class
         from evennia import create_object
         willow = create_object(
-            "typeclasses.characters.Willow",  # Use the new Willow class
+            "typeclasses.characters.Willow",
             key="Willow",
             location=self,
             locks="edit:perm(Builders);call:false()"

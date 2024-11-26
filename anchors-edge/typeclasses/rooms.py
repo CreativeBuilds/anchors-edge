@@ -12,8 +12,6 @@ import time
 from evennia import TICKER_HANDLER
 import pytz
 import requests
-import json
-from textwrap import fill
 
 from evennia.settings_default import CLIENT_DEFAULT_WIDTH
 
@@ -34,21 +32,8 @@ class Room(DefaultRoom):
         if not appearance:
             return ""
 
-        # Split into components
-        parts = appearance.split('\n\n')
-        
-        # Process each part
-        wrapped_parts = []
-        for i, part in enumerate(parts):
-            if i == 0:  # Room name - don't wrap
-                wrapped_parts.append(part)
-            elif "You see:" in part:  # Contents list - don't wrap
-                wrapped_parts.append(part)
-            else:  # Description text - wrap
-                wrapped_parts.append(fill(part, width=CLIENT_DEFAULT_WIDTH))
-                
-        # Rejoin with original spacing
-        return '\n\n'.join(wrapped_parts)
+        # Let the command/client handle text wrapping
+        return appearance
 
 
 class WeatherAwareRoom(DefaultRoom):
@@ -78,6 +63,15 @@ class WeatherAwareRoom(DefaultRoom):
             "night": 0
         }
         
+        # Default weather effect descriptions
+        self.db.weather_effects = {
+            "rain": "\nThe sound of rain can be heard.",
+            "wind": "\nThe wind howls outside.",
+            "thunder": "\nThunder rumbles in the distance.",
+            "cloudy_light": "dim",  # replaces "bright"
+            "cloudy_sun": "daylight"  # replaces "sunlight"
+        }
+        
         # Location for weather (Turks and Caicos)
         self.db.latitude = 21.4655745
         self.db.longitude = -71.1390341
@@ -85,92 +79,55 @@ class WeatherAwareRoom(DefaultRoom):
         # Start the weather update ticker (every 15 minutes)
         TICKER_HANDLER.add(60 * 15, self.update_weather)
         
+        # Add moon phase effects
+        self.db.moon_effects = {
+            "new_moon": "darkness shrouds",
+            "waxing_crescent": "a thin crescent moon casts faint light",
+            "first_quarter": "a half moon provides modest illumination",
+            "waxing_gibbous": "the nearly full moon bathes the area in silver light",
+            "full_moon": "bright moonlight illuminates",
+            "waning_gibbous": "the waning moon casts strong silver light",
+            "last_quarter": "the half moon provides modest illumination",
+            "waning_crescent": "a thin crescent moon offers faint light"
+        }
+        
+        # Extend weather effects with moonlight variations
+        self.db.weather_effects.update({
+            "cloudy_moon": "filtered moonlight dimly illuminates",  # replaces normal moon descriptions when cloudy
+            "clear_night": "stars twinkle in the clear night sky",
+            "cloudy_night": "clouds obscure the night sky"
+        })
+        
+        # Track moon phase (0-7: new=0, full=4)
+        self.db.current_moon_phase = 0
+        
     def get_openrouter_description(self, base_desc, weather_data):
-        """Get AI-generated weather-influenced description using Claude Sonnet"""
-        import os
-        OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-        url = "https://openrouter.ai/api/v1/chat/completions"
-        
-        # Weather code interpretation
-        weather_codes = {
-            0: "Clear sky",
-            1: "Mainly clear",
-            2: "Partly cloudy",
-            3: "Overcast",
-            45: "Foggy",
-            48: "Depositing rime fog",
-            51: "Light drizzle",
-            53: "Moderate drizzle",
-            55: "Dense drizzle",
-            61: "Slight rain",
-            63: "Moderate rain",
-            65: "Heavy rain",
-            71: "Slight snow fall",
-            73: "Moderate snow fall",
-            75: "Heavy snow fall",
-            77: "Snow grains",
-            80: "Slight rain showers",
-            81: "Moderate rain showers",
-            82: "Violent rain showers",
-            85: "Slight snow showers",
-            86: "Heavy snow showers",
-            95: "Thunderstorm",
-            96: "Thunderstorm with slight hail",
-            99: "Thunderstorm with heavy hail"
-        }
-        
-        # Get weather condition description
+        """Get weather-influenced description using base description and current weather"""
         weather_code = weather_data.get('weather_code', 0)
-        weather_desc = weather_codes.get(weather_code, "Unknown weather")
+        wind_speed = weather_data.get('wind_speed_10m', 0)
+        cloud_cover = weather_data.get('cloud_cover', 0)
         
-        # Simplified weather conditions for the prompt
-        conditions = (
-            f"The weather outside is {weather_desc}. "
-            f"The wind is blowing at {weather_data.get('wind_speed_10m', 0)} mph "
-            f"with gusts up to {weather_data.get('wind_gusts_10m', 0)} mph. "
-            f"The sky is {weather_data.get('cloud_cover', 0)}% covered in clouds. "
-            f"The temperature feels like {weather_data.get('apparent_temperature', 0)}°F."
-        )
+        # Add weather effects to the description
+        desc = base_desc
         
-        prompt = (
-            "You are a descriptive writer for a text-based game. "
-            f"Here is a base description of a ship's holding cell:\n\n{base_desc}\n\n"
-            f"Current weather conditions: {conditions}\n\n"
-            "Create a new description that incorporates these weather conditions. Focus on how "
-            "the weather affects the atmosphere, lighting, sounds, and movement of the ship. "
-            "Ensure the description is logically consistent with the current weather (for example, "
-            "no direct moonlight if it's cloudy). Keep the same tone and approximate length as "
-            "the original description. Do not generate more than one paragraph. Five sentences or less."
-        )
-
-        headers = {
-            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": "http://localhost:4001", 
-            "X-Title": "Anchors Edge MUD"
-        }
-        
-        data = {
-            "model": "anthropic/claude-3-sonnet",
-            "messages": [
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            "temperature": 0.5,
-            "max_tokens": 256
-        }
-        
-        try:
-            response = requests.post(url, headers=headers, json=data)
-            if response.status_code == 200:
-                x = response.json()['choices'][0]['message']['content'].strip()
-                # replace the text "\n\n" with actual newlines
-                return x.replace("\\n", "\n")
-        except Exception as e:
-            print(f"OpenRouter API error: {e}")
-        return base_desc
+        # Default weather effects - can be overridden by child classes
+        if hasattr(self, 'apply_weather_effects'):
+            desc = self.apply_weather_effects(desc, weather_code, wind_speed, cloud_cover)
+        else:
+            # Basic default weather modifications
+            if weather_code in [51, 53, 55, 61, 63, 65, 80, 81, 82]:
+                desc = desc + "\nThe sound of rain can be heard outside."
+            
+            if wind_speed > 15:
+                desc = desc + "\nThe wind can be heard howling outside."
+            
+            if weather_code in [95, 96, 99]:
+                desc = desc + "\nThunder rumbles in the distance."
+            
+            if cloud_cover > 80 and self.get_time_period() == "day":
+                desc = desc.replace("bright", "dim").replace("sunlight", "daylight")
+            
+        return desc
 
     def get_weather_data(self):
         """Fetch current weather data from Open-Meteo API"""
@@ -217,8 +174,14 @@ class WeatherAwareRoom(DefaultRoom):
         if not self.db.weather_data:
             self.db.weather_data = self.get_weather_data()
         
-        # Always get a new description from OpenRouter
-        weather_desc = self.get_openrouter_description(base_desc, self.db.weather_data)
+        # Apply weather effects directly to the base description
+        weather_desc = self.apply_weather_effects(
+            base_desc, 
+            self.db.weather_data.get('weather_code', 0),
+            self.db.weather_data.get('wind_speed_10m', 0),
+            self.db.weather_data.get('cloud_cover', 0)
+        )
+        
         self.db.cached_descriptions[current_period] = weather_desc
         self.db.cache_timestamps[current_period] = time.time()
         print(f"Updated cached description for {current_period}")
@@ -236,6 +199,78 @@ class WeatherAwareRoom(DefaultRoom):
         tz = pytz.timezone('America/Chicago')
         now = datetime.now(tz)
         return now.hour
+
+    def get_moon_phase(self):
+        """Calculate current moon phase (simplified 8-phase system)"""
+        # This is a simplified calculation - you may want to use a proper astronomical formula
+        
+        # Moon cycle is approximately 29.53 days
+        cycle_length = 29.53
+        
+        # Reference new moon date (you can update this periodically)
+        reference_new_moon = datetime(2024, 3, 10)  # March 10, 2024 new moon
+        
+        days_since_new = (datetime.now() - reference_new_moon).days
+        current_cycle_position = (days_since_new % cycle_length) / cycle_length
+        
+        # Convert to 8 phases (0-7)
+        phase = int(current_cycle_position * 8)
+        
+        # Map phase number to name
+        phase_names = [
+            "new_moon", "waxing_crescent", "first_quarter", "waxing_gibbous",
+            "full_moon", "waning_gibbous", "last_quarter", "waning_crescent"
+        ]
+        
+        return phase_names[phase]
+
+    def apply_weather_effects(self, desc, weather_code, wind_speed, cloud_cover):
+        """Apply generic weather effects to the description"""
+        current_period = self.get_time_period()
+        
+        # Handle night-specific lighting based on moon and clouds
+        if current_period == "night":
+            moon_phase = self.get_moon_phase()
+            moon_desc = self.db.moon_effects[moon_phase]
+            
+            if cloud_cover > 80:
+                # Very cloudy - minimal moonlight
+                desc = desc.replace(moon_desc, self.db.weather_effects["cloudy_moon"])
+                desc = desc.replace(self.db.weather_effects["clear_night"], 
+                                  self.db.weather_effects["cloudy_night"])
+            elif cloud_cover > 40:
+                # Partially cloudy - filtered moonlight
+                desc = desc.replace(moon_desc, 
+                                  f"filtered {moon_desc.replace('bright ', '').replace('strong ', '')}")
+        
+        # Existing weather effects...
+        if weather_code in [51, 53, 55, 61, 63, 65, 80, 81, 82]:
+            desc = desc + self.db.weather_effects["rain"]
+        
+        if wind_speed > 15:
+            desc = desc + self.db.weather_effects["wind"]
+        
+        if weather_code in [95, 96, 99]:
+            desc = desc + self.db.weather_effects["thunder"]
+        
+        # Modify lighting for very cloudy conditions during day
+        if cloud_cover > 80 and current_period == "day":
+            desc = desc.replace("bright", self.db.weather_effects["cloudy_light"])
+            desc = desc.replace("sunlight", self.db.weather_effects["cloudy_sun"])
+            
+        return desc
+
+    def get_time_period(self):
+        """Determine current time period"""
+        hour = self.get_time_of_day()
+        if 5 <= hour < 7:
+            return "dawn"
+        elif 7 <= hour < 17:
+            return "day"
+        elif 17 <= hour < 20:
+            return "dusk"
+        else:
+            return "night"
 
 
 class DynamicHoldingCell(WeatherAwareRoom):
@@ -351,12 +386,12 @@ class DynamicHoldingCell(WeatherAwareRoom):
             else:
                 return "|M"  # Magenta for overcast
         
-        # Wrap the appearance text
-        appearance = f"\n\n|Y{self.key}|n\n\n"
+        # Build the appearance text without wrapping
+        appearance = f"\n‎ \n‎|Y{self.key}|n\n‎ \n‎"
         
-        # Add the main description with wrapping
+        # Add the main description without wrapping
         main_desc = self.db.cached_descriptions[current_period] or self.db.desc_base[current_period]
-        appearance += fill(main_desc, width=CLIENT_DEFAULT_WIDTH)
+        appearance += main_desc
         
         # Add weather status line
         weather_line = (
@@ -365,7 +400,7 @@ class DynamicHoldingCell(WeatherAwareRoom):
             f"{get_cloud_color(cloud_cover)}Cloud Cover: {cloud_cover}%|n"
         )
         
-        appearance += f"\n\n{weather_line}"
+        appearance += f"\n‎ \n‎{weather_line}"
         
         return appearance
     
@@ -385,8 +420,8 @@ class DynamicHoldingCell(WeatherAwareRoom):
         url = "https://openrouter.ai/api/v1/chat/completions"
         
         prompt = (
-            "You are a concise writer for a text-based game. Given this detailed room description:\n\n"
-            f"{current_desc}\n\n"
+            "You are a concise writer for a text-based game. Given this detailed room description:\n‎ \n"
+            f"{current_desc}\n‎ \n"
             "Create a single, clear sentence that captures the essential elements and current "
             "weather/atmospheric conditions. Focus on the most notable features and current state "
             "of the cell. Keep the tone consistent but be brief."
@@ -418,14 +453,14 @@ class DynamicHoldingCell(WeatherAwareRoom):
                 # Cache the brief description
                 self.db.brief_desc = brief_desc
                 # Wrap the brief description
-                brief_desc = fill(brief_desc, width=CLIENT_DEFAULT_WIDTH)
-                return f"\n\n|Y{self.key}|n\n\n{brief_desc}\nExits: {', '.join(e.key for e in self.exits)}"
+                brief_desc = brief_desc
+                return f"\n‎ \n‎|Y{self.key}|n\n‎ \n‎{brief_desc}\nExits: {', '.join(e.key for e in self.exits)}"
         except Exception as e:
             print(f"OpenRouter API error in brief description: {e}")
         
         # Fallback to basic description if API fails
         return (
-            f"\n\n|Y{self.key}|n\n\n"
+            f"\n‎ \n‎Y{self.key}|n\n‎ \n"
             "A cramped ship's holding cell with a barred window and wooden door. "
             f"Exits: {', '.join(e.key for e in self.exits)}"
         )
@@ -438,51 +473,135 @@ class DynamicHoldingCell(WeatherAwareRoom):
         # Normal detailed description
         return super().return_appearance(looker, **kwargs)
 
-class TavernRoom(DefaultRoom):
+class TavernRoom(WeatherAwareRoom):
     """
     A cozy tavern room that serves as the starting point for new characters.
+    Inherits weather awareness to add atmospheric effects.
     """
     def at_object_creation(self):
-        """
-        Called when the room is first created.
-        """
+        """Called when the room is first created"""
         super().at_object_creation()
         
-        # Set a detailed description of the tavern room
-        desc = (
-            "You find yourself in a warm, inviting tavern room. Wooden beams cross the ceiling, "
-            "their aged surface telling tales of countless years gone by. Soft, golden light "
-            "from iron wall sconces bathes the room in a comfortable glow, creating dancing "
-            "shadows in the corners. The air carries the comforting scent of pine wood and "
-            "hearth smoke.\n\n"
-            "A polished wooden bar runs along one wall, its surface worn smooth by countless "
-            "patrons. Several sturdy wooden tables and chairs are scattered about, each "
-            "bearing the marks of years of use. A large fireplace dominates one wall, its "
-            "crackling flames providing both warmth and light.\n\n"
-            "On the far wall, a ornate mirror hangs, its gilded frame catching the firelight. "
-            "The mirror seems to invite you to examine your reflection."
+        # Delete all characters in the room that aren't players
+        for char in self.contents:
+            if not char.has_account:
+                char.delete()
+        
+        # Create Willow using the new NPC class
+        from evennia import create_object
+        willow = create_object(
+            "typeclasses.characters.Willow",  # Use the new Willow class
+            key="Willow",
+            location=self,
+            locks="edit:perm(Builders);call:false()"
         )
-        # Wrap the description text
-        self.db.desc = fill(desc, width=CLIENT_DEFAULT_WIDTH)
+        
+        # Store reference to Willow
+        self.db.barmaid = willow
+        
+        # Override default weather effects with tavern-specific ones
+        self.db.weather_effects.update({
+            "rain": "The gentle patter of rain against the windows mingles with the sounds within. The air carries",
+            "wind": "The sound of the wind whistles softly through the window frames. The air carries",
+            "thunder": "The gentle patter of rain against the windows mingles with the sounds within. Occasional rumbles of thunder can be heard in the distance. The air carries",
+            "cloudy_light": "Muted",  # replaces "Bright"
+            "cloudy_sun": "daylight filters",  # replaces "sunlight streams"
+            "cloudy_moon": "dim moonlight filters through the clouded windows",
+            "clear_night": "the night sky is visible through the windows",
+            "cloudy_night": "the clouded night sky is barely visible through the windows"
+        })
+        
+        # Override moon effects for tavern-specific descriptions
+        self.db.moon_effects = {
+            "new_moon": "the darkness of the new moon leaves only starlight filtering",
+            "waxing_crescent": "faint crescent moonlight slips",
+            "first_quarter": "half-moon light streams",
+            "waxing_gibbous": "strong moonlight pours",
+            "full_moon": "brilliant full moonlight floods",
+            "waning_gibbous": "strong moonlight streams",
+            "last_quarter": "half-moon light filters",
+            "waning_crescent": "faint crescent moonlight barely reaches"
+        }
+        
+        # Base descriptions for different times of day
+        self.db.desc_base = {
+            "dawn": ("You find yourself in a warm, inviting tavern room as dawn's first light peeks through the windows. "
+                    "Wooden beams cross the ceiling, their aged surface telling tales of countless years gone by. "
+                    "The iron wall sconces are being extinguished one by one as morning light gradually fills the room. "
+                    "The air carries the comforting scent of pine wood and lingering hearth smoke.\n‎\n‎"
+                    "A polished wooden bar runs along one wall, its surface worn smooth by countless patrons. "
+                    "Several sturdy wooden tables and chairs are scattered about, each bearing the marks of years of use. "
+                    "A large fireplace dominates one wall, its embers still glowing from the night before.\n‎\n‎"
+                    "On the far wall, a ornate mirror hangs, its gilded frame catching the early morning light. "
+                    "The mirror seems to invite you to examine your reflection."),
+
+            "day": ("You find yourself in a warm, inviting tavern room. Wooden beams cross the ceiling, their aged "
+                   "surface telling tales of countless years gone by. Bright sunlight streams through the windows, "
+                   "mixing with the warm glow from iron wall sconces. The air carries the comforting scent of pine "
+                   "wood and fresh bread from the kitchen.\n‎\n‎"
+                   "A polished wooden bar runs along one wall, its surface worn smooth by countless patrons. "
+                   "Several sturdy wooden tables and chairs are scattered about, each bearing the marks of years of use. "
+                   "A large fireplace dominates one wall, maintained with a modest flame that provides a cozy atmosphere.\n‎\n‎"
+                   "On the far wall, a ornate mirror hangs, its gilded frame gleaming in the daylight. "
+                   "The mirror seems to invite you to examine your reflection."),
+
+            "dusk": ("You find yourself in a warm, inviting tavern room as evening settles in. Wooden beams cross "
+                    "the ceiling, their aged surface telling tales of countless years gone by. The golden light of "
+                    "sunset mingles with the growing warmth of freshly lit iron wall sconces. The air carries the "
+                    "comforting scent of pine wood and hearth smoke.\n‎\n‎"
+                    "A polished wooden bar runs along one wall, its surface worn smooth by countless patrons. "
+                    "Several sturdy wooden tables and chairs are scattered about, each bearing the marks of years of use. "
+                    "A large fireplace dominates one wall, its flames building up to ward off the coming night.\n‎\n‎"
+                    "On the far wall, a ornate mirror hangs, its gilded frame catching the last rays of sunlight. "
+                    "The mirror seems to invite you to examine your reflection."),
+
+            "night": ("You find yourself in a warm, inviting tavern room. Wooden beams cross the ceiling, their aged "
+                     "surface telling tales of countless years gone by. Soft, golden light from iron wall sconces "
+                     "bathes the room in a comfortable glow, creating dancing shadows in the corners. The air carries "
+                     "the comforting scent of pine wood and hearth smoke.\n‎\n‎"
+                     "A polished wooden bar runs along one wall, its surface worn smooth by countless patrons. "
+                     "Several sturdy wooden tables and chairs are scattered about, each bearing the marks of years of use. "
+                     "A large fireplace dominates one wall, its crackling flames providing both warmth and light.\n‎\n‎"
+                     "On the far wall, a ornate mirror hangs, its gilded frame catching the firelight. "
+                     "The mirror seems to invite you to examine your reflection.")
+        }
 
     def return_appearance(self, looker, **kwargs):
         """
         Customize the appearance of the tavern room.
         """
-        # Get the parent class's appearance string
-        appearance = super().return_appearance(looker, **kwargs)
+        if not looker:
+            return ""
+            
+        # Update description based on time and weather
+        current_period = self.get_time_period()
         
-        # If it's a string (not None), wrap it
-        if appearance:
-            # Split into parts (usually the room name is first)
-            parts = appearance.split('\n\n')
+        # Check if we need to update the description
+        if not self.db.cached_descriptions[current_period]:
+            self.update_description()
+        elif time.time() - self.db.cache_timestamps[current_period] > 900:  # 15 minutes
+            self.update_description()
             
-            # Wrap each part except the room name
-            wrapped_parts = [parts[0]]  # Keep room name as-is
-            for part in parts[1:]:
-                wrapped_parts.append(fill(part, width=CLIENT_DEFAULT_WIDTH))
+        return super().return_appearance(looker, **kwargs)
+
+    def apply_weather_effects(self, desc, weather_code, wind_speed, cloud_cover):
+        """Apply tavern-specific weather effects to the description"""
+        
+        # Add rain sounds if it's raining
+        if weather_code in [51, 53, 55, 61, 63, 65, 80, 81, 82]:
+            desc = desc.replace("The air carries", self.db.weather_effects["rain"])
+        
+        # Add wind sounds for strong winds
+        if wind_speed > 15:
+            desc = desc.replace("The air carries", self.db.weather_effects["wind"])
+        
+        # Add thunder effects
+        if weather_code in [95, 96, 99]:
+            desc = desc.replace("The air carries", self.db.weather_effects["thunder"])
+        
+        # Modify lighting for very cloudy conditions during day
+        if cloud_cover > 80 and self.get_time_period() == "day":
+            desc = desc.replace("Bright sunlight streams", 
+                              f"{self.db.weather_effects['cloudy_light']} {self.db.weather_effects['cloudy_sun']}")
             
-            # Rejoin with original spacing
-            appearance = '\n\n'.join(wrapped_parts)
-            
-        return appearance
+        return desc

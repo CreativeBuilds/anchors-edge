@@ -1,6 +1,4 @@
-from textwrap import fill
 from evennia import DefaultObject
-from server.conf.settings import CLIENT_DEFAULT_WIDTH
 
 class WaterBucket(DefaultObject):
     """
@@ -13,4 +11,4 @@ class WaterBucket(DefaultObject):
             "A simple wooden bucket filled with water. Despite the ship's gentle "
             "swaying, the water's surface is calm enough to see your reflection."
         )
-        self.db.desc = fill(desc, width=CLIENT_DEFAULT_WIDTH) 
+        self.db.desc = desc 

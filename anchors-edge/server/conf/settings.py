@@ -37,12 +37,8 @@ SERVERNAME = "anchors-edge"
 # Path to the default room typeclass
 BASE_ROOM_TYPECLASS = "typeclasses.rooms.Room"
 
-# Set default client width for text wrapping
-CLIENT_DEFAULT_WIDTH = 80
-
-# Import textwrap in any files that need text wrapping
-# Add to the top of files that handle text output:
-from textwrap import fill
+# Remove or comment out the CLIENT_DEFAULT_WIDTH setting since we're not using it
+# CLIENT_DEFAULT_WIDTH = 80
 
 ######################################################################
 # Settings given in secret_settings.py override those in this file.

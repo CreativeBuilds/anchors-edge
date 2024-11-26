@@ -15,7 +15,11 @@ own cmdsets by inheriting from them or directly from `evennia.CmdSet`.
 """
 
 from evennia import default_cmds
-from commands.command import CmdDescribeSelf, BriefCommand, CmdRegenRoom
+from commands.command import (
+    CmdDescribeSelf, BriefCommand, CmdRegenRoom, 
+    SayCommand, CmdInventory, GiveCommand,
+    CmdEat, CmdDrink, CmdChug  # Add the new commands
+)
 
 
 class CharacterCmdSet(default_cmds.CharacterCmdSet):
@@ -38,7 +42,13 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         self.add(CmdDescribeSelf())
         self.add(BriefCommand())
         self.add(CmdRegenRoom())
-
+        self.add(SayCommand())
+        self.add(CmdInventory())
+        self.add(GiveCommand())
+        self.add(CmdEat())      # Add eat command
+        self.add(CmdDrink())    # Add drink command
+        self.add(CmdChug())     # Add chug command
+        
 
 class AccountCmdSet(default_cmds.AccountCmdSet):
     """

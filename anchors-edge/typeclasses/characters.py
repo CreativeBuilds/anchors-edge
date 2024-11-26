@@ -442,18 +442,14 @@ class NPC(Character):
         return response
 
     def parse_last_offer(self, speaker):
-        """
-        Parse only the most recent response for pending transactions.
-        """
+        """Parse the most recent response for pending transactions."""
         player_memory = self.db.conversation_memory["per_player"].get(speaker.key, {"recent_interactions": []})
         if not player_memory or not player_memory["recent_interactions"]:
             return None
             
-        # Only check the most recent interaction
         last_interaction = player_memory["recent_interactions"][-1]
         response = last_interaction["response"].lower()
         
-        # If this response is about giving items, it's not an offer
         if "accepts the payment and hands you" in response:
             return None
         
@@ -469,42 +465,44 @@ class NPC(Character):
             
         # If no explicit tags, look for natural language price mentions
         if not offers:
-            # Look for total price and quantity mentions
-            total_price_match = re.search(r"(?:that'?s?|that(?:'?s| is|ll be)) (\d+) copper", response)
-            quantity_matches = re.findall(r"(\d+)\s+(?:(?:cups?|mugs?|glasses?|tankards?|bottles?|bowls?|plates?|servings?|portions?)\s+(?:of\s+)?)?(\w+)", response)
-            
-            if total_price_match and quantity_matches:
-                total_price = int(total_price_match.group(1))
-                calculated_total = 0
+            # First look for the total price
+            price_match = re.search(r"(?:that'?s?|that(?:'?s| is|ll be)) (\d+) copper", response)
+            if price_match:
+                total_stated_price = int(price_match.group(1))
+                
+                # Define costs and intoxication levels
+                drink_costs = {"ale": 5, "beer": 4, "wine": 10, "mead": 15, "coffee": 2}
+                drink_intox = {"ale": 3, "beer": 2, "wine": 5, "mead": 7, "coffee": 0}
+                food_costs = {"bread": 1, "meat": 5, "stew": 8}
+                
+                # Look for all quantity + item mentions
+                found_items = []
+                
+                # Pattern for "X item" mentions
+                quantity_matches = re.finditer(r"(\d+)\s+(?:(?:cups?|mugs?|glasses?|tankards?|bottles?|plates?|servings?|portions?)\s+(?:of\s+)?)?(\w+)", response)
+                for match in quantity_matches:
+                    quantity = int(match.group(1))
+                    item = match.group(2).rstrip('s')  # Remove plural
+                    found_items.append((quantity, item))
+                
+                # Calculate total cost and create offers
+                total_calculated_cost = 0
                 temp_offers = []
                 
-                # Process each quantity match
-                for quantity_str, item in quantity_matches:
-                    quantity = int(quantity_str)
-                    item = item.strip().lower().rstrip('s')  # Remove plural
-                    
-                    # Handle drinks
-                    if item in ["ale", "beer", "wine", "mead", "coffee"]:
-                        costs = {"ale": 5, "beer": 4, "wine": 10, "mead": 15, "coffee": 2}
-                        intox = {"ale": 3, "beer": 2, "wine": 5, "mead": 7, "coffee": 0}
-                        
-                        item_total = quantity * costs[item]
-                        calculated_total += item_total
-                        
+                for quantity, item in found_items:
+                    if item in drink_costs:
+                        item_cost = drink_costs[item]
+                        total_calculated_cost += quantity * item_cost
                         for _ in range(quantity):
-                            temp_offers.append(("drink", item, costs[item], intox[item]))
-                            
-                    # Handle food
-                    elif item in ["bread", "meat", "stew"]:
-                        costs = {"bread": 1, "meat": 5, "stew": 8}
-                        item_total = quantity * costs[item]
-                        calculated_total += item_total
-                        
+                            temp_offers.append(("drink", item, item_cost, drink_intox[item]))
+                    elif item in food_costs:
+                        item_cost = food_costs[item]
+                        total_calculated_cost += quantity * item_cost
                         for _ in range(quantity):
-                            temp_offers.append(("food", item, costs[item]))
+                            temp_offers.append(("food", item, item_cost))
                 
-                # Only use the offers if the total price matches
-                if calculated_total == total_price:
+                # Only use the offers if the total price matches what was stated
+                if total_calculated_cost == total_stated_price:
                     offers = temp_offers
         
         return offers if offers else None

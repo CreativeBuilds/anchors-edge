@@ -162,7 +162,7 @@ class Character(ObjectParent, DefaultCharacter):
     def get_intoxication_level(self):
         """Get the current intoxication state"""
         # Initialize if needed
-        if not hasattr(self.db, "intoxication"):
+        if not hasattr(self.db, "intoxication") or self.db.intoxication is None:
             self.db.intoxication = 0
             
         intox = self.db.intoxication

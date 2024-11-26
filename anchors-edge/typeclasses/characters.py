@@ -644,14 +644,14 @@ class NPC(Character):
                         else:
                             item_descriptions.append(f"{item_name}")
                     
-                    # Create message using inline functions for actor stance
+                    # Create message using proper Evennia inline functions
                     if len(item_descriptions) == 1:
-                        text = f"{self.name} accepts the payment and hands {source.name} {item_descriptions[0]}."
-                        self.location.msg_contents(text, mapping={source: {"name": "you"}})
+                        text = f"$You() $conj(accept) the payment and $conj(hand) $you({source.key}) {item_descriptions[0]}."
+                        self.location.msg_contents(text, from_obj=self, mapping={source.key: source})
                     else:
                         items_list = ", ".join(item_descriptions[:-1]) + f" and {item_descriptions[-1]}"
-                        text = f"{self.name} accepts the payment and hands {source.name} {items_list}."
-                        self.location.msg_contents(text, mapping={source: {"name": "you"}})
+                        text = f"$You() $conj(accept) the payment and $conj(hand) $you({source.key}) {items_list}."
+                        self.location.msg_contents(text, from_obj=self, mapping={source.key: source})
                     
                     # Remember the interaction from source's perspective
                     if hasattr(source, 'has_account') and source.has_account:

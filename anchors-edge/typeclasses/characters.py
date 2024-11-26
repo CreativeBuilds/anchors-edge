@@ -646,12 +646,12 @@ class NPC(Character):
                     
                     # Create message using inline functions for actor stance
                     if len(item_descriptions) == 1:
-                        text = f"$You() $conj(accept) the payment and $conj(hand) $You() {item_descriptions[0]}."
-                        self.location.msg_contents(text, from_obj=self, mapping={"you": source})
+                        text = f"{self.name} accepts the payment and hands {source.name} {item_descriptions[0]}."
+                        self.location.msg_contents(text, mapping={source: {"name": "you"}})
                     else:
                         items_list = ", ".join(item_descriptions[:-1]) + f" and {item_descriptions[-1]}"
-                        text = f"$You() $conj(accept) the payment and $conj(hand) $You() {items_list}."
-                        self.location.msg_contents(text, from_obj=self, mapping={"you": source})
+                        text = f"{self.name} accepts the payment and hands {source.name} {items_list}."
+                        self.location.msg_contents(text, mapping={source: {"name": "you"}})
                     
                     # Remember the interaction from source's perspective
                     if hasattr(source, 'has_account') and source.has_account:

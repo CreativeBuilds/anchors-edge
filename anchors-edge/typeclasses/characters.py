@@ -16,6 +16,7 @@ import os
 import requests
 from time import time
 from dotenv import load_dotenv
+import re
 
 # Load environment variables from .env file
 load_dotenv()

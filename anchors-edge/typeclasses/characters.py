@@ -648,14 +648,31 @@ class NPC(Character):
                             item_descriptions.append(f"{item_name}")
                     
                     if len(item_descriptions) == 1:
-                        response = f"{self.name} accepts the payment and hands you {item_descriptions[0]}."
+                        def get_personalized_msg(recipient):
+                            if recipient == source:
+                                return f"{self.name} accepts the payment and hands you {item_descriptions[0]}."
+                            else:
+                                return f"{self.name} accepts the payment and hands {source.name} {item_descriptions[0]}."
+                        
+                        self.location.msg_contents(get_personalized_msg)
                     else:
                         items_list = ", ".join(item_descriptions[:-1]) + f" and {item_descriptions[-1]}"
-                        response = f"{self.name} accepts the payment and hands you {items_list}."
-                else:
-                    # Something went wrong, return the money
-                    source.add_currency(**{currency_type: amount})
-                    response = f"{self.name} frowns, 'I'm sorry, something seems to be wrong with that order.'"
+                        def get_personalized_msg(recipient):
+                            if recipient == source:
+                                return f"{self.name} accepts the payment and hands you {items_list}."
+                            else:
+                                return f"{self.name} accepts the payment and hands {source.name} {items_list}."
+                        
+                        self.location.msg_contents(get_personalized_msg)
+                    
+                    # Remember the interaction with the source's perspective
+                    if hasattr(source, 'has_account') and source.has_account:
+                        self.remember_interaction(
+                            source,
+                            f"*gives {amount} {currency_type} to {self.key}*",
+                            f"{self.name} accepts the payment and hands you {items_list if len(item_descriptions) > 1 else item_descriptions[0]}."
+                        )
+                    return
             else:
                 # Wrong amount, return the money
                 source.add_currency(**{currency_type: amount})
@@ -685,10 +702,10 @@ class NPC(Character):
                     
                     if items_given:
                         if len(items_given) == 1:
-                            response = f"{self.name} accepts the payment and hands you a fresh {items_given[0]}."
+                            response = f"{self.name} accepts the payment and hands {source.name} a fresh {items_given[0]}."
                         else:
                             items_list = ", ".join(items_given[:-1]) + f" and {items_given[-1]}"
-                            response = f"{self.name} accepts the payment and hands you fresh {items_list}."
+                            response = f"{self.name} accepts the payment and hands {source.name} fresh {items_list}."
                     else:
                         # Something went wrong, return the money
                         source.add_currency(**{currency_type: amount})
@@ -835,9 +852,14 @@ class OpenrouterCharacter(NPC):
                         "Respond in character with a single short response (max 100 tokens). "
                         "Include basic emotes or actions that fit the current room's state. "
                         "Stay consistent with the character's personality and knowledge. "
-                        "Consider the time of day and current room conditions in your response. "
-                        "Use the example responses as a guide for tone and style, but create "
-                        "a natural response that fits the current conversation flow. "
+                        "When mentioning any menu items, ALWAYS include their price in copper pieces (cp):\n"
+                        "- ale (5 cp)\n"
+                        "- beer (4 cp)\n"
+                        "- wine (10 cp)\n"
+                        "- mead (15 cp)\n"
+                        "- bread (1 cp)\n"
+                        "- meat (5 cp)\n"
+                        "- stew (8 cp)\n"
                         "Make your responses interesting and engaging but short and concise."
                         f"{self.append_to_prompt()}"
                     )

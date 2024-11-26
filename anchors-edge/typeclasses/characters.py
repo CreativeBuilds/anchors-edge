@@ -477,10 +477,10 @@ class NPC(Character):
             if price_matches:
                 total_price = int(price_matches[0])
                 
-                # Look for quantity + item mentions
+                # Look for quantity + item mentions - add coffee to the pattern
                 quantity_item_matches = [
                     (int(m.group(1)), m.group(2))
-                    for m in re.finditer(r"(\d+)\s+(ale|beer|wine|mead|bread|meat|stew)s?", response)
+                    for m in re.finditer(r"(\d+)\s+(ale|beer|wine|mead|coffee|bread|meat|stew)s?", response)
                 ]
                 
                 # Also look for single items without quantities

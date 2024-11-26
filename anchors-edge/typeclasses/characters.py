@@ -470,6 +470,27 @@ class NPC(Character):
         for name, cost in food_matches:
             offers.append(("food", name, int(cost)))
             
+        # Also check for plain text mentions of prices
+        if not offers:
+            # Look for price mentions in the text
+            price_matches = re.findall(r"that'll be (\d+) copper", response.lower())
+            if price_matches:
+                # Look for item mentions
+                if "ale" in response.lower():
+                    offers.append(("drink", "ale", int(price_matches[0]), 3))
+                elif "beer" in response.lower():
+                    offers.append(("drink", "beer", int(price_matches[0]), 2))
+                elif "wine" in response.lower():
+                    offers.append(("drink", "wine", int(price_matches[0]), 5))
+                elif "mead" in response.lower():
+                    offers.append(("drink", "mead", int(price_matches[0]), 7))
+                elif "bread" in response.lower():
+                    offers.append(("food", "bread", int(price_matches[0])))
+                elif "meat" in response.lower():
+                    offers.append(("food", "meat", int(price_matches[0])))
+                elif "stew" in response.lower():
+                    offers.append(("food", "stew", int(price_matches[0])))
+        
         return offers if offers else None
 
     def parse_conversation_for_purchase(self, source, amount, currency_type):
@@ -572,7 +593,40 @@ class NPC(Character):
         # Check for pending transactions
         pending_offers = self.parse_last_offer(source)
         
-        if not pending_offers:
+        if pending_offers:
+            # Calculate total cost for offered items
+            total_cost = sum(offer[2] for offer in pending_offers)  # item[2] is the cost
+            
+            if total_copper == total_cost:
+                # Create and give all items
+                items_given = []
+                for offer in pending_offers:
+                    if len(offer) == 4:  # Drink
+                        item_type, item_name, item_cost, intoxication = offer
+                    else:  # Food
+                        item_type, item_name, item_cost = offer
+                        intoxication = None
+                        
+                    item = self.create_ordered_item(item_type, item_name, intoxication)
+                    if item:
+                        item.move_to(source, quiet=True)
+                        items_given.append(item_name)
+                
+                if items_given:
+                    if len(items_given) == 1:
+                        response = f"{self.name} accepts the payment and hands you a fresh {items_given[0]}."
+                    else:
+                        items_list = ", ".join(items_given[:-1]) + f" and {items_given[-1]}"
+                        response = f"{self.name} accepts the payment and hands you fresh {items_list}."
+                else:
+                    # Something went wrong, return the money
+                    source.add_currency(**{currency_type: amount})
+                    response = f"{self.name} frowns, 'I'm sorry, something seems to be wrong with that order.'"
+            else:
+                # Wrong amount, return the money
+                source.add_currency(**{currency_type: amount})
+                response = f"{self.name} hands the coins back, 'For those items I'll need {total_cost} copper pieces.'"
+        else:
             # Try to determine what they want to buy from conversation
             purchase_intent = self.parse_conversation_for_purchase(source, amount, currency_type)
             
@@ -608,50 +662,11 @@ class NPC(Character):
                 else:
                     # Wrong amount, return the money
                     source.add_currency(**{currency_type: amount})
-                    total_needed = sum(item[2] for item in purchase_intent)
-                    response = f"{self.name} hands the coins back, 'For those items I'll need {total_needed} copper pieces.'"
+                    response = f"{self.name} hands the coins back, 'For those items I'll need {total_cost} copper pieces.'"
             else:
-                # No clear purchase intent found, use default response
+                # No pending offers or purchase intent found
                 source.add_currency(**{currency_type: amount})
                 response = f"{self.name} hands the coins back, 'I'm sorry, what would you like to order?'"
-        
-        elif len(pending_offers) > 1:
-            # Calculate total cost for all offered items
-            total_cost = sum(offer[2] for offer in pending_offers)  # item[2] is the cost
-            
-            if total_copper == total_cost:
-                # Create and give all items
-                items_given = []
-                for offer in pending_offers:
-                    if len(offer) == 4:  # Drink
-                        item_type, item_name, item_cost, intoxication = offer
-                    else:  # Food
-                        item_type, item_name, item_cost = offer
-                        intoxication = None
-                        
-                    item = self.create_ordered_item(item_type, item_name, intoxication)
-                    if item:
-                        item.move_to(source, quiet=True)
-                        items_given.append(item_name)
-                
-                if items_given:
-                    if len(items_given) == 1:
-                        response = f"{self.name} accepts the payment and hands you a fresh {items_given[0]}."
-                    else:
-                        items_list = ", ".join(items_given[:-1]) + f" and {items_given[-1]}"
-                        response = f"{self.name} accepts the payment and hands you fresh {items_list}."
-                else:
-                    # Something went wrong, return the money
-                    source.add_currency(**{currency_type: amount})
-                    response = f"{self.name} frowns, 'I'm sorry, something seems to be wrong with that order.'"
-            else:
-                # Wrong amount, return the money
-                source.add_currency(**{currency_type: amount})
-                response = f"{self.name} hands the coins back, 'For those items I'll need {total_cost} copper pieces.'"
-        else:
-            # No pending offers or purchase intent found
-            source.add_currency(**{currency_type: amount})
-            response = f"{self.name} hands the coins back, 'I'm sorry, what would you like to order?'"
         
         # Send the response and remember the interaction
         if response:  # Only send if we have a response
@@ -1120,116 +1135,6 @@ class Willow(OpenrouterCharacter):
             return obj
             
         return None
-
-    def at_receive_currency(self, amount, currency_type, source):
-        """Called when receiving currency"""
-        if not source or not hasattr(source, 'msg'):
-            return
-            
-        # Convert currency to copper for comparison
-        copper_value = {
-            "gold": 100,
-            "silver": 10,
-            "copper": 1
-        }
-        total_copper = amount * copper_value[currency_type]
-        
-        # Initialize response variable
-        response = None
-        
-        # Check for pending transactions
-        pending_offers = self.parse_last_offer(source)
-        
-        if not pending_offers:
-            # Try to determine what they want to buy from conversation
-            purchase_intent = self.parse_conversation_for_purchase(source, amount, currency_type)
-            
-            if purchase_intent:
-                # Calculate total cost of all items
-                total_cost = sum(item[2] for item in purchase_intent)  # item[2] is the cost
-                
-                if total_copper == total_cost:
-                    # Create and give all items
-                    items_given = []
-                    for purchase in purchase_intent:
-                        if len(purchase) == 4:  # Drink
-                            item_type, item_name, item_cost, intoxication = purchase
-                        else:  # Food
-                            item_type, item_name, item_cost = purchase
-                            intoxication = None
-                            
-                        item = self.create_ordered_item(item_type, item_name, intoxication)
-                        if item:
-                            item.move_to(source, quiet=True)
-                            items_given.append(item_name)
-                    
-                    if items_given:
-                        if len(items_given) == 1:
-                            response = f"{self.name} accepts the payment and hands you a fresh {items_given[0]}."
-                        else:
-                            items_list = ", ".join(items_given[:-1]) + f" and {items_given[-1]}"
-                            response = f"{self.name} accepts the payment and hands you fresh {items_list}."
-                    else:
-                        # Something went wrong, return the money
-                        source.add_currency(**{currency_type: amount})
-                        response = f"{self.name} frowns, 'I'm sorry, something seems to be wrong with that order.'"
-                else:
-                    # Wrong amount, return the money
-                    source.add_currency(**{currency_type: amount})
-                    total_needed = sum(item[2] for item in purchase_intent)
-                    response = f"{self.name} hands the coins back, 'For those items I'll need {total_needed} copper pieces.'"
-            else:
-                # No clear purchase intent found, use default response
-                source.add_currency(**{currency_type: amount})
-                response = f"{self.name} hands the coins back, 'I'm sorry, what would you like to order?'"
-        
-        elif len(pending_offers) > 1:
-            # Calculate total cost for all offered items
-            total_cost = sum(offer[2] for offer in pending_offers)  # item[2] is the cost
-            
-            if total_copper == total_cost:
-                # Create and give all items
-                items_given = []
-                for offer in pending_offers:
-                    if len(offer) == 4:  # Drink
-                        item_type, item_name, item_cost, intoxication = offer
-                    else:  # Food
-                        item_type, item_name, item_cost = offer
-                        intoxication = None
-                        
-                    item = self.create_ordered_item(item_type, item_name, intoxication)
-                    if item:
-                        item.move_to(source, quiet=True)
-                        items_given.append(item_name)
-                
-                if items_given:
-                    if len(items_given) == 1:
-                        response = f"{self.name} accepts the payment and hands you a fresh {items_given[0]}."
-                    else:
-                        items_list = ", ".join(items_given[:-1]) + f" and {items_given[-1]}"
-                        response = f"{self.name} accepts the payment and hands you fresh {items_list}."
-                else:
-                    # Something went wrong, return the money
-                    source.add_currency(**{currency_type: amount})
-                    response = f"{self.name} frowns, 'I'm sorry, something seems to be wrong with that order.'"
-            else:
-                # Wrong amount, return the money
-                source.add_currency(**{currency_type: amount})
-                response = f"{self.name} hands the coins back, 'For those items I'll need {total_cost} copper pieces.'"
-        else:
-            # No pending offers or purchase intent found
-            source.add_currency(**{currency_type: amount})
-            response = f"{self.name} hands the coins back, 'I'm sorry, what would you like to order?'"
-        
-        # Send the response and remember the interaction
-        if response:  # Only send if we have a response
-            self.location.msg_contents(response)
-            if hasattr(source, 'has_account') and source.has_account:
-                self.remember_interaction(
-                    source,
-                    f"*gives {amount} {currency_type} to {self.key}*",
-                    response
-                )
 
     def update_desc(self):
         """

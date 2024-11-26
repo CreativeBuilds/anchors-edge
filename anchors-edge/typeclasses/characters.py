@@ -485,7 +485,7 @@ class NPC(Character):
                 
                 # Also look for single items without quantities
                 single_item_matches = [
-                    (1, item) for item in ["ale", "beer", "wine", "mead", "bread", "meat", "stew"]
+                    (1, item) for item in ["ale", "beer", "wine", "mead", "coffee", "bread", "meat", "stew"]
                     if f" {item}" in response and not any(item == m[1] for m in quantity_item_matches)
                 ]
                 
@@ -494,10 +494,10 @@ class NPC(Character):
                 
                 # Create offers for each item
                 for quantity, item in all_items:
-                    if item in ["ale", "beer", "wine", "mead"]:
+                    if item in ["ale", "beer", "wine", "mead", "coffee"]:
                         # Set appropriate costs and intoxication levels
-                        costs = {"ale": 5, "beer": 4, "wine": 10, "mead": 15}
-                        intox = {"ale": 3, "beer": 2, "wine": 5, "mead": 7}
+                        costs = {"ale": 5, "beer": 4, "wine": 10, "mead": 15, "coffee": 2}
+                        intox = {"ale": 3, "beer": 2, "wine": 5, "mead": 7, "coffee": 0}
                         for _ in range(quantity):
                             offers.append(("drink", item, costs[item], intox[item]))
                     else:
@@ -878,7 +878,7 @@ class OpenrouterCharacter(NPC):
         return visible_message
     
     def append_to_context(self):
-        """Append additional context to the AI prompt"""
+        """Append additional context to the AI's context of the world"""
         return ""
 
     def update_desc(self):
@@ -1125,7 +1125,7 @@ class Willow(OpenrouterCharacter):
             "Willow is a half-elven barmaid who serves drinks and food to the customers. "
             "The tavern is called the Wyld Boar. "
             "The menu is the following: "
-            "Beer (4cp), Wine (10cp), Ale (5cp), Cider (6cp), "
+            "Beer (4cp), Wine (10cp), Ale (5cp), Cider (6cp), Coffee (2cp), "
             "Food is available all day, including bread (1cp), meat (5cp), stew (8cp), fruit (2cp), "
             "cheese (3cp), and pie (7cp)."
         )
@@ -1138,6 +1138,7 @@ class Willow(OpenrouterCharacter):
             "<drink name='beer' cp='4' intoxication='2'/>\n"
             "<drink name='wine' cp='10' intoxication='5'/>\n"
             "<drink name='mead' cp='15' intoxication='7'/>\n"
+            "<drink name='coffee' cp='2' intoxication='0'/>\n"
             "<food name='bread' cp='1'/>\n"
             "<food name='meat' cp='5'/>\n"
             "<food name='stew' cp='8'/>\n"

@@ -45,6 +45,14 @@ class WeatherAwareRoom(DefaultRoom):
         """Called when room is first created"""
         super().at_object_creation()
         
+        # Initialize cached_descriptions as an empty dictionary
+        if not hasattr(self.db, 'cached_descriptions') or self.db.cached_descriptions is None:
+            self.db.cached_descriptions = {}
+        
+        # Initialize cache_timestamps similarly
+        if not hasattr(self.db, 'cache_timestamps') or self.db.cache_timestamps is None:
+            self.db.cache_timestamps = {}
+        
         # Weather data storage
         self.db.weather_data = {}
         self.db.last_weather_update = 0
@@ -528,7 +536,7 @@ class TavernRoom(WeatherAwareRoom):
             "dawn": ("You find yourself in a warm, inviting tavern room as dawn's first light peeks through the windows. "
                     "Wooden beams cross the ceiling, their aged surface telling tales of countless years gone by. "
                     "The iron wall sconces are being extinguished one by one as morning light gradually fills the room. "
-                    "The air carries the comforting scent of pine wood and lingering hearth smoke.\n‎\n‎"
+                    "The air carries the comforting scent of pine wood and lingering hearth smoke.\n‎\n"
                     "A polished wooden bar runs along one wall, its surface worn smooth by countless patrons. "
                     "Several sturdy wooden tables and chairs are scattered about, each bearing the marks of years of use. "
                     "A large fireplace dominates one wall, its embers still glowing from the night before.\n‎\n‎"

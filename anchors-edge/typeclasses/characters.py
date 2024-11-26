@@ -747,7 +747,16 @@ class OpenrouterCharacter(NPC):
         room = self.location
         room_desc = room.db.desc if room and hasattr(room, 'db') else "unknown location"
         time_period = room.get_time_period() if hasattr(room, 'get_time_period') else "unknown time"
-            
+        
+        # Get list of characters and their descriptions in the room
+        character_info = []
+        if room:
+            for char in room.contents:
+                if hasattr(char, 'has_account') or (hasattr(char.db, 'is_npc') and char.db.is_npc):
+                    if char != self:  # Don't include self in the list
+                        desc = char.db.desc if hasattr(char.db, 'desc') and char.db.desc else "no description"
+                        character_info.append(f"{char.key}: {desc}")
+        
         # Build conversation context
         context = (
             f"You are roleplaying as {self.key}, {self.db.personality}\n"
@@ -755,8 +764,17 @@ class OpenrouterCharacter(NPC):
             f"Knowledge: {self.db.knowledge}\n\n"
             f"Time of day: {time_period}\n"
             f"The room's current state: {room_desc}\n\n"
-            "Example responses for specific topics:\n"
+            "People currently in the room:\n"
         )
+        
+        # Add character descriptions
+        if character_info:
+            for info in character_info:
+                context += f"- {info}\n"
+        else:
+            context += "- No one else is here\n"
+        
+        context += "\nExample responses for specific topics:\n"
         
         # Add example responses
         for triggers, responses in self.db.responses.items():

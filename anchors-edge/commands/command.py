@@ -620,22 +620,22 @@ class CmdChug(default_cmds.MuxCommand):
             self.caller.msg(f"You can't chug {drink.name} - it's not a drink!")
             return
 
-        if not hasattr(drink, 'drink_charges') or drink.drink_charges <= 0:
+        if not hasattr(drink.db, 'health') or drink.db.health <= 0:
             self.caller.msg(f"The {drink.name} is empty!")
             return
 
         # Consume all remaining charges at once
-        charges = drink.drink_charges
-        alcohol_content = drink.db.alcohol_content if drink.db.alcohol_content else 0
+        health = drink.db.health
+        alcohol_content = drink.db.alcohol_content if hasattr(drink.db, 'alcohol_content') else 0
         
         # Apply effects (multiply by charges for "chugging" effect)
         if alcohol_content:
             # Drinking quickly hits harder - multiply effect by 1.5
-            total_alcohol = (alcohol_content * charges) * 1.5
+            total_alcohol = (alcohol_content * health) * 1.5
             self.caller.db.intoxication = (self.caller.db.intoxication or 0) + total_alcohol
 
         # Empty the container
-        drink.drink_charges = 0
+        drink.db.health = 0
 
         # Messages - always show chug messages regardless of rate limit
         # since chugging is a more significant action

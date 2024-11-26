@@ -602,9 +602,6 @@ class NPC(Character):
         }
         total_copper = amount * copper_value[currency_type]
         
-        # Initialize response variable
-        response = None
-        
         # Check for pending transactions
         pending_offers = self.parse_last_offer(source)
         
@@ -647,25 +644,16 @@ class NPC(Character):
                         else:
                             item_descriptions.append(f"{item_name}")
                     
+                    # Create message using inline functions for actor stance
                     if len(item_descriptions) == 1:
-                        def get_personalized_msg(recipient):
-                            if recipient == source:
-                                return f"{self.name} accepts the payment and hands you {item_descriptions[0]}."
-                            else:
-                                return f"{self.name} accepts the payment and hands {source.name} {item_descriptions[0]}."
-                        
-                        self.location.msg_contents(get_personalized_msg)
+                        text = f"$You() $conj(accept) the payment and $conj(hand) $You() {item_descriptions[0]}."
+                        self.location.msg_contents(text, from_obj=self, mapping={"you": source})
                     else:
                         items_list = ", ".join(item_descriptions[:-1]) + f" and {item_descriptions[-1]}"
-                        def get_personalized_msg(recipient):
-                            if recipient == source:
-                                return f"{self.name} accepts the payment and hands you {items_list}."
-                            else:
-                                return f"{self.name} accepts the payment and hands {source.name} {items_list}."
-                        
-                        self.location.msg_contents(get_personalized_msg)
+                        text = f"$You() $conj(accept) the payment and $conj(hand) $You() {items_list}."
+                        self.location.msg_contents(text, from_obj=self, mapping={"you": source})
                     
-                    # Remember the interaction with the source's perspective
+                    # Remember the interaction from source's perspective
                     if hasattr(source, 'has_account') and source.has_account:
                         self.remember_interaction(
                             source,
@@ -673,61 +661,20 @@ class NPC(Character):
                             f"{self.name} accepts the payment and hands you {items_list if len(item_descriptions) > 1 else item_descriptions[0]}."
                         )
                     return
+                else:
+                    # Error messages don't need actor stance since they're just NPC dialogue
+                    source.add_currency(**{currency_type: amount})
+                    self.location.msg_contents(f"{self.name} frowns, 'I'm sorry, something seems to be wrong with that order.'")
+                    return
             else:
                 # Wrong amount, return the money
                 source.add_currency(**{currency_type: amount})
-                response = f"{self.name} hands the coins back, 'For those items I'll need {total_cost} copper pieces.'"
+                self.location.msg_contents(f"{self.name} hands the coins back, 'For those items I'll need {total_cost} copper pieces.'")
+                return
         else:
-            # Try to determine what they want to buy from conversation
-            purchase_intent = self.parse_conversation_for_purchase(source, amount, currency_type)
-            
-            if purchase_intent:
-                # Calculate total cost of all items
-                total_cost = sum(item[2] for item in purchase_intent)  # item[2] is the cost
-                
-                if total_copper == total_cost:
-                    # Create and give all items
-                    items_given = []
-                    for purchase in purchase_intent:
-                        if len(purchase) == 4:  # Drink
-                            item_type, item_name, item_cost, intoxication = purchase
-                        else:  # Food
-                            item_type, item_name, item_cost = purchase
-                            intoxication = None
-                            
-                        item = self.create_ordered_item(item_type, item_name, intoxication)
-                        if item:
-                            item.move_to(source, quiet=True)
-                            items_given.append(item_name)
-                    
-                    if items_given:
-                        if len(items_given) == 1:
-                            response = f"{self.name} accepts the payment and hands {source.name} a fresh {items_given[0]}."
-                        else:
-                            items_list = ", ".join(items_given[:-1]) + f" and {items_given[-1]}"
-                            response = f"{self.name} accepts the payment and hands {source.name} fresh {items_list}."
-                    else:
-                        # Something went wrong, return the money
-                        source.add_currency(**{currency_type: amount})
-                        response = f"{self.name} frowns, 'I'm sorry, something seems to be wrong with that order.'"
-                else:
-                    # Wrong amount, return the money
-                    source.add_currency(**{currency_type: amount})
-                    response = f"{self.name} hands the coins back, 'For those items I'll need {total_cost} copper pieces.'"
-            else:
-                # No pending offers or purchase intent found
-                source.add_currency(**{currency_type: amount})
-                response = f"{self.name} hands the coins back, 'I'm sorry, what would you like to order?'"
-        
-        # Send the response and remember the interaction
-        if response:  # Only send if we have a response
-            self.location.msg_contents(response)
-            if hasattr(source, 'has_account') and source.has_account:
-                self.remember_interaction(
-                    source,
-                    f"*gives {amount} {currency_type} to {self.key}*",
-                    response
-                )
+            # No pending offers or purchase intent found
+            source.add_currency(**{currency_type: amount})
+            self.location.msg_contents(f"{self.name} hands the coins back, 'I'm sorry, what would you like to order?'")
 
     def at_object_receive(self, moved_obj, source_location, **kwargs):
         """Called when this object receives another object"""

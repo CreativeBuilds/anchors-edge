@@ -472,39 +472,40 @@ class NPC(Character):
             
         # Also check for plain text mentions of prices
         if not offers:
-            # Look for total price mention
-            price_matches = re.findall(r"that'll be (\d+) copper", response)
-            if price_matches:
-                total_price = int(price_matches[0])
-                
-                # Look for quantity + item mentions - add coffee to the pattern
-                quantity_item_matches = [
-                    (int(m.group(1)), m.group(2))
-                    for m in re.finditer(r"(\d+)\s+(ale|beer|wine|mead|coffee|bread|meat|stew)s?", response)
-                ]
-                
-                # Also look for single items without quantities
-                single_item_matches = [
-                    (1, item) for item in ["ale", "beer", "wine", "mead", "coffee", "bread", "meat", "stew"]
-                    if f" {item}" in response and not any(item == m[1] for m in quantity_item_matches)
-                ]
-                
-                # Combine all found items
-                all_items = quantity_item_matches + single_item_matches
-                
-                # Create offers for each item
-                for quantity, item in all_items:
+            # Look for quantity mentions first
+            quantity_matches = re.findall(r"(\d+)\s+(?:more\s+)?(?:cups?\s+of\s+)?(\w+)", response)
+            if quantity_matches:
+                for quantity, item in quantity_matches:
+                    quantity = int(quantity)
+                    item = item.strip().lower()
                     if item in ["ale", "beer", "wine", "mead", "coffee"]:
                         # Set appropriate costs and intoxication levels
                         costs = {"ale": 5, "beer": 4, "wine": 10, "mead": 15, "coffee": 2}
                         intox = {"ale": 3, "beer": 2, "wine": 5, "mead": 7, "coffee": 0}
                         for _ in range(quantity):
                             offers.append(("drink", item, costs[item], intox[item]))
-                    else:
-                        # Handle food items
+                    elif item in ["bread", "meat", "stew"]:
                         costs = {"bread": 1, "meat": 5, "stew": 8}
                         for _ in range(quantity):
                             offers.append(("food", item, costs[item]))
+            
+            # If no quantity matches, fall back to looking for single items
+            if not offers:
+                # Look for single items without quantities
+                single_item_matches = [
+                    (1, item) for item in ["ale", "beer", "wine", "mead", "coffee", "bread", "meat", "stew"]
+                    if f" {item}" in response
+                ]
+                
+                # Create offers for each item
+                for quantity, item in single_item_matches:
+                    if item in ["ale", "beer", "wine", "mead", "coffee"]:
+                        costs = {"ale": 5, "beer": 4, "wine": 10, "mead": 15, "coffee": 2}
+                        intox = {"ale": 3, "beer": 2, "wine": 5, "mead": 7, "coffee": 0}
+                        offers.append(("drink", item, costs[item], intox[item]))
+                    else:
+                        costs = {"bread": 1, "meat": 5, "stew": 8}
+                        offers.append(("food", item, costs[item]))
         
         return offers if offers else None
 

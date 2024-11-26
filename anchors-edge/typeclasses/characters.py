@@ -443,7 +443,6 @@ class NPC(Character):
     def parse_last_offer(self, speaker):
         """
         Parse only the most recent response for pending transactions.
-        Returns list of tuples (type, name, cost, intoxication) or None if no transaction pending.
         """
         player_memory = self.db.conversation_memory["per_player"].get(speaker.key, {"recent_interactions": []})
         if not player_memory or not player_memory["recent_interactions"]:
@@ -457,10 +456,7 @@ class NPC(Character):
         if "accepts the payment and hands you" in response:
             return None
         
-        # Look for transaction tags
-        import re
-        
-        # Find all item offers in the response
+        # Look for transaction tags first
         offers = []
         drink_matches = re.findall(r"<drink name='([^']+)' cp='(\d+)' intoxication='(\d+)'/>", response)
         food_matches = re.findall(r"<food name='([^']+)' cp='(\d+)'/>", response)
@@ -470,69 +466,45 @@ class NPC(Character):
         for name, cost in food_matches:
             offers.append(("food", name, int(cost)))
             
-        # Also check for plain text mentions of prices
+        # If no explicit tags, look for natural language price mentions
         if not offers:
-            # Look for total price mention
-            total_price_match = re.search(r"(?:that'?s?|that(?:'?s| is|ll be)) (\d+) copper", response.lower())
+            # Look for total price and quantity mentions
+            total_price_match = re.search(r"(?:that'?s?|that(?:'?s| is|ll be)) (\d+) copper", response)
+            quantity_matches = re.findall(r"(\d+)\s+(?:(?:cups?|mugs?|glasses?|tankards?|bottles?|bowls?|plates?|servings?|portions?)\s+(?:of\s+)?)?(\w+)", response)
             
-            # More robust quantity matching
-            quantity_patterns = [
-                # Direct number + item
-                r"(\d+)\s+(?:more\s+)?(\w+)",
-                # Number + container + item
-                r"(\d+)\s+(?:more\s+)?(?:cups?|mugs?|glasses?|tankards?|bottles?|bowls?|plates?|servings?|portions?)\s+(?:of\s+)?(\w+)",
-                # Number + item + container
-                r"(\d+)\s+(?:more\s+)?(\w+)(?:\s+(?:cups?|mugs?|glasses?|tankards?|bottles?|bowls?|plates?|servings?|portions?))?",
-                # "another" or "one more" + item
-                r"(?:another|one more)\s+(\w+)",
-                # "a" or "an" + item
-                r"\b(?:a|an)\s+(\w+)"
-            ]
-            
-            found_items = []
-            
-            # Process each pattern
-            for pattern in quantity_patterns:
-                matches = re.finditer(pattern, response.lower())
-                for match in matches:
-                    if len(match.groups()) == 2:
-                        quantity, item = match.groups()
-                        quantity = int(quantity)
-                    else:
-                        quantity = 1
-                        item = match.group(1)
-                    
-                    # Clean up item name
-                    item = item.strip().lower()
-                    # Remove plural 's' and container words
-                    item = item.rstrip('s')
-                    for container in ['cup', 'mug', 'glass', 'tankard', 'bottle', 'bowl', 'plate', 'serving', 'portion']:
-                        item = item.replace(container, '').strip()
-                    
-                    found_items.append((quantity, item))
-            
-            # Process found items
-            if total_price_match and found_items:
+            if total_price_match and quantity_matches:
                 total_price = int(total_price_match.group(1))
+                calculated_total = 0
+                temp_offers = []
                 
-                # Process each found item
-                for quantity, item in found_items:
+                # Process each quantity match
+                for quantity_str, item in quantity_matches:
+                    quantity = int(quantity_str)
+                    item = item.strip().lower().rstrip('s')  # Remove plural
+                    
                     # Handle drinks
                     if item in ["ale", "beer", "wine", "mead", "coffee"]:
                         costs = {"ale": 5, "beer": 4, "wine": 10, "mead": 15, "coffee": 2}
                         intox = {"ale": 3, "beer": 2, "wine": 5, "mead": 7, "coffee": 0}
                         
-                        # Verify total price matches quantity * cost
-                        if total_price == quantity * costs[item]:
-                            for _ in range(quantity):
-                                offers.append(("drink", item, costs[item], intox[item]))
-                    
-                    # Handle food items
+                        item_total = quantity * costs[item]
+                        calculated_total += item_total
+                        
+                        for _ in range(quantity):
+                            temp_offers.append(("drink", item, costs[item], intox[item]))
+                            
+                    # Handle food
                     elif item in ["bread", "meat", "stew"]:
                         costs = {"bread": 1, "meat": 5, "stew": 8}
-                        if total_price == quantity * costs[item]:
-                            for _ in range(quantity):
-                                offers.append(("food", item, costs[item]))
+                        item_total = quantity * costs[item]
+                        calculated_total += item_total
+                        
+                        for _ in range(quantity):
+                            temp_offers.append(("food", item, costs[item]))
+                
+                # Only use the offers if the total price matches
+                if calculated_total == total_price:
+                    offers = temp_offers
         
         return offers if offers else None
 

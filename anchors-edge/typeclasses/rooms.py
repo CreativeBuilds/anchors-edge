@@ -174,9 +174,23 @@ class WeatherAwareRoom(DefaultRoom):
         return False
 
     def update_description(self):
-        """Update only the current time period's description and clear brief description"""
+        """Updates the room's description based on time of day and weather"""
+        # Get current time period
         current_period = self.get_time_period()
-        base_desc = self.db.desc_base[current_period]
+        
+        # Initialize base descriptions if they don't exist
+        if not hasattr(self.db, 'desc_base') or self.db.desc_base is None:
+            self.db.desc_base = {
+                "dawn": self.db.desc or "The room is lit by the early morning light.",
+                "morning": self.db.desc or "The room is well-lit by the morning sun.",
+                "noon": self.db.desc or "The room is brightly lit by the midday sun.",
+                "afternoon": self.db.desc or "The room is lit by the afternoon sun.",
+                "dusk": self.db.desc or "The room is dimly lit by the setting sun.",
+                "night": self.db.desc or "The room is dark, lit only by artificial light."
+            }
+        
+        # Get base description for current time period
+        base_desc = self.db.desc_base.get(current_period, self.db.desc or "You see nothing special.")
         
         # Always fetch fresh weather data if needed
         if not self.db.weather_data:
@@ -489,6 +503,15 @@ class TavernRoom(WeatherAwareRoom):
     def at_object_creation(self):
         """Called when the room is first created"""
         super().at_object_creation()
+        
+        # Initialize desc_base as a dictionary with default descriptions
+        if not hasattr(self.db, 'desc_base') or self.db.desc_base is None:
+            self.db.desc_base = {
+                "dawn": "Default dawn description.",
+                "day": "Default day description.",
+                "dusk": "Default dusk description.",
+                "night": "Default night description."
+            }
         
         # Delete all characters in the room that aren't players
         for char in self.contents:

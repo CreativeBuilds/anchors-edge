@@ -764,7 +764,7 @@ class OpenrouterCharacter(NPC):
             "Authorization": f"Bearer {OPENROUTER_API_KEY}",
             "Content-Type": "application/json",
             "HTTP-Referer": "http://localhost:4001",
-            "X-Title": f"A.E. {self.caller.key} Drunk Speech"
+            "X-Title": f"A.E. {speaker.key}"
         }
         
         data = {

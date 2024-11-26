@@ -443,7 +443,7 @@ class NPC(Character):
     def parse_last_offer(self, speaker):
         """
         Parse only the most recent response for pending transactions.
-        Returns tuple of (type, name, cost, intoxication) or None if no transaction pending.
+        Returns list of tuples (type, name, cost, intoxication) or None if no transaction pending.
         """
         player_memory = self.db.conversation_memory["per_player"].get(speaker.key)
         if not player_memory or not player_memory["recent_interactions"]:
@@ -451,12 +451,12 @@ class NPC(Character):
             
         # Only check the most recent interaction
         last_interaction = player_memory["recent_interactions"][-1]
-        response = last_interaction["response"]
+        response = last_interaction["response"].lower()
         
         # If this response is about giving items, it's not an offer
         if "accepts the payment and hands you" in response:
             return None
-            
+        
         # Look for transaction tags
         import re
         
@@ -472,24 +472,39 @@ class NPC(Character):
             
         # Also check for plain text mentions of prices
         if not offers:
-            # Look for price mentions in the text
-            price_matches = re.findall(r"that'll be (\d+) copper", response.lower())
+            # Look for total price mention
+            price_matches = re.findall(r"that'll be (\d+) copper", response)
             if price_matches:
-                # Look for item mentions
-                if "ale" in response.lower():
-                    offers.append(("drink", "ale", int(price_matches[0]), 3))
-                elif "beer" in response.lower():
-                    offers.append(("drink", "beer", int(price_matches[0]), 2))
-                elif "wine" in response.lower():
-                    offers.append(("drink", "wine", int(price_matches[0]), 5))
-                elif "mead" in response.lower():
-                    offers.append(("drink", "mead", int(price_matches[0]), 7))
-                elif "bread" in response.lower():
-                    offers.append(("food", "bread", int(price_matches[0])))
-                elif "meat" in response.lower():
-                    offers.append(("food", "meat", int(price_matches[0])))
-                elif "stew" in response.lower():
-                    offers.append(("food", "stew", int(price_matches[0])))
+                total_price = int(price_matches[0])
+                
+                # Look for quantity + item mentions
+                quantity_item_matches = [
+                    (int(m.group(1)), m.group(2))
+                    for m in re.finditer(r"(\d+)\s+(ale|beer|wine|mead|bread|meat|stew)s?", response)
+                ]
+                
+                # Also look for single items without quantities
+                single_item_matches = [
+                    (1, item) for item in ["ale", "beer", "wine", "mead", "bread", "meat", "stew"]
+                    if f" {item}" in response and not any(item == m[1] for m in quantity_item_matches)
+                ]
+                
+                # Combine all found items
+                all_items = quantity_item_matches + single_item_matches
+                
+                # Create offers for each item
+                for quantity, item in all_items:
+                    if item in ["ale", "beer", "wine", "mead"]:
+                        # Set appropriate costs and intoxication levels
+                        costs = {"ale": 5, "beer": 4, "wine": 10, "mead": 15}
+                        intox = {"ale": 3, "beer": 2, "wine": 5, "mead": 7}
+                        for _ in range(quantity):
+                            offers.append(("drink", item, costs[item], intox[item]))
+                    else:
+                        # Handle food items
+                        costs = {"bread": 1, "meat": 5, "stew": 8}
+                        for _ in range(quantity):
+                            offers.append(("food", item, costs[item]))
         
         return offers if offers else None
 
@@ -600,6 +615,14 @@ class NPC(Character):
             if total_copper == total_cost:
                 # Create and give all items
                 items_given = []
+                item_counts = {}  # Track quantities of each item
+                
+                # First count quantities of each item
+                for offer in pending_offers:
+                    item_name = offer[1]  # item[1] is the name
+                    item_counts[item_name] = item_counts.get(item_name, 0) + 1
+                
+                # Then create and give items
                 for offer in pending_offers:
                     if len(offer) == 4:  # Drink
                         item_type, item_name, item_cost, intoxication = offer
@@ -610,14 +633,25 @@ class NPC(Character):
                     item = self.create_ordered_item(item_type, item_name, intoxication)
                     if item:
                         item.move_to(source, quiet=True)
-                        items_given.append(item_name)
+                        # Only add to items_given if it's the first of its kind
+                        if item_name not in items_given:
+                            items_given.append(item_name)
                 
                 if items_given:
-                    if len(items_given) == 1:
-                        response = f"{self.name} accepts the payment and hands you a fresh {items_given[0]}."
+                    # Create response with quantities
+                    item_descriptions = []
+                    for item_name in items_given:
+                        quantity = item_counts[item_name]
+                        if quantity > 1:
+                            item_descriptions.append(f"{quantity} {item_name}s")
+                        else:
+                            item_descriptions.append(f"{item_name}")
+                    
+                    if len(item_descriptions) == 1:
+                        response = f"{self.name} accepts the payment and hands you {item_descriptions[0]}."
                     else:
-                        items_list = ", ".join(items_given[:-1]) + f" and {items_given[-1]}"
-                        response = f"{self.name} accepts the payment and hands you fresh {items_list}."
+                        items_list = ", ".join(item_descriptions[:-1]) + f" and {item_descriptions[-1]}"
+                        response = f"{self.name} accepts the payment and hands you {items_list}."
                 else:
                     # Something went wrong, return the money
                     source.add_currency(**{currency_type: amount})

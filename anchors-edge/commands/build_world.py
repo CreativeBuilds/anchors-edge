@@ -179,9 +179,6 @@ class CmdBuildWorld(Command):
             {"sheltered": True, "indoor": True, "magical": False}
         )
         
-        # Store tavern reference for later use
-        self.ndb.tavern = tavern  # Store temporarily in non-persistent storage
-        
         # Now that tavern exists, set it as spawn location
         self._set_spawn_location(tavern)
         
@@ -229,6 +226,9 @@ class CmdBuildWorld(Command):
         )
         
         self.msg("Main island areas created.")
+        
+        # Move players from Limbo to the new tavern
+        self._move_players_from_limbo(tavern)
         
         # Verify the build
         self._verify_build(tavern, harbor, market)
@@ -322,7 +322,7 @@ class CmdBuildWorld(Command):
             self.msg(f"|rError setting spawn location: {e}|n")
             logger.log_err(f"Failed to set spawn location: {e}")
 
-    def _move_players_from_limbo(self):
+    def _move_players_from_limbo(self, tavern):
         """Move all players from Limbo to the new tavern."""
         try:
             from evennia.objects.models import ObjectDB
@@ -332,8 +332,6 @@ class CmdBuildWorld(Command):
             if not limbo:
                 return
             
-            # Get the tavern from our stored reference
-            tavern = self.ndb.tavern
             if not tavern:
                 self.msg("|rError: Could not find tavern reference.|n")
                 return

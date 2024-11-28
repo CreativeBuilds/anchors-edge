@@ -40,8 +40,8 @@ BASE_ROOM_TYPECLASS = "typeclasses.rooms.WeatherAwareRoom"
 # Default home location for new characters. This should be a valid dbref
 # (limbo #2 is created by default) or None for allowing character creation
 # anywhere. Can be overridden by buildworld command.
-DEFAULT_HOME = "#3"
-START_LOCATION = "#3"
+DEFAULT_HOME = "#2"
+START_LOCATION = "#2"
 
 
 # Remove or comment out the CLIENT_DEFAULT_WIDTH setting since we're not using it

@@ -35,7 +35,17 @@ class WeatherAwareRoom(DefaultRoom):
         """
         This is called when someone looks at the room.
         """
+        # Get the base appearance
         appearance = super().return_appearance(looker, **kwargs)
+        
+        # Only show room ID to admins/builders
+        if not looker.locks.check_lockstring(looker, "perm(Admin) or perm(Builder)"):
+            # Remove the room ID from the appearance
+            # The ID is typically shown as (#1234) at the end of the first line
+            lines = appearance.split('\n')
+            if lines:
+                lines[0] = lines[0].split(' (#')[0]  # Remove the ID part
+            appearance = '\n'.join(lines)
         
         # Only add weather if enabled and we're not indoors
         if self.db.weather_enabled and not self.db.weather_modifiers.get("indoor", False):

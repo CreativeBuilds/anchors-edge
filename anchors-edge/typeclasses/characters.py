@@ -816,26 +816,6 @@ class OpenrouterCharacter(NPC):
                         "Respond in character with a single short response (max 100 tokens). "
                         "Include basic emotes or actions that fit the current room's state. "
                         "Stay consistent with the character's personality and knowledge. "
-                        "\nIMPORTANT RULES:"
-                        "\n1. NEVER give or serve items until payment is received"
-                        "\n2. NEVER say 'enjoy' or similar until after payment"
-                        "\n3. When someone orders, always state the price and wait for payment"
-                        "\n4. Only describe preparing items, but don't hand them over until paid"
-                        "\nWhen mentioning any menu items, ALWAYS include their price in copper pieces (cp):\n"
-                        "- ale (5 cp)\n"
-                        "- beer (4 cp)\n"
-                        "- wine (10 cp)\n"
-                        "- mead (15 cp)\n"
-                        "- bread (1 cp)\n"
-                        "- meat (5 cp)\n"
-                        "- stew (8 cp)\n"
-                        "\nExample responses:"
-                        "\nCustomer: 'Give me an ale!'"
-                        "\nCorrect: 'That'll be 5 copper pieces for the ale.'"
-                        "\nIncorrect: 'Here's your ale, enjoy!'"
-                        "\n\nCustomer: 'I'd like some wine please'"
-                        "\nCorrect: 'Ah, wine! That'll be 10 copper pieces.'"
-                        "\nIncorrect: 'Here you go, enjoy your wine!'"
                         "\n\nMake your responses interesting and engaging but short and concise."
                         f"{self.append_to_prompt()}"
                     )
@@ -933,66 +913,12 @@ class OpenrouterCharacter(NPC):
             ]
         }
         
-        weather_descriptions = {
-            "rain": [
-                "Raindrops glisten in their hair like tiny crystals.",
-                "They are slightly damp from the falling rain.",
-                "Water droplets trace paths down their form."
-            ],
-            "windy": [
-                "Their hair and clothes flutter in the breeze.",
-                "The wind plays with the edges of their garments.",
-                "A gusty breeze tousles their appearance."
-            ],
-            "thunderstorm": [
-                "Lightning flashes occasionally illuminate their form.",
-                "Thunder and rain create a dramatic backdrop around them.",
-                "They stand resolute against the stormy conditions."
-            ],
-            "overcast": [
-                "Diffused light from the cloudy sky softens their features.",
-                "The grey light casts them in muted tones.",
-                "Overcast conditions blur their edges slightly."
-            ],
-            "partly cloudy": [
-                "Shifting clouds create changing patterns of light around them.",
-                "Occasional sunbeams highlight their presence.",
-                "They move between patches of sun and shade."
-            ],
-            "clear": [
-                "Clear conditions show them in pristine detail.",
-                "Nothing obscures their clear appearance.",
-                "They stand in perfect clarity."
-            ]
-        }
-        
-        # Extract weather conditions
-        conditions = []
-        if weather_data.get('weather_code') in [51, 53, 55, 61, 63, 65, 80, 81, 82]:
-            conditions.append("rain")
-        if weather_data.get('wind_speed_10m', 0) > 15:
-            conditions.append("windy")
-        if weather_data.get('weather_code') in [95, 96, 99]:
-            conditions.append("thunderstorm")
-        if weather_data.get('cloud_cover', 0) > 80:
-            conditions.append("overcast")
-        elif weather_data.get('cloud_cover', 0) > 40:
-            conditions.append("partly cloudy")
-        if not conditions:
-            conditions.append("clear")
-        
         # Select atmospheric descriptions
         atmospheric_desc = []
         
         # Add time-based description
         if time_period and time_period in time_descriptions:
             atmospheric_desc.append(random.choice(time_descriptions[time_period]))
-        
-        # Add weather-based description (pick one random weather condition if multiple exist)
-        if conditions:
-            weather_condition = random.choice(conditions)
-            if weather_condition in weather_descriptions:
-                atmospheric_desc.append(random.choice(weather_descriptions[weather_condition]))
         
         # Combine descriptions
         final_desc = self.db.base_desc

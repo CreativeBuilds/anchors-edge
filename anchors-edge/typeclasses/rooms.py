@@ -96,12 +96,12 @@ class WeatherAwareRoom(DefaultRoom):
             dict: Current weather data for this room's location
         """
         try:
-            if hasattr(GLOBAL_SCRIPTS, "weather_controller"):
-                return GLOBAL_SCRIPTS.weather_controller.get_weather_data("main_island")
+            weather = GLOBAL_SCRIPTS.weather_controller
+            if weather:
+                return weather.get_weather_data("main_island")
             else:
-                # Log that weather script is not found
                 from evennia.utils import logger
-                logger.log_err("Weather script not found in GLOBAL_SCRIPTS")
+                logger.log_err("Weather controller not found in GLOBAL_SCRIPTS")
                 return {}
         except Exception as e:
             from evennia.utils import logger

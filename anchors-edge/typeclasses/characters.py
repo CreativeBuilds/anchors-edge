@@ -17,6 +17,7 @@ import requests
 from time import time
 from dotenv import load_dotenv
 import re
+from server.conf.settings import START_LOCATION, DEFAULT_HOME  # Direct import
 
 # Load environment variables from .env file
 load_dotenv()
@@ -931,16 +932,14 @@ class OpenrouterCharacter(NPC):
         """
         Called before character is created.
         """
-        from evennia.objects.models import ObjectDB
-        GLOBAL_SCRIPTS = ObjectDB.objects.get_id(1)
-        
-        # Get spawn location from global scripts
-        spawn_location = GLOBAL_SCRIPTS.db.default_spawn_location
+        # Get spawn location from settings.py
+        spawn_location = START_LOCATION
         if spawn_location:
             self.home = spawn_location
             self.location = spawn_location
         else:
             # Fallback to limbo (#2) if no spawn location is set
+            from evennia.objects.models import ObjectDB
             self.home = ObjectDB.objects.get_id(2)
             self.location = ObjectDB.objects.get_id(2)
 

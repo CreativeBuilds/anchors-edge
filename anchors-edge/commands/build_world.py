@@ -6,7 +6,7 @@ from evennia import Command, create_object, create_script
 from evennia.utils import search, logger
 from typeclasses.rooms import IslandRoom, WeatherAwareRoom
 from evennia.utils.evtable import EvTable
-from django.conf import settings
+from server.conf.settings import START_LOCATION, DEFAULT_HOME  # Direct import
 from evennia.objects.models import ObjectDB
 
 
@@ -56,6 +56,27 @@ class CmdBuildWorld(Command):
             
             self.msg("World building completed successfully!")
             
+            # Move players from Limbo to the new tavern
+            self._move_players_from_limbo()
+            
+            # Notify about restart
+            self.msg("|yRestarting server to apply spawn location changes...|n")
+            
+            # Schedule a server restart
+            from evennia.server.sessionhandler import SESSIONS
+            SESSIONS.announce_all("|rGame restarting in 3 seconds.|n")
+            from twisted.internet import reactor
+            from evennia import SERVERNAME
+            
+            def do_restart():
+                SESSIONS.announce_all("|rRestarting....|n")
+                from evennia import gamedir
+                from subprocess import call
+                import sys
+                call([sys.executable, "evennia.py", "reload"], cwd=gamedir)
+            
+            reactor.callLater(3, do_restart)
+            
         except Exception as e:
             self.msg(f"Error building world: {e}")
             logger.log_trace()
@@ -87,7 +108,7 @@ class CmdBuildWorld(Command):
         try:
             # First list what will be deleted
             rooms = search.search_object("*", typeclass="typeclasses.rooms.WeatherAwareRoom")
-            scripts = search.search_script("weather_controller")
+            weather_scripts = search.search_script("weather_controller")
             
             if not confirmed:
                 self.msg("\nThe following will be deleted:")
@@ -97,9 +118,9 @@ class CmdBuildWorld(Command):
                         if room.dbref != "#2":
                             self.msg(f"- {room.name} ({room.dbref})")
                 
-                if scripts:
+                if weather_scripts:
                     self.msg("\nScripts:")
-                    for script in scripts:
+                    for script in weather_scripts:
                         self.msg(f"- {script.key}")
                 
                 # Ask for confirmation
@@ -115,8 +136,9 @@ class CmdBuildWorld(Command):
                         self.msg(f"Deleting room: {room.name}")
                         room.delete()
             
-            if scripts:
-                for script in scripts:
+            # Only delete our custom scripts, not system scripts
+            if weather_scripts:
+                for script in weather_scripts:
                     self.msg(f"Deleting script: {script.key}")
                     script.delete()
             
@@ -157,7 +179,10 @@ class CmdBuildWorld(Command):
             {"sheltered": True, "indoor": True, "magical": False}
         )
         
-        # Set the tavern as the spawn location
+        # Store tavern reference for later use
+        self.ndb.tavern = tavern  # Store temporarily in non-persistent storage
+        
+        # Now that tavern exists, set it as spawn location
         self._set_spawn_location(tavern)
         
         # Create the outdoor areas
@@ -205,23 +230,24 @@ class CmdBuildWorld(Command):
         
         self.msg("Main island areas created.")
         
-        # Verify the setup
+        # Verify the build
         self._verify_build(tavern, harbor, market)
 
     def _verify_build(self, tavern, harbor, market):
         """Verify the build was successful."""
         try:
             # Check spawn location settings
-            GLOBAL_SCRIPTS = ObjectDB.objects.get_id(1)
-            spawn_loc = GLOBAL_SCRIPTS.db.default_spawn_location
-            home_loc = GLOBAL_SCRIPTS.db.default_home_location
+            from server.conf.settings import START_LOCATION, DEFAULT_HOME
             
-            if spawn_loc == tavern and home_loc == tavern:
+            # Convert dbref string to actual object
+            spawn_dbref = START_LOCATION.strip('#')
+            spawn_location = search.search_object(f"#{spawn_dbref}", exact=True)
+            
+            if spawn_location and spawn_location[0] == tavern:
                 self.msg("|gSpawn location set successfully.|n")
             else:
                 self.msg("|rWarning: Spawn location may not be set correctly.|n")
                 
-            
             # Check weather awareness
             if harbor.db.weather_enabled and market.db.weather_enabled:
                 self.msg("|gWeather awareness configured for outdoor areas.|n")
@@ -270,21 +296,69 @@ class CmdBuildWorld(Command):
 
     def _set_spawn_location(self, location):
         """
-        Set the spawn location using Evennia's attribute system.
+        Set the spawn location by updating settings.py
         """
         try:
-            # Store spawn location reference in a global script
-            GLOBAL_SCRIPTS = ObjectDB.objects.get_id(1)
-            GLOBAL_SCRIPTS.db.default_spawn_location = location
-            GLOBAL_SCRIPTS.db.default_home_location = location
+            # Update settings file path
+            settings_path = "server/conf/settings.py"
             
-            # Log the change
-            logger.log_info(f"Updated spawn location to {location.name} ({location.dbref})")
-            self.msg(f"|gSpawn location set to {location.name}.|n")
+            with open(settings_path, 'r') as f:
+                lines = f.readlines()
+                
+            # Update the settings
+            with open(settings_path, 'w') as f:
+                for line in lines:
+                    if line.startswith('DEFAULT_HOME'):
+                        f.write(f'DEFAULT_HOME = "#{location.id}"\n')
+                    elif line.startswith('START_LOCATION'):
+                        f.write(f'START_LOCATION = "#{location.id}"\n')
+                    else:
+                        f.write(line)
+                        
+            self.msg(f"|gSpawn location set to {location.name} (#{location.id}).|n")
+            logger.log_info(f"Updated spawn location in settings.py to {location.name} (#{location.id})")
             
         except Exception as e:
             self.msg(f"|rError setting spawn location: {e}|n")
             logger.log_err(f"Failed to set spawn location: {e}")
+
+    def _move_players_from_limbo(self):
+        """Move all players from Limbo to the new tavern."""
+        try:
+            from evennia.objects.models import ObjectDB
+            
+            # Get Limbo
+            limbo = ObjectDB.objects.get_id(2)
+            if not limbo:
+                return
+            
+            # Get the tavern from our stored reference
+            tavern = self.ndb.tavern
+            if not tavern:
+                self.msg("|rError: Could not find tavern reference.|n")
+                return
+            
+            # Find all characters in Limbo
+            players_in_limbo = [obj for obj in limbo.contents 
+                               if obj.has_account and obj.location == limbo]
+            
+            if players_in_limbo:
+                self.msg(f"\n|yMoving {len(players_in_limbo)} player(s) from Limbo to {tavern.name}...|n")
+                
+                # Move each player
+                for player in players_in_limbo:
+                    player.location = tavern
+                    player.msg(f"|yYou have been moved to {tavern.name}.|n")
+                    
+                # Announce in tavern
+                if len(players_in_limbo) == 1:
+                    tavern.msg_contents(f"{players_in_limbo[0].name} appears in the tavern.", exclude=players_in_limbo)
+                else:
+                    names = ", ".join(p.name for p in players_in_limbo)
+                    tavern.msg_contents(f"Several people appear in the tavern: {names}", exclude=players_in_limbo)
+                    
+        except Exception as e:
+            self.msg(f"|rError moving players from Limbo: {e}|n")
 
 class CmdListObjects(Command):
     """

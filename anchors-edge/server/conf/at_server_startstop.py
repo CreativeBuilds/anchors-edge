@@ -5,27 +5,33 @@ This module contains functions called by Evennia at various
 points during its startup, reload and shutdown sequence.
 """
 
-from evennia.utils import logger
+from evennia.utils import logger, create
 
 def at_server_start():
     """
     This is called every time the server starts up.
     """
     try:
-        from evennia import create_script
         from evennia.utils import search
+        from typeclasses.scripts import GlobalSettingsScript, IslandWeatherScript
         
-        # Check if weather script exists
+        # Initialize global settings script
+        settings_script = search.search_script("global_settings")
+        if not settings_script:
+            logger.log_info("Creating global settings script...")
+            settings_script = create.create_script(GlobalSettingsScript)
+            if settings_script:
+                logger.log_info("Global settings script initialized successfully.")
+            else:
+                logger.log_err("Failed to create global settings script!")
+        else:
+            logger.log_info("Global settings script already exists.")
+            
+        # Initialize weather system script
         weather_script = search.search_script("weather_controller")
         if not weather_script:
             logger.log_info("Creating weather system script...")
-            # Use string path instead of direct class reference
-            script = create_script(
-                "typeclasses.scripts.IslandWeatherScript",
-                key="weather_controller",
-                persistent=True,
-                autostart=True
-            )
+            script = create.create_script(IslandWeatherScript)
             if script:
                 logger.log_info("Weather system initialized successfully.")
             else:
@@ -34,7 +40,7 @@ def at_server_start():
             logger.log_info("Weather system script already exists.")
             
     except Exception as e:
-        logger.log_err(f"Error initializing weather system: {e}")
+        logger.log_err(f"Error during server startup initialization: {e}")
 
 def at_server_stop():
     """

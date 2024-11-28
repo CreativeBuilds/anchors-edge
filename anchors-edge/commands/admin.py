@@ -34,14 +34,20 @@ class CmdRespawn(Command):
             return
             
         try:
-            # Get the world spawn location
-            GLOBAL_SCRIPTS = ObjectDB.objects.get_id(1)
-            spawn_location = GLOBAL_SCRIPTS.db.default_spawn_location
+            # Get spawn location from settings.py
+            from server.conf.settings import START_LOCATION
+            from evennia.utils import search
+            
+            # Convert dbref string to actual object
+            spawn_dbref = START_LOCATION.strip('#')
+            spawn_location = search.search_object(f"#{spawn_dbref}", exact=True)
             
             if not spawn_location:
-                self.msg("|rError: World spawn location not set.|n")
+                self.msg("|rError: Spawn location not found.|n")
                 return
-                
+            
+            spawn_location = spawn_location[0]
+            
             # Store old location for message
             old_location = target.location
             

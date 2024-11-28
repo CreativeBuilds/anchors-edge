@@ -37,6 +37,13 @@ SERVERNAME = "anchors-edge"
 # Path to the default room typeclass
 BASE_ROOM_TYPECLASS = "typeclasses.rooms.WeatherAwareRoom"
 
+# Default home location for new characters. This should be a valid dbref
+# (limbo #2 is created by default) or None for allowing character creation
+# anywhere. Can be overridden by buildworld command.
+DEFAULT_HOME = "#3"
+START_LOCATION = "#3"
+
+
 # Remove or comment out the CLIENT_DEFAULT_WIDTH setting since we're not using it
 # CLIENT_DEFAULT_WIDTH = 80
 
@@ -47,3 +54,13 @@ try:
     from server.conf.secret_settings import *
 except ImportError:
     print("secret_settings.py file not found or failed to import.")
+
+# Add the weather script as a global script
+GLOBAL_SCRIPTS = {
+    'weather_controller': {
+        'typeclass': 'typeclasses.scripts.IslandWeatherScript',
+        'repeats': -1,  # Repeat indefinitely 
+        'interval': 900,  # 15 minutes between updates
+        'desc': 'Global weather system controller'
+    }
+}

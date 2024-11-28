@@ -549,23 +549,6 @@ class TavernRoom(WeatherAwareRoom):
         # Then call parent's at_object_creation which will use these descriptions
         super().at_object_creation()
         
-        # Delete all characters in the room that aren't players
-        for char in self.contents:
-            if not char.has_account:
-                char.delete()
-        
-        # Create Willow using the new NPC class
-        from evennia import create_object
-        willow = create_object(
-            "typeclasses.characters.Willow",
-            key="Willow",
-            location=self,
-            locks="edit:perm(Builders);call:false()"
-        )
-        
-        # Store reference to Willow
-        self.db.barmaid = willow
-        
         # Override default weather effects with tavern-specific ones
         self.db.weather_effects.update({
             "rain": "The gentle patter of rain against the windows mingles with the sounds within. The air carries",
@@ -577,163 +560,13 @@ class TavernRoom(WeatherAwareRoom):
             "clear_night": "the night sky is visible through the windows",
             "cloudy_night": "the clouded night sky is barely visible through the windows"
         })
-        
-        # Override moon effects for tavern-specific descriptions
-        self.db.moon_effects = {
-            "new_moon": "the darkness of the new moon leaves only starlight filtering",
-            "waxing_crescent": "faint crescent moonlight slips",
-            "first_quarter": "half-moon light streams",
-            "waxing_gibbous": "strong moonlight pours",
-            "full_moon": "brilliant full moonlight floods",
-            "waning_gibbous": "strong moonlight streams",
-            "last_quarter": "half-moon light filters",
-            "waning_crescent": "faint crescent moonlight barely reaches"
-        }
-        
-        # Base descriptions for different times of day
-        self.db.desc_base = {
-            "dawn": ("You find yourself in a warm, inviting tavern room as dawn's first light peeks through the windows. "
-                    "Wooden beams cross the ceiling, their aged surface telling tales of countless years gone by. "
-                    "The iron wall sconces are being extinguished one by one as morning light gradually fills the room. "
-                    "The air carries the comforting scent of pine wood and lingering hearth smoke.\n‎\n"
-                    "A polished wooden bar runs along one wall, its surface worn smooth by countless patrons. "
-                    "Several sturdy wooden tables and chairs are scattered about, each bearing the marks of years of use. "
-                    "A large fireplace dominates one wall, its embers still glowing from the night before.\n‎\n‎"
-                    "On the far wall, a ornate mirror hangs, its gilded frame catching the early morning light. "
-                    "The mirror seems to invite you to examine your reflection."),
-
-            "day": ("You find yourself in a warm, inviting tavern room. Wooden beams cross the ceiling, their aged "
-                   "surface telling tales of countless years gone by. Bright sunlight streams through the windows, "
-                   "mixing with the warm glow from iron wall sconces. The air carries the comforting scent of pine "
-                   "wood and fresh bread from the kitchen.\n‎\n‎"
-                   "A polished wooden bar runs along one wall, its surface worn smooth by countless patrons. "
-                   "Several sturdy wooden tables and chairs are scattered about, each bearing the marks of years of use. "
-                   "A large fireplace dominates one wall, maintained with a modest flame that provides a cozy atmosphere.\n‎\n‎"
-                   "On the far wall, a ornate mirror hangs, its gilded frame gleaming in the daylight. "
-                   "The mirror seems to invite you to examine your reflection."),
-
-            "dusk": ("You find yourself in a warm, inviting tavern room as evening settles in. Wooden beams cross "
-                    "the ceiling, their aged surface telling tales of countless years gone by. The golden light of "
-                    "sunset mingles with the growing warmth of freshly lit iron wall sconces. The air carries the "
-                    "comforting scent of pine wood and hearth smoke.\n‎\n‎"
-                    "A polished wooden bar runs along one wall, its surface worn smooth by countless patrons. "
-                    "Several sturdy wooden tables and chairs are scattered about, each bearing the marks of years of use. "
-                    "A large fireplace dominates one wall, its flames building up to ward off the coming night.\n‎\n‎"
-                    "On the far wall, a ornate mirror hangs, its gilded frame catching the last rays of sunlight. "
-                    "The mirror seems to invite you to examine your reflection."),
-
-            "night": ("You find yourself in a warm, inviting tavern room. Wooden beams cross the ceiling, their aged "
-                     "surface telling tales of countless years gone by. Soft, golden light from iron wall sconces "
-                     "bathes the room in a comfortable glow, creating dancing shadows in the corners. The air carries "
-                     "the comforting scent of pine wood and hearth smoke.\n‎\n‎"
-                     "A polished wooden bar runs along one wall, its surface worn smooth by countless patrons. "
-                     "Several sturdy wooden tables and chairs are scattered about, each bearing the marks of years of use. "
-                     "A large fireplace dominates one wall, its crackling flames providing both warmth and light.\n‎\n‎"
-                     "On the far wall, a ornate mirror hangs, its gilded frame catching the firelight. "
-                     "The mirror seems to invite you to examine your reflection.")
-        }
-
-    def return_appearance(self, looker, **kwargs):
-        """
-        Customize the appearance of the tavern room.
-        """
-        if not looker:
-            return ""
-            
-        # Update description based on time and weather
-        current_period = self.get_time_period()
-        
-        # Check if we need to update the description
-        if not self.db.cached_descriptions[current_period]:
-            self.update_description()
-        elif time.time() - self.db.cache_timestamps[current_period] > 900:  # 15 minutes
-            self.update_description()
-            
-        return super().return_appearance(looker, **kwargs)
-
-    def apply_weather_effects(self, desc, weather_code, wind_speed, cloud_cover):
-        """Apply tavern-specific weather effects to the description"""
-        current_period = self.get_time_period()
-        
-        # Start with the base description
-        modified_desc = desc
-        
-        # Build weather effects
-        weather_effects = []
-        
-        # Add rain sounds if it's raining
-        if weather_code in [51, 53, 55, 61, 63, 65, 80, 81, 82]:
-            weather_effects.append("The gentle patter of rain against the windows mingles with the sounds within")
-        
-        # Add wind sounds for strong winds
-        if wind_speed > 15:
-            weather_effects.append("The wind whistles softly through the window frames")
-        
-        # Add thunder effects
-        if weather_code in [95, 96, 99]:
-            weather_effects.append("Occasional rumbles of thunder can be heard in the distance")
-        
-        # Combine weather effects with appropriate conjunctions
-        if weather_effects:
-            weather_text = ""
-            if len(weather_effects) == 1:
-                weather_text = f"{weather_effects[0]}. "
-            elif len(weather_effects) == 2:
-                weather_text = f"{weather_effects[0]} and {weather_effects[1]}. "
-            else:
-                weather_text = f"{', '.join(weather_effects[:-1])}, and {weather_effects[-1]}. "
-            
-            # Find the sentence about the air's scent
-            air_scent_index = modified_desc.find("The air carries")
-            if air_scent_index != -1:
-                # Insert weather effects before the air scent
-                modified_desc = (
-                    f"{modified_desc[:air_scent_index]}"
-                    f"{weather_text}"
-                    f"{modified_desc[air_scent_index:]}"
-                )
-        
-        # Modify lighting for very cloudy conditions during day
-        if cloud_cover > 80 and current_period == "day":
-            modified_desc = modified_desc.replace("Bright sunlight streams", 
-                                               "Muted daylight filters")
-            
-        return modified_desc
 
     def at_object_receive(self, moved_obj, source_location, **kwargs):
         """Called when an object enters the room"""
         # Check if it's a drink being dropped
         if hasattr(moved_obj, 'db') and moved_obj.db.is_drink:
-            # Get the barmaid
-            if hasattr(self.db, 'barmaid') and self.db.barmaid:
-                # Determine if it's placed on a table or bar
-                if random.random() < 0.6:  # 60% chance for table
-                    self.msg_contents(f"{moved_obj.name} is placed on a nearby table.")
-                else:
-                    self.msg_contents(f"{moved_obj.name} is placed on the bar.")
-                    
-                # Only schedule cleanup if drink is nearly empty
-                if moved_obj.db.health <= 3:
-                    from evennia import utils
-                    utils.delay(10, self.cleanup_drink, moved_obj)
-    
-    def cleanup_drink(self, drink_obj):
-        """Have Willow clean up the drink"""
-        if not drink_obj or not drink_obj.location == self:
-            return
-            
-        # Double check the drink is still nearly empty when cleanup occurs
-        if drink_obj.db.health > 3:
-            return
-            
-        if hasattr(self.db, 'barmaid') and self.db.barmaid:
-            willow = self.db.barmaid
-            # Generate cleanup message
-            messages = [
-                f"{willow.name} swings by and collects the nearly empty {drink_obj.name}.",
-                f"{willow.name} efficiently clears away the mostly finished {drink_obj.name}.",
-                f"{willow.name} gathers up the almost empty {drink_obj.name} while tidying the tavern.",
-                f"{willow.name} picks up the nearly finished {drink_obj.name} and takes it behind the bar."
-            ]
-            self.msg_contents(random.choice(messages))
-            drink_obj.delete()
+            # Determine if it's placed on a table or bar
+            if random.random() < 0.6:  # 60% chance for table
+                self.msg_contents(f"{moved_obj.name} is placed on a nearby table.")
+            else:
+                self.msg_contents(f"{moved_obj.name} is placed on the bar.")

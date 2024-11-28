@@ -56,24 +56,19 @@ class CmdBuildWorld(Command):
             
             self.msg("World building completed successfully!")
             
-            # Move players from Limbo to the new tavern
-            self._move_players_from_limbo()
-            
             # Notify about restart
             self.msg("|yRestarting server to apply spawn location changes...|n")
             
             # Schedule a server restart
             from evennia.server.sessionhandler import SESSIONS
             SESSIONS.announce_all("|rGame restarting in 3 seconds.|n")
+            from evennia.commands.default.system import CmdReload
             from twisted.internet import reactor
-            from evennia import SERVERNAME
             
             def do_restart():
-                SESSIONS.announce_all("|rRestarting....|n")
-                from evennia import gamedir
-                from subprocess import call
-                import sys
-                call([sys.executable, "evennia.py", "reload"], cwd=gamedir)
+                SESSIONS.announce_all("|Reloading...|n")
+                # Use the built-in reload command
+                CmdReload().execute_cmd("reload")
             
             reactor.callLater(3, do_restart)
             
@@ -229,39 +224,6 @@ class CmdBuildWorld(Command):
         
         # Move players from Limbo to the new tavern
         self._move_players_from_limbo(tavern)
-        
-        # Verify the build
-        self._verify_build(tavern, harbor, market)
-
-    def _verify_build(self, tavern, harbor, market):
-        """Verify the build was successful."""
-        try:
-            # Check spawn location settings
-            from server.conf.settings import START_LOCATION, DEFAULT_HOME
-            
-            # Convert dbref string to actual object
-            spawn_dbref = START_LOCATION.strip('#')
-            spawn_location = search.search_object(f"#{spawn_dbref}", exact=True)
-            
-            if spawn_location and spawn_location[0] == tavern:
-                self.msg("|gSpawn location set successfully.|n")
-            else:
-                self.msg("|rWarning: Spawn location may not be set correctly.|n")
-                
-            # Check weather awareness
-            if harbor.db.weather_enabled and market.db.weather_enabled:
-                self.msg("|gWeather awareness configured for outdoor areas.|n")
-            else:
-                self.msg("|rWarning: Weather awareness may not be configured correctly.|n")
-            
-            # Check exits
-            if len(harbor.exits) == 2 and len(tavern.exits) == 1 and len(market.exits) == 1:
-                self.msg("|gAll exits created successfully.|n")
-            else:
-                self.msg("|rWarning: Some exits may be missing.|n")
-                
-        except Exception as e:
-            self.msg(f"|rError during verification: {e}|n")
 
     def _create_room(self, key, desc, modifiers):
         """Helper method to create a room."""

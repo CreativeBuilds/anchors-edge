@@ -20,20 +20,24 @@ of the screen is done by the unlogged-in "look" command.
 
 """
 
-from server.conf.settings import SERVERNAME  # Direct import
+from django.conf import settings
 from evennia import utils
 
 CONNECTION_SCREEN = """
 |b==============================================================|n
- Welcome to |g{}|n, version {}!
-
+ Welcome to |g{}|n!
+ 
  If you have an existing account, connect to it by typing:
       |wconnect <username> <password>|n
  If you need to create an account, type (without the <>'s):
       |wcreate <username> <password>|n
 
- If you have spaces in your username, enclose it in quotes.
  Enter |whelp|n for more info. |wlook|n will re-show this screen.
-|b==============================================================|n""".format(
-    SERVERNAME, utils.get_evennia_version("short")
-)
+|b==============================================================|n""" \
+    .format(settings.SERVERNAME)
+
+def get_connection_screen():
+    """
+    Returns the connection screen as a string.
+    """
+    return utils.dedent(CONNECTION_SCREEN)

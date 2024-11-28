@@ -13,7 +13,13 @@ just overloads its hooks to have it perform its function.
 """
 
 from evennia.scripts.scripts import DefaultScript
+from evennia.utils import logger
+from typing import Optional, Dict
+import time
+import requests
 
+# Time constants
+WEATHER_UPDATE_INTERVAL = 15 * 60  # 15 minutes in seconds
 
 class Script(DefaultScript):
     """
@@ -101,3 +107,84 @@ class Script(DefaultScript):
     """
 
     pass
+
+class IslandWeatherScript(DefaultScript):
+    """
+    A global script that manages weather for different island regions.
+    This is a more appropriate solution than using a room, as it:
+    - Persists with the server
+    - Can be accessed globally
+    - Doesn't tie weather data to a physical location
+    - Can manage multiple weather systems
+    
+    Usage:
+        from evennia import GLOBAL_SCRIPTS
+        weather = GLOBAL_SCRIPTS.weather
+        current_weather = weather.get_weather_data("main_island")
+    """
+    
+    def at_script_creation(self):
+        """Set up the script."""
+        self.key = "weather_controller"
+        self.desc = "Manages weather systems for different islands"
+        self.persistent = True
+        
+        # Initialize weather data storage
+        self.db.weather_systems = {}
+        self.db.last_updates = {}
+        self.db.coordinates = {
+            "main_island": (21.4655745, -71.1390341),  # Turks and Caicos
+            # Add other islands as needed
+        }
+    
+    def get_weather_data(self, island_key: str) -> Optional[Dict]:
+        """
+        Get weather data for a specific island.
+        
+        Args:
+            island_key (str): Identifier for the island
+            
+        Returns:
+            dict: Weather data if available, None if island_key is invalid
+        """
+        # First check if island exists
+        if island_key not in self.db.coordinates:
+            logger.log_err(f"Invalid island key: {island_key}. Available islands: {list(self.db.coordinates.keys())}")
+            return None
+            
+        now = time.time()
+        
+        # Check if we need to update
+        if (island_key not in self.db.last_updates or 
+            now - self.db.last_updates.get(island_key, 0) > WEATHER_UPDATE_INTERVAL):
+            self._update_weather(island_key)
+            
+        return self.db.weather_systems.get(island_key)
+    
+    def _update_weather(self, island_key: str) -> None:
+        """Update weather data for an island."""
+        if island_key not in self.db.coordinates:
+            logger.log_err(f"No coordinates found for island {island_key}")
+            return
+            
+        lat, lon = self.db.coordinates[island_key]
+        url = "https://api.open-meteo.com/v1/forecast"
+        params = {
+            "latitude": lat,
+            "longitude": lon,
+            "current": "apparent_temperature,precipitation,rain,showers,"
+                      "weather_code,cloud_cover,wind_speed_10m,wind_direction_10m,"
+                      "wind_gusts_10m",
+            "temperature_unit": "fahrenheit",
+            "wind_speed_unit": "mph",
+            "precipitation_unit": "inch",
+            "timezone": "America/Chicago"
+        }
+        
+        try:
+            response = requests.get(url, params=params)
+            if response.status_code == 200:
+                self.db.weather_systems[island_key] = response.json()['current']
+                self.db.last_updates[island_key] = time.time()
+        except Exception as e:
+            logger.log_err(f"Weather API error for {island_key}: {e}")

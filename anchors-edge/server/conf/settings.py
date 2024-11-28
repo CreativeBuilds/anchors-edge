@@ -35,7 +35,7 @@ from evennia.settings_default import *
 SERVERNAME = "anchors-edge"
 
 # Path to the default room typeclass
-BASE_ROOM_TYPECLASS = "typeclasses.rooms.Room"
+BASE_ROOM_TYPECLASS = "typeclasses.rooms.WeatherAwareRoom"
 
 # Remove or comment out the CLIENT_DEFAULT_WIDTH setting since we're not using it
 # CLIENT_DEFAULT_WIDTH = 80

@@ -927,3 +927,20 @@ class OpenrouterCharacter(NPC):
         
         self.db.desc = final_desc
 
+    def at_pre_create(self):
+        """
+        Called before character is created.
+        """
+        from evennia.objects.models import ObjectDB
+        GLOBAL_SCRIPTS = ObjectDB.objects.get_id(1)
+        
+        # Get spawn location from global scripts
+        spawn_location = GLOBAL_SCRIPTS.db.default_spawn_location
+        if spawn_location:
+            self.home = spawn_location
+            self.location = spawn_location
+        else:
+            # Fallback to limbo (#2) if no spawn location is set
+            self.home = ObjectDB.objects.get_id(2)
+            self.location = ObjectDB.objects.get_id(2)
+

@@ -2,44 +2,52 @@
 Server startstop hooks
 
 This module contains functions called by Evennia at various
-points during its startup, reload and shutdown sequence. It
-allows for customizing the server operation as desired.
-
-This module must contain at least these global functions:
-
-at_server_init()
-at_server_start()
-at_server_stop()
-at_server_reload_start()
-at_server_reload_stop()
-at_server_cold_start()
-at_server_cold_stop()
-
+points during its startup, reload and shutdown sequence.
 """
 
-
-def at_server_init():
-    """
-    This is called first as the server is starting up, regardless of how.
-    """
-    pass
-
+from evennia.utils import logger
 
 def at_server_start():
     """
-    This is called every time the server starts up, regardless of
-    how it was shut down.
+    This is called every time the server starts up.
     """
-    pass
-
+    try:
+        from evennia import create_script
+        from evennia.utils import search
+        
+        # Check if weather script exists
+        weather_script = search.search_script("weather_controller")
+        if not weather_script:
+            logger.log_info("Creating weather system script...")
+            # Use string path instead of direct class reference
+            script = create_script(
+                "typeclasses.scripts.IslandWeatherScript",
+                key="weather_controller",
+                persistent=True,
+                autostart=True
+            )
+            if script:
+                logger.log_info("Weather system initialized successfully.")
+            else:
+                logger.log_err("Failed to create weather system script!")
+        else:
+            logger.log_info("Weather system script already exists.")
+            
+    except Exception as e:
+        logger.log_err(f"Error initializing weather system: {e}")
 
 def at_server_stop():
     """
-    This is called just before the server is shut down, regardless
-    of it is for a reload, reset or shutdown.
+    This is called just before the server is shut down fully.
     """
-    pass
-
+    try:
+        from evennia.utils import search
+        # Properly save weather data before shutdown
+        weather_script = search.search_script("weather_controller")
+        if weather_script:
+            weather_script[0].at_server_shutdown()
+    except Exception as e:
+        logger.log_err(f"Error during weather system shutdown: {e}")
 
 def at_server_reload_start():
     """
@@ -47,13 +55,11 @@ def at_server_reload_start():
     """
     pass
 
-
 def at_server_reload_stop():
     """
-    This is called only time the server stops before a reload.
+    This is called only time the server stops during a reload.
     """
     pass
-
 
 def at_server_cold_start():
     """
@@ -61,7 +67,6 @@ def at_server_cold_start():
     shutdown or a reset.
     """
     pass
-
 
 def at_server_cold_stop():
     """

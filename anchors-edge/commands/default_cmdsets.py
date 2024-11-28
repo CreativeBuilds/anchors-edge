@@ -20,6 +20,8 @@ from commands.command import (
     SayCommand, CmdInventory, GiveCommand,
     CmdEat, CmdDrink, CmdChug  # Add the new commands
 )
+from commands.build_world import CmdBuildWorld, CmdListObjects
+from commands.admin import CmdRespawn
 
 
 class CharacterCmdSet(default_cmds.CharacterCmdSet):
@@ -48,6 +50,9 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         self.add(CmdEat())      # Add eat command
         self.add(CmdDrink())    # Add drink command
         self.add(CmdChug())     # Add chug command
+        self.add(CmdBuildWorld())
+        self.add(CmdListObjects())
+        self.add(CmdRespawn())
         
 
 class AccountCmdSet(default_cmds.AccountCmdSet):

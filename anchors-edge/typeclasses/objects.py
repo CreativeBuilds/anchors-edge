@@ -215,3 +215,27 @@ class Object(ObjectParent, DefaultObject):
     """
 
     pass
+
+class Item(ObjectParent):
+    """
+    Base class for all items.
+    """
+    def at_object_creation(self):
+        """Called when object is first created."""
+        super().at_object_creation()
+        
+        # Initialize smell and taste descriptions
+        self.db.smell_desc = None
+        self.db.taste_desc = None
+
+    def get_smell_desc(self):
+        """Get the smell description of this item."""
+        if self.db.smell_desc:
+            return self.db.smell_desc
+        return f"You smell nothing special about {self.name}."
+
+    def get_taste_desc(self):
+        """Get the taste description of this item."""
+        if self.db.taste_desc:
+            return self.db.taste_desc
+        return f"You probably shouldn't try to taste {self.name}."

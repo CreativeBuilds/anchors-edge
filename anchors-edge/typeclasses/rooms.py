@@ -36,6 +36,23 @@ class Room(DefaultRoom):
         # Let the command/client handle text wrapping
         return appearance
 
+    def at_object_creation(self):
+        """Called when object is first created."""
+        super().at_object_creation()
+        
+        # Initialize smell description
+        self.db.smell_desc = None
+
+    def get_smell_desc(self):
+        """Get the smell description of this room."""
+        if self.db.smell_desc:
+            return self.db.smell_desc
+        return f"You smell nothing special about {self.name}."
+
+    def get_taste_desc(self):
+        """Prevent tasting rooms."""
+        return f"You can't taste {self.name}..."
+
 
 class WeatherAwareRoom(DefaultRoom):
     """
@@ -560,6 +577,22 @@ class TavernRoom(WeatherAwareRoom):
             "clear_night": "the night sky is visible through the windows",
             "cloudy_night": "the clouded night sky is barely visible through the windows"
         })
+        
+        # Add default smell descriptions for different times of day
+        self.db.smell_desc = {
+            "dawn": "The air carries the mingled scents of fresh bread, lingering hearth smoke, and the crisp morning air filtering through the windows.",
+            "day": "The warm scents of food and drink mingle with the woody aroma of the tavern's timber walls and furniture.",
+            "dusk": "Evening brings the rich aroma of cooking stews, fresh-baked bread, and the smoky scent from the fireplace.",
+            "night": "The night air is rich with the scents of hearth smoke, spilled ale, and warm wood."
+        }
+
+    def get_smell_desc(self):
+        """Get the current time-appropriate smell description."""
+        if hasattr(self, 'get_time_period'):
+            current_period = self.get_time_period()
+            if current_period in self.db.smell_desc:
+                return self.db.smell_desc[current_period]
+        return super().get_smell_desc()
 
     def at_object_receive(self, moved_obj, source_location, **kwargs):
         """Called when an object enters the room"""

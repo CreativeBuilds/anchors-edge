@@ -656,3 +656,70 @@ class CmdChug(default_cmds.MuxCommand):
                 self.caller.msg("Woah! That hits you like a truck!")
             elif total_alcohol > 5:
                 self.caller.msg("You feel quite a strong buzz from that!")
+
+class SmellCommand(default_cmds.MuxCommand):
+    """
+    Smell your surroundings or a specific object/person
+
+    Usage:
+      smell [<obj>]
+
+    If no object is specified, smells the current room.
+    """
+    key = "smell"
+    aliases = ["sniff"]
+    locks = "cmd:all()"
+
+    def func(self):
+        if not self.args:
+            # Smell the room
+            location = self.caller.location
+            if not location:
+                self.caller.msg("You have no location to smell!")
+                return
+            
+            smell_desc = location.get_smell_desc() if hasattr(location, 'get_smell_desc') else None
+            if smell_desc:
+                self.caller.msg(smell_desc)
+            else:
+                self.caller.msg(f"You smell nothing special about {location.name}.")
+            return
+
+        # Smell a specific object
+        obj = self.caller.search(self.args.strip())
+        if not obj:
+            return
+
+        smell_desc = obj.get_smell_desc() if hasattr(obj, 'get_smell_desc') else None
+        if smell_desc:
+            self.caller.msg(smell_desc)
+        else:
+            self.caller.msg(f"You smell nothing special about {obj.name}.")
+
+class TasteCommand(default_cmds.MuxCommand):
+    """
+    Taste an object
+
+    Usage:
+      taste <obj>
+
+    Attempts to taste the specified object.
+    """
+    key = "taste"
+    aliases = ["lick"]
+    locks = "cmd:all()"
+
+    def func(self):
+        if not self.args:
+            self.caller.msg("What do you want to taste?")
+            return
+
+        obj = self.caller.search(self.args.strip())
+        if not obj:
+            return
+
+        taste_desc = obj.get_taste_desc() if hasattr(obj, 'get_taste_desc') else None
+        if taste_desc:
+            self.caller.msg(taste_desc)
+        else:
+            self.caller.msg(f"You can't taste {obj.name}.")

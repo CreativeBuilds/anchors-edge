@@ -4,7 +4,7 @@ Command module for building the entire game world.
 
 from evennia import Command, create_object, create_script
 from evennia.utils import search, logger
-from typeclasses.rooms import IslandRoom, WeatherAwareRoom
+from typeclasses.rooms import IslandRoom, WeatherAwareRoom, TavernRoom
 from evennia.utils.evtable import EvTable
 from server.conf.settings import START_LOCATION, DEFAULT_HOME  # Direct import
 from evennia.objects.models import ObjectDB
@@ -56,21 +56,6 @@ class CmdBuildWorld(Command):
             
             self.msg("World building completed successfully!")
             
-            # Notify about restart
-            self.msg("|yRestarting server to apply spawn location changes...|n")
-            
-            # Schedule a server restart
-            from evennia.server.sessionhandler import SESSIONS
-            SESSIONS.announce_all("|rGame restarting in 3 seconds.|n")
-            from evennia.commands.default.system import CmdReload
-            from twisted.internet import reactor
-            
-            def do_restart():
-                SESSIONS.announce_all("|Reloading...|n")
-                # Use the built-in reload command
-                CmdReload().execute_cmd("reload")
-            
-            reactor.callLater(3, do_restart)
             
         except Exception as e:
             self.msg(f"Error building world: {e}")
@@ -106,25 +91,25 @@ class CmdBuildWorld(Command):
             weather_scripts = search.search_script("weather_controller")
             
             if not confirmed:
-                self.msg("\nThe following will be deleted:")
+                self.msg("|/The following will be deleted:")
                 if rooms:
-                    self.msg("\nRooms:")
+                    self.msg("|/Rooms:")
                     for room in rooms:
                         if room.dbref != "#2":
                             self.msg(f"- {room.name} ({room.dbref})")
                 
                 if weather_scripts:
-                    self.msg("\nScripts:")
+                    self.msg("|/Scripts:")
                     for script in weather_scripts:
                         self.msg(f"- {script.key}")
                 
                 # Ask for confirmation
                 self.caller.attributes.add("_buildworld_confirm", True)
-                self.msg("\nAre you sure? Type '@buildworld reset y' to confirm.")
+                self.msg("|/Are you sure? Type '@buildworld reset y' to confirm.")
                 return
             
             # Actually delete everything
-            self.msg("\nDeleting objects...")
+            self.msg("|/Deleting objects...")
             if rooms:
                 for room in rooms:
                     if room and room.dbref != "#2":
@@ -137,42 +122,151 @@ class CmdBuildWorld(Command):
                     self.msg(f"Deleting script: {script.key}")
                     script.delete()
             
-            self.msg("\nReset complete.")
+            self.msg("|/Reset complete.")
             
         except Exception as e:
             self.msg(f"|rError during reset: {e}|n")
             logger.log_trace()
 
     def _setup_weather_system(self):
-        """Ensure the weather system is set up."""
-        weather_script = search.search_script("weather_controller")
-        if not weather_script:
-            self.msg("Creating weather system...")
-            script = create_script(
-                "typeclasses.scripts.IslandWeatherScript",
-                key="weather_controller",
-                persistent=True,
-                autostart=True
-            )
-            if not script:
-                raise Exception("Failed to create weather system!")
-        else:
-            self.msg("Weather system already exists.")
+        """Ensure weather system is running."""
+        try:
+            # Check if weather script exists
+            weather_script = search.search_script("weather_controller")
+            
+            if not weather_script:
+                self.msg("Creating weather system...")
+                # Create the weather script
+                script = create_script(
+                    "typeclasses.scripts.IslandWeatherScript",
+                    key="weather_controller",
+                    persistent=True,
+                    interval=900,  # 15 minutes
+                    autostart=True  # Make sure it starts automatically
+                )
+                if script:
+                    script.start()  # Explicitly start the script
+                    self.msg("|gWeather system created and started successfully.|n")
+                    # Force first update
+                    script.update_weather()
+                else:
+                    self.msg("|rFailed to create weather system.|n")
+            else:
+                script = weather_script[0]
+                if not script.is_active:
+                    script.start()
+                    self.msg("|gRestarted existing weather system.|n")
+                else:
+                    self.msg("|gWeather system already running.|n")
+                
+                # Force an update
+                script.update_weather()
+            
+            # Verify the script is running
+            weather_script = search.search_script("weather_controller")
+            if weather_script and weather_script[0].is_active:
+                self.msg("Weather system verified as running.")
+                test_data = weather_script[0].get_weather_data("main_island")
+                if test_data:
+                    self.msg(f"Weather data available: {test_data}")
+                else:
+                    self.msg("Warning: No weather data available yet.")
+            else:
+                self.msg("|rWarning: Weather system not running properly.|n")
+            
+        except Exception as e:
+            self.msg(f"|rError setting up weather system: {e}|n")
+            logger.log_err(f"Failed to setup weather system: {e}")
 
     def _build_island(self):
-        """
-        Build the main island structure.
-        """
+        """Build the main island structure."""
         self.msg("Building main island...")
         
-        # Create the tavern first as it will be our default spawn
-        tavern = self._create_room(
-            "The Rusty Anchor Tavern",
-            "A cozy tavern frequented by sailors and locals alike. The warm glow of lanterns "
-            "illuminates rough wooden tables and a well-worn bar counter. The air is thick "
-            "with the smell of ale and sea salt. A heavy door leads outside to the harbor.",
-            {"sheltered": True, "indoor": True, "magical": False}
+        # Create the tavern first using TavernRoom typeclass
+        tavern = create_object(
+            TavernRoom,
+            key="The Rusty Anchor Tavern",
+            location=None,
+            attributes=(
+                ("desc", "A warm and inviting tavern that serves as a haven for sailors and locals alike. "
+                        "The main room stretches before you, with a well-worn bar running along the left wall. "
+                        "Three private booths line the back wall, offering more intimate spaces for quiet "
+                        "conversations. A large stone hearth dominates the western wall, while sturdy wooden "
+                        "stairs in the northwest corner lead up to the second floor. Polished wooden beams "
+                        "cross the ceiling, and iron sconces line the walls."),
+                ("weather_modifiers", {"sheltered": True, "indoor": True, "magical": False}),
+                ("base_desc", "A warm and inviting tavern that serves as a haven for sailors and locals alike. "
+                             "The main room stretches before you, with a well-worn bar running along the left wall. "
+                             "Three private booths line the back wall, offering more intimate spaces for quiet "
+                             "conversations. A large stone hearth dominates the western wall, while sturdy wooden "
+                             "stairs in the northwest corner lead up to the second floor. Polished wooden beams "
+                             "cross the ceiling, and iron sconces line the walls."),
+                ("weather_enabled", True),
+                ("is_tavern", True)
+            )
         )
+        
+        # Create the second floor landing first
+        second_floor = create_object(
+            TavernRoom,
+            key="Second Floor Landing",
+            location=None,
+            attributes=(
+                ("desc", "A well-maintained corridor stretches before you, lit by the natural light "
+                        "streaming through a tall window at the far end. A polished wooden table "
+                        "stands beneath the window, adorned with a clay pot containing fresh wildflowers. "
+                        "Four sturdy doors lead to the guest rooms, each marked with a brass number."),
+                ("weather_modifiers", {"sheltered": True, "indoor": True, "magical": False})
+            )
+        )
+        
+        # Create stairs exit in both directions
+        self._create_exit(tavern, second_floor, ["stairs", "up", "u"], ["down", "d"])
+        
+        # Create the guest rooms connected to the landing
+        for i in range(1, 5):
+            room_name = f"Guest Room {i}"
+            room_desc = (
+                f"A simple but comfortable guest room. A wooden-framed bed with clean linen "
+                f"sheets rests against one wall, while a sturdy desk and chair sit beneath a "
+                f"window offering views of the harbor. A copper bathing tub sits in one corner, "
+                f"ready for hot water to be brought up from the kitchens below."
+            )
+            guest_room = create_object(
+                TavernRoom,
+                key=room_name,
+                location=None,
+                attributes=(
+                    ("desc", room_desc),
+                    ("weather_modifiers", {"sheltered": True, "indoor": True, "magical": False})
+                )
+            )
+            # Create exit from landing to room
+            self._create_exit(second_floor, guest_room, [f"door {i}", f"room {i}"], ["out"])
+
+        # Create the booth rooms
+        booth_desc = (
+            "A cozy private booth tucked away from the main tavern floor. High-backed wooden "
+            "benches and a solid oak table provide an intimate setting for private conversations. "
+            "A small lantern on the table provides warm illumination."
+        )
+        
+        for i in range(1, 4):
+            booth = create_object(
+                TavernRoom,
+                key=f"Private Booth {i}",
+                location=None,
+                attributes=(
+                    ("desc", booth_desc),
+                    ("weather_modifiers", {"sheltered": True, "indoor": True, "magical": False})
+                )
+            )
+            # Create exit from tavern to booth
+            self._create_exit(tavern, booth, [f"booth {i}"], ["out"])
+
+        # Add furnishings to the tavern and second floor
+        self._add_tavern_furnishings(tavern)
+        self._add_second_floor_furnishings(second_floor)
         
         # Now that tavern exists, set it as spawn location
         self._set_spawn_location(tavern)
@@ -303,7 +397,7 @@ class CmdBuildWorld(Command):
                                if obj.has_account and obj.location == limbo]
             
             if players_in_limbo:
-                self.msg(f"\n|yMoving {len(players_in_limbo)} player(s) from Limbo to {tavern.name}...|n")
+                self.msg(f"|/|yMoving {len(players_in_limbo)} player(s) from Limbo to {tavern.name}...|n")
                 
                 # Move each player
                 for player in players_in_limbo:
@@ -320,19 +414,81 @@ class CmdBuildWorld(Command):
         except Exception as e:
             self.msg(f"|rError moving players from Limbo: {e}|n")
 
+    def _add_tavern_furnishings(self, tavern):
+        """Add furnishings to the tavern."""
+        furnishings = [
+            ("the bar", "A long, polished wooden bar runs along the left wall, its surface marked "
+                    "by countless mugs and tales shared over the years. Various bottles and "
+                    "kegs line the shelves behind it."),
+            ("the hearth", "A large stone hearth dominates the western wall. The well-maintained "
+                      "fireplace provides both warmth and a cozy atmosphere to the tavern."),
+            ("the stairs", "Sturdy wooden stairs in the northwest corner lead up to the guest "
+                      "rooms on the second floor."),
+            ("booth one", "A cozy private booth with high-backed wooden benches and a solid table, "
+                      "offering privacy for intimate conversations."),
+            ("booth two", "A secluded booth with comfortable seating and a well-worn table, "
+                      "perfect for private meetings."),
+            ("booth three", "A quiet booth tucked away in the corner, its table bearing the marks "
+                      "of countless meals and conversations."),
+            ("the sconces", "Iron sconces line the walls, their flames providing warm illumination "
+                       "throughout the tavern."),
+            ("the windows", "Tall windows with wooden shutters look out onto the harbor, letting "
+                       "in natural light during the day.")
+        ]
+        
+        for key, desc in furnishings:
+            obj = create_object(
+                "evennia.objects.objects.DefaultObject",
+                key=key,
+                location=tavern,
+                attributes=[
+                    ("desc", desc)
+                ]
+            )
+            # Make the objects un-gettable
+            obj.locks.add("get:false()")
+
+    def _add_second_floor_furnishings(self, second_floor):
+        """Add furnishings to the second floor landing."""
+        furnishings = [
+            ("the table", "A polished wooden table stands beneath the window, its surface gleaming in "
+                     "the natural light."),
+            ("the window", "A tall window looks out over the harbor, letting in plenty of natural light."),
+            ("some flowers", "Fresh wildflowers arranged in a clay pot, their vibrant colors brightening "
+                       "the space. You can smell their sweet fragrance from here."),
+            ("a clay pot", "A simple but elegant clay pot with delicate patterns etched around its rim.")
+        ]
+        
+        for key, desc in furnishings:
+            obj = create_object(
+                "evennia.objects.objects.DefaultObject",
+                key=key,
+                location=second_floor,
+                attributes=[
+                    ("desc", desc)
+                ]
+            )
+            # Make the objects un-gettable
+            obj.locks.add("get:false()")
+            
+            # Add special attributes for the flowers
+            if key == "some flowers":
+                obj.db.smell_desc = "The sweet fragrance of wildflowers fills your nose."
+                obj.cmdset.add("commands.default_cmdsets.FlowerCmdSet", persistent=True)
+
 class CmdListObjects(Command):
     """
-    List all game objects with filtering options.
+    List game objects and their details
     
     Usage:
-        @objects [/switch] [type]
-        
+        @objects[/switch]
+    
     Switches:
-        /rooms      - List only rooms
-        /exits      - List only exits
-        /chars      - List only characters
-        /scripts    - List only scripts
-        /weather    - Show weather info
+        rooms    - List all rooms
+        exits    - List all exits
+        chars    - List all characters
+        scripts  - List all scripts
+        weather  - Show weather info
         
     Examples:
         @objects
@@ -344,29 +500,35 @@ class CmdListObjects(Command):
     key = "@objects"
     locks = "cmd:perm(Admin)"
     help_category = "Building"
-    
+    switch_options = ["rooms", "exits", "chars", "scripts", "weather"]
     def func(self):
         """List objects based on switches."""
-        if "weather" in self.switches:
+        # Get the first switch if any and convert to lowercase
+        switch = None
+        if hasattr(self, 'switches') and self.switches:
+            switch = self.switches[0].lower()
+
+        if not switch:  # If no switches, show all objects
+            objects = search.search_object("*")
+            title = "All Objects"
+        elif switch == "weather":
             self._show_weather()
             return
-            
-        # Determine what to list
-        if "rooms" in self.switches:
+        elif switch == "rooms":
             objects = search.search_object("*", typeclass="typeclasses.rooms.WeatherAwareRoom")
             title = "Rooms"
-        elif "exits" in self.switches:
+        elif switch == "exits":
             objects = search.search_object("*", typeclass="typeclasses.exits.Exit")
             title = "Exits"
-        elif "chars" in self.switches:
+        elif switch == "chars":
             objects = search.search_object("*", typeclass="typeclasses.characters.Character")
             title = "Characters"
-        elif "scripts" in self.switches:
-            objects = search.search_script("weather_controller")
+        elif switch == "scripts":
+            objects = search.search_script("*")  # Changed to search all scripts
             title = "Scripts"
         else:
-            objects = search.search_object("*")  # Search all objects
-            title = "All Objects"
+            self.msg("Invalid switch. Use one of: rooms, exits, chars, scripts, weather")
+            return
 
         # Create table
         table = EvTable(

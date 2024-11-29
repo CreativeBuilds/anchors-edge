@@ -5,6 +5,7 @@ Commands describe the input the account can do to the game.
 
 """
 
+from evennia import Command
 from evennia.commands.command import Command as BaseCommand
 from evennia.commands.default.muxcommand import MuxCommand
 from typeclasses.mirror import Mirror
@@ -199,12 +200,12 @@ class SayCommand(default_cmds.MuxCommand):
                 {
                     "role": "user", 
                     "content": (
-                        f"Convert exactly: '{message}'\n"
-                        f"To drunk speech. {instructions}\n"
-                        "Rules:\n"
-                        "1. Keep exactly the same length and meaning\n"
-                        "2. Don't add any new words or context\n"
-                        "3. Only modify pronunciation and spelling\n"
+                        f"Convert exactly: '{message}'|/"
+                        f"To drunk speech. {instructions}|/"
+                        "Rules:|/"
+                        "1. Keep exactly the same length and meaning|/"
+                        "2. Don't add any new words or context|/"
+                        "3. Only modify pronunciation and spelling|/"
                         "4. Return only the modified text"
                     )
                 }
@@ -352,7 +353,7 @@ class CmdInventory(default_cmds.CmdInventory):
                         "",
                         item.db.desc if item.db.desc else ""
                     )
-            string = f"|wYou are carrying:|n\n{table}"
+            string = f"|wYou are carrying:|n|/{table}"
         
         self.caller.msg(string)
         
@@ -360,8 +361,8 @@ class CmdInventory(default_cmds.CmdInventory):
         currency = self.caller.get_currency()
         if currency:
             self.caller.msg(
-                f"\n|Y|hPurse|h|n\n"
-                f"-----------------------------------\n"
+                f"|/|Y|hPurse|h|n|/"
+                f"-----------------------------------|/"
                 f"|Y|hG|h|n {currency['gold']}    "
                 f"|W|hS|h|n {currency['silver']}    "
                 f"|r|hC|h|n {currency['copper']}    "
@@ -723,3 +724,53 @@ class TasteCommand(default_cmds.MuxCommand):
             self.caller.msg(taste_desc)
         else:
             self.caller.msg(f"You can't taste {obj.name}.")
+
+class CmdIdentify(Command):
+    """
+    Scan the room to identify objects.
+    
+    Usage:
+      identify
+      id
+    
+    This command will list all visible objects in your current location.
+    """
+    key = "identify"
+    aliases = ["id"]
+    locks = "cmd:all()"
+    
+    def func(self):
+        """Execute the identify command."""
+        location = self.caller.location
+        if not location:
+            self.caller.msg("You have no location to scan!")
+            return
+            
+        # Get all objects in the room
+        contents = [obj for obj in location.contents if obj != self.caller]
+        if not contents:
+            self.caller.msg("You don't see any distinct objects here.")
+            return
+            
+        # Group objects by their key
+        objects_by_type = {}
+        for obj in contents:
+            if not obj.destination:  # Skip exits
+                key = obj.key
+                if key in objects_by_type:
+                    objects_by_type[key].append(obj)
+                else:
+                    objects_by_type[key] = [obj]
+        
+        if not objects_by_type:
+            self.caller.msg("You don't see any distinct objects here.")
+            return
+            
+        # Format the output
+        self.caller.msg("You scan the room and identify the following:")
+        for key, objs in objects_by_type.items():
+            count = len(objs)
+            if count > 1:
+                self.caller.msg(f"- {key} (x{count})")
+            else:
+                self.caller.msg(f"- {key}")

@@ -18,10 +18,12 @@ from evennia import default_cmds
 from commands.command import (
     CmdDescribeSelf, BriefCommand, CmdRegenRoom, 
     SayCommand, CmdInventory, GiveCommand,
-    CmdEat, CmdDrink, CmdChug  # Add the new commands
+    CmdEat, CmdDrink, CmdChug, CmdIdentify  # Add CmdIdentify
 )
 from commands.build_world import CmdBuildWorld, CmdListObjects
 from commands.admin import CmdRespawn
+from evennia import CmdSet
+from evennia import Command
 
 
 class CharacterCmdSet(default_cmds.CharacterCmdSet):
@@ -53,6 +55,7 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         self.add(CmdBuildWorld())
         self.add(CmdListObjects())
         self.add(CmdRespawn())
+        self.add(CmdIdentify())  # Add the new identify command
         
 
 class AccountCmdSet(default_cmds.AccountCmdSet):
@@ -113,3 +116,39 @@ class SessionCmdSet(default_cmds.SessionCmdSet):
         #
         # any commands you add below will overload the default ones.
         #
+
+
+class CmdSmell(Command):
+    """
+    Smell the flowers
+    
+    Usage:
+      smell flowers
+    """
+    key = "smell"
+    aliases = ["sniff"]
+    
+    def func(self):
+        """Execute command."""
+        if not self.args:
+            self.caller.msg("What do you want to smell?")
+            return
+            
+        target = self.caller.search(self.args.strip())
+        if not target:
+            return
+            
+        if hasattr(target.db, "smell_desc"):
+            self.caller.msg(target.db.smell_desc)
+        else:
+            self.caller.msg(f"You smell {target.name}, but notice nothing special.")
+
+class FlowerCmdSet(CmdSet):
+    """
+    Cmdset for flower objects.
+    """
+    key = "flower_cmdset"
+    
+    def at_cmdset_creation(self):
+        """Called when cmdset is first created."""
+        self.add(CmdSmell())

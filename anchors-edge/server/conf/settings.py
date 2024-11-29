@@ -41,9 +41,6 @@ BASE_ROOM_TYPECLASS = "typeclasses.rooms.WeatherAwareRoom"
 # (limbo #2 is created by default) or None for allowing character creation
 # anywhere. Can be overridden by buildworld command.
 DEFAULT_HOME = "#3"
-START_LOCATION = "#3"
-
-
 # Remove or comment out the CLIENT_DEFAULT_WIDTH setting since we're not using it
 # CLIENT_DEFAULT_WIDTH = 80
 

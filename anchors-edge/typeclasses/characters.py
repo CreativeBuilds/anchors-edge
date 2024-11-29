@@ -37,13 +37,13 @@ def get_intoxication_description(intoxication):
     if not intoxication or intoxication <= INTOX_SOBER:
         return ""
     elif intoxication <= INTOX_TIPSY:
-        return "\n|yThey appear slightly tipsy.|n"
+        return "|/|yThey appear slightly tipsy.|n"
     elif intoxication <= INTOX_DRUNK:
-        return "\n|yThey are noticeably drunk.|n"
+        return "|/|yThey are noticeably drunk.|n"
     elif intoxication <= INTOX_VERY_DRUNK:
-        return "\n|rThey are very drunk and unsteady on their feet.|n"
+        return "|/|rThey are very drunk and unsteady on their feet.|n"
     else:
-        return "\n|RThey are completely intoxicated and can barely stand.|n"
+        return "|/|RThey are completely intoxicated and can barely stand.|n"
 
 class Character(ObjectParent, DefaultCharacter):
     """Base character class"""
@@ -206,7 +206,7 @@ class Character(ObjectParent, DefaultCharacter):
             return ""
         
         # Get the base description
-        string = f"{self.key}(#{self.id})\n"
+        string = f"{self.key}(#{self.id})|/"
         if self.db.desc:
             string += self.db.desc
         
@@ -253,19 +253,19 @@ class Character(ObjectParent, DefaultCharacter):
                         {
                             "role": "user",
                             "content": (
-                                f"Character description: {string}\n\n"
-                                f"Current conditions:\n"
-                                f"Time: {time_period}\n"
-                                f"Weather: {weather_str}\n"
-                                f"Temperature: {weather_data.get('apparent_temperature', 'unknown')}°F\n"
-                                f"Wind Speed: {weather_data.get('wind_speed_10m', 'unknown')} mph\n\n"
+                                f"Character description: {string}|/|/"
+                                f"Current conditions:|/"
+                                f"Time: {time_period}|/"
+                                f"Weather: {weather_str}|/"
+                                f"Temperature: {weather_data.get('apparent_temperature', 'unknown')}°F|/"
+                                f"Wind Speed: {weather_data.get('wind_speed_10m', 'unknown')} mph|/|/"
                                 "Add a single, poetic sentence describing how these conditions affect "
                                 "the character's appearance. Focus on lighting, shadows, and atmospheric effects. "
-                                "Consider how the weather and time of day interact with their features.\n\n"
-                                "Examples based on conditions:\n"
-                                "- Rain: |cRaindrops glisten in her hair like tiny crystals.|n\n"
-                                "- Night + Clear: |wMoonlight catches her elven features, giving them an ethereal glow.|n\n"
-                                "- Dawn + Windy: |yThe morning breeze gently lifts her hair as dawn's first light touches her face.|n\n"
+                                "Consider how the weather and time of day interact with their features.|/|/"
+                                "Examples based on conditions:|/"
+                                "- Rain: |cRaindrops glisten in her hair like tiny crystals.|n|/"
+                                "- Night + Clear: |wMoonlight catches her elven features, giving them an ethereal glow.|n|/"
+                                "- Dawn + Windy: |yThe morning breeze gently lifts her hair as dawn's first light touches her face.|n|/"
                                 "Keep it short, atmospheric, and focused on the current conditions."
                             )
                         }
@@ -278,7 +278,7 @@ class Character(ObjectParent, DefaultCharacter):
                     response = requests.post(url, headers=headers, json=data)
                     if response.status_code == 200:
                         ai_description = response.json()['choices'][0]['message']['content'].strip()
-                        string += f"\n{ai_description}"
+                        string += f"|/{ai_description}"
                 except Exception as e:
                     print(f"Error getting dynamic appearance description: {e}")
         
@@ -381,7 +381,7 @@ class NPC(Character):
             player_memory["recent_interactions"].pop(0)
             
         # Log the entire conversation history for this player
-        print(f"\nConversation history between {self.name} and {speaker.key}:")
+        print(f"|/Conversation history between {self.name} and {speaker.key}:")
         print("-" * 50)
         for interaction in player_memory["recent_interactions"]:
             print(f"[{interaction['timestamp'].strftime('%Y-%m-%d %H:%M:%S')}]")
@@ -519,32 +519,32 @@ class NPC(Character):
 
         # Build conversation context
         context = (
-            f"Recent conversation between {source.name} and {self.name}:\n\n"
+            f"Recent conversation between {source.name} and {self.name}:|/|/"
         )
         
         for interaction in recent_interactions:
-            context += f"{source.name}: {interaction['message']}\n"
-            context += f"{self.name}: {interaction['response']}\n"
+            context += f"{source.name}: {interaction['message']}|/"
+            context += f"{self.name}: {interaction['response']}|/"
 
-        context += f"\n{source.name} just gave {amount} {currency_type} to {self.name}.\n"
+        context += f"|/{source.name} just gave {amount} {currency_type} to {self.name}.|/"
 
         # Prepare the prompt
         prompt = (
-            f"{context}\n\n"
-            "Based on this conversation and payment, what is the customer trying to purchase?\n"
-            "Respond using ONLY these formats for items:\n"
-            "<drink name='ale' cp='5' intoxication='3'/>\n"
-            "<drink name='beer' cp='4' intoxication='2'/>\n"
-            "<drink name='wine' cp='10' intoxication='5'/>\n"
-            "<drink name='mead' cp='15' intoxication='7'/>\n"
-            "<food name='bread' cp='1'/>\n"
-            "<food name='meat' cp='5'/>\n"
-            "<food name='stew' cp='8'/>\n"
-            "\nIf multiple items could match, choose the most likely based on:\n"
-            "1. Recent conversation context\n"
-            "2. Amount of money given\n"
-            "3. Common tavern orders\n"
-            "\nRespond with ONLY the item tag, nothing else."
+            f"{context}|/|/"
+            "Based on this conversation and payment, what is the customer trying to purchase?|/"
+            "Respond using ONLY these formats for items:|/"
+            "<drink name='ale' cp='5' intoxication='3'/>|/"
+            "<drink name='beer' cp='4' intoxication='2'/>|/"
+            "<drink name='wine' cp='10' intoxication='5'/>|/"
+            "<drink name='mead' cp='15' intoxication='7'/>|/"
+            "<food name='bread' cp='1'/>|/"
+            "<food name='meat' cp='5'/>|/"
+            "<food name='stew' cp='8'/>|/"
+            "|/If multiple items could match, choose the most likely based on:|/"
+            "1. Recent conversation context|/"
+            "2. Amount of money given|/"
+            "3. Common tavern orders|/"
+            "|/Respond with ONLY the item tag, nothing else."
         )
 
         url = "https://openrouter.ai/api/v1/chat/completions"
@@ -759,43 +759,43 @@ class OpenrouterCharacter(NPC):
         
         # Build conversation context
         context = (
-            f"You are roleplaying as {self.key}, {self.db.personality}\n"
-            f"Conversation style: {self.db.conversation_style}\n"
-            f"Knowledge: {self.db.knowledge}\n\n"
-            f"Time of day: {time_period}\n"
-            f"The room's current state: {room_desc}\n\n"
-            "People currently in the room:\n"
+            f"You are roleplaying as {self.key}, {self.db.personality}|/"
+            f"Conversation style: {self.db.conversation_style}|/"
+            f"Knowledge: {self.db.knowledge}|/|/"
+            f"Time of day: {time_period}|/"
+            f"The room's current state: {room_desc}|/|/"
+            "People currently in the room:|/"
         )
         
         # Add character descriptions
         if character_info:
             for info in character_info:
-                context += f"- {info}\n"
+                context += f"- {info}|/"
         else:
-            context += "- No one else is here\n"
+            context += "- No one else is here|/"
         
-        context += "\nExample responses for specific topics:\n"
+        context += "|/Example responses for specific topics:|/"
         
         # Add example responses
         for triggers, responses in self.db.responses.items():
             trigger_words = [t.strip() for t in triggers.split(',')]
             example_responses = list(responses)  # Convert _SaverList to list
-            context += f"When someone mentions {' or '.join(trigger_words)}, you might say:\n"
+            context += f"When someone mentions {' or '.join(trigger_words)}, you might say:|/"
             for response in example_responses:
-                context += f"- {response}\n"
-            context += "\n"
+                context += f"- {response}|/"
+            context += "|/"
             
-        context += f"\nIn a conversation with {speaker.key}:\n"
+        context += f"|/In a conversation with {speaker.key}:|/"
         
         # Add recent conversation history
         for interaction in conversation_history[-3:]:
             context += (
-                f"{speaker.key}: {interaction['message']}\n"
-                f"{self.key}: {interaction['response']}\n"
+                f"{speaker.key}: {interaction['message']}|/"
+                f"{self.key}: {interaction['response']}|/"
             )
             
         # Add current message
-        context += f"\n{speaker.key}: {message}\n{self.key}:"
+        context += f"|/{speaker.key}: {message}|/{self.key}:"
         
         # Prepare API request
         url = "https://openrouter.ai/api/v1/chat/completions"
@@ -812,12 +812,12 @@ class OpenrouterCharacter(NPC):
                 {
                     "role": "user",
                     "content": (
-                        f"{context}\n\n"
+                        f"{context}|/|/"
                         f"{self.append_to_context()}"
                         "Respond in character with a single short response (max 100 tokens). "
                         "Include basic emotes or actions that fit the current room's state. "
                         "Stay consistent with the character's personality and knowledge. "
-                        "\n\nMake your responses interesting and engaging but short and concise."
+                        "|/|/Make your responses interesting and engaging but short and concise."
                         f"{self.append_to_prompt()}"
                     )
                 }
@@ -924,7 +924,7 @@ class OpenrouterCharacter(NPC):
         # Combine descriptions
         final_desc = self.db.base_desc
         if atmospheric_desc:
-            final_desc += "\n\n" + " ".join(atmospheric_desc)
+            final_desc += "|/|/" + " ".join(atmospheric_desc)
         
         self.db.desc = final_desc
 

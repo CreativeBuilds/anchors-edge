@@ -6,11 +6,16 @@ evennia stop
 echo "Waiting for processes to stop..."
 sleep 2
 
-echo "Removing database..."
-rm -f server/evennia.db3
+echo "Running world cleanup..."
+# Create a temporary Python script to run the cleanup
+cat << EOF > cleanup_temp.py
+from evennia.utils import create_script
+create_script('typeclasses.scripts.cleanup.WorldCleanupScript').clean_world()
+EOF
 
-echo "Restoring from backup..."
-cp server/backup.evennia.db3 server/evennia.db3
+# Run the cleanup script
+evennia shell < cleanup_temp.py
+rm cleanup_temp.py
 
 echo "Updating settings..."
 # Use sed to update the settings file

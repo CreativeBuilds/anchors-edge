@@ -148,7 +148,7 @@
 @tel tavern
 
 # Create harbor district
-@dig Harbor District;harbor;tut#10 : typeclasses.rooms.island.IslandRoom
+@dig Harbor District;harbor;tut#10 : typeclasses.rooms.harbor.HarborRoom
 
 # Create tavern exit to harbor
 @open exit;out;sw;southwest = harbor
@@ -160,7 +160,7 @@
 @open northeast;ne = tavern
 
 # Set harbor description
-@desc here = A bustling harbor district with ships coming and going. The salty breeze carries the scent of the sea. The Salty Maiden provides shelter to the northeast, while the Market Square lies to the north.
+@desc here = The harbor stretches before you, a bustling maritime hub where ships of all sizes come and go. Wooden docks extend into the water, their weathered planks bearing testament to countless footsteps and cargo loads. The salty breeze carries the mingled scents of the sea, tar, and fresh fish. The Salty Maiden tavern provides shelter to the northeast, while the Market Square lies to the north.
 
 # Create market square
 @dig Market Square;market;tut#11 : typeclasses.rooms.island.IslandRoom
@@ -354,3 +354,13 @@
 # Create exit back to tavern
 #@tel kitchen
 #@open out = tavern
+
+## Create tavern keeper
+#@create/drop Marta;keeper : typeclasses.characters.npc.TavernKeeper
+#@desc keeper = A middle-aged woman with graying hair tied back in a practical bun. Her capable hands and alert eyes speak of years of experience running the tavern.
+#@lock keeper = get:false()
+
+## Create server
+#@create/drop Tom;server : typeclasses.characters.npc.TavernServer
+#@desc server = A young man moving efficiently between tables, carrying drinks and meals with practiced ease.
+#@lock server = get:false()

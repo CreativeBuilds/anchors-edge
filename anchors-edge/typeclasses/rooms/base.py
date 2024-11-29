@@ -61,16 +61,19 @@ class WeatherAwareRoom(DefaultRoom):
         if looker.locks.check_lockstring(looker, "perm(Admin) or perm(Builder)"):
             weather_data = self.get_weather_data()
             debug_info = ["|/|r[Weather Debug Info]|n"]
-            if weather_data:
-                debug_info.extend([
-                    f"Temperature: {weather_data.get('apparent_temperature')}°F",
-                    f"Wind Speed: {weather_data.get('wind_speed_10m')} mph",
-                    f"Wind Direction: {weather_data.get('wind_direction_10m')}°",
-                    f"Cloud Cover: {weather_data.get('cloud_cover')}%",
-                    f"Weather Code: {weather_data.get('weathercode')}"
-                ])
+            if settings.SHOW_WEATHER_DEBUG:
+                if weather_data:
+                    debug_info.extend([
+                        f"Temperature: {weather_data.get('apparent_temperature')}°F",
+                        f"Wind Speed: {weather_data.get('wind_speed_10m')} mph", 
+                        f"Wind Direction: {weather_data.get('wind_direction_10m')}°",
+                        f"Cloud Cover: {weather_data.get('cloud_cover')}%",
+                        f"Weather Code: {weather_data.get('weathercode')}"
+                    ])
+                else:
+                    debug_info.append("No weather data available")
             else:
-                debug_info.append("No weather data available")
+                debug_info.append("Weather debug info disabled")
                 
             debug_info.extend([
                 f"Room Modifiers: {self.db.weather_modifiers}",

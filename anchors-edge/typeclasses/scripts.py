@@ -59,13 +59,29 @@ class IslandWeatherScript(DefaultScript):
         current_time = datetime.now(austin_tz)
         current_hour = current_time.hour
         
-        for period, (start, end) in self.db.time_periods.items():
+        # Define time periods with more natural transitions
+        time_periods = {
+            "dawn": (5, 7),          # 5:00 AM - 7:00 AM
+            "morning": (7, 11),      # 7:00 AM - 11:00 AM
+            "noon": (11, 14),        # 11:00 AM - 2:00 PM
+            "afternoon": (14, 17),   # 2:00 PM - 5:00 PM
+            "early_evening": (17, 19),# 5:00 PM - 7:00 PM
+            "evening": (19, 23),     # 7:00 PM - 11:00 PM
+            "late_night": (23, 2),   # 11:00 PM - 2:00 AM
+            "witching_hour": (2, 5)  # 2:00 AM - 5:00 AM
+        }
+        
+        # Handle periods that cross midnight
+        if current_hour >= 23 or current_hour < 2:
+            return "late_night"
+        elif current_hour >= 2 and current_hour < 5:
+            return "witching_hour"
+        
+        # Handle other periods
+        for period, (start, end) in time_periods.items():
             if start <= current_hour < end:
                 return period
-            # Special handling for evening which crosses midnight
-            elif period == "evening" and (current_hour >= start or current_hour < end):
-                return period
-        
+            
         return "day"  # Default fallback
         
     def at_repeat(self):

@@ -8,23 +8,10 @@ and merged onto entities at runtime.
 To create new commands to populate the cmdset, see
 `commands/command.py`.
 
-This module wraps the default command sets of Evennia; overloads them
-to add/remove commands from the default lineup. You can create your
-own cmdsets by inheriting from them or directly from `evennia.CmdSet`.
-
 """
 
 from evennia import default_cmds
-from commands.command import (
-    CmdDescribeSelf, BriefCommand, CmdRegenRoom, 
-    SayCommand, CmdInventory, GiveCommand,
-    CmdEat, CmdDrink, CmdChug, CmdIdentify  # Add CmdIdentify
-)
-from commands.build_world import CmdBuildWorld, CmdListObjects
-from commands.admin import CmdRespawn
-from evennia import CmdSet
-from evennia import Command
-
+from commands.build_world import CmdBuildWorld
 
 class CharacterCmdSet(default_cmds.CharacterCmdSet):
     """
@@ -43,20 +30,8 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         #
         # any commands you add below will overload the default ones.
         #
-        self.add(CmdDescribeSelf())
-        self.add(BriefCommand())
-        self.add(CmdRegenRoom())
-        self.add(SayCommand())
-        self.add(CmdInventory())
-        self.add(GiveCommand())
-        self.add(CmdEat())      # Add eat command
-        self.add(CmdDrink())    # Add drink command
-        self.add(CmdChug())     # Add chug command
         self.add(CmdBuildWorld())
-        self.add(CmdListObjects())
-        self.add(CmdRespawn())
-        self.add(CmdIdentify())  # Add the new identify command
-        
+
 
 class AccountCmdSet(default_cmds.AccountCmdSet):
     """
@@ -116,39 +91,3 @@ class SessionCmdSet(default_cmds.SessionCmdSet):
         #
         # any commands you add below will overload the default ones.
         #
-
-
-class CmdSmell(Command):
-    """
-    Smell the flowers
-    
-    Usage:
-      smell flowers
-    """
-    key = "smell"
-    aliases = ["sniff"]
-    
-    def func(self):
-        """Execute command."""
-        if not self.args:
-            self.caller.msg("What do you want to smell?")
-            return
-            
-        target = self.caller.search(self.args.strip())
-        if not target:
-            return
-            
-        if hasattr(target.db, "smell_desc"):
-            self.caller.msg(target.db.smell_desc)
-        else:
-            self.caller.msg(f"You smell {target.name}, but notice nothing special.")
-
-class FlowerCmdSet(CmdSet):
-    """
-    Cmdset for flower objects.
-    """
-    key = "flower_cmdset"
-    
-    def at_cmdset_creation(self):
-        """Called when cmdset is first created."""
-        self.add(CmdSmell())

@@ -45,6 +45,16 @@ DEFAULT_HOME = "#2"
 # CLIENT_DEFAULT_WIDTH = 80
 
 ######################################################################
+# Weather System Settings
+######################################################################
+
+# Whether to show weather debug info in room descriptions
+SHOW_WEATHER_DEBUG = True  # Set to False in production
+
+# Maximum width for wrapped text in room descriptions
+ROOM_DESCRIPTION_WIDTH = 78  # Standard terminal width is 80, leaving room for margins
+
+######################################################################
 # Settings given in secret_settings.py override those in this file.
 ######################################################################
 try:
@@ -63,6 +73,3 @@ GLOBAL_SCRIPTS = {
         'start_delay': False  # Start immediately
     }
 }
-
-# Maximum width for wrapped text in room descriptions
-ROOM_DESCRIPTION_WIDTH = 78  # Standard terminal width is 80, leaving room for margins

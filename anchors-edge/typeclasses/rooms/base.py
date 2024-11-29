@@ -135,7 +135,7 @@ class WeatherAwareRoom(DefaultRoom):
         width = getattr(settings, 'ROOM_DESCRIPTION_WIDTH', 78)
         return fill(text, width=width, expand_tabs=True, replace_whitespace=False)
     
-    def return_appearance(self, looker, **kwargs):
+    def return_appearance(self, looker):
         """
         This formats a description. It is the hook a 'look' command
         should call.
@@ -143,13 +143,22 @@ class WeatherAwareRoom(DefaultRoom):
         if not looker:
             return ""
             
-        # Update dynamic description if available
-        if hasattr(self, '_update_dynamic_description'):
-            self._update_dynamic_description()
+        # Get the base appearance
+        appearance = super().return_appearance(looker)
+        
+        # Only add weather debug info if enabled and viewer is an admin
+        if (getattr(settings, 'SHOW_WEATHER_DEBUG', False) and 
+            looker.permissions.check("Admin")):
+            weather_data = self.get_weather_data()
+            debug_info = "\n\n[Weather Debug Info]"
+            if weather_data:
+                debug_info += f"\nTemperature: {weather_data.get('apparent_temperature')}°F"
+                debug_info += f"\nWind Speed: {weather_data.get('wind_speed_10m')} mph"
+                debug_info += f"\nWind Direction: {weather_data.get('wind_direction_10m')}°"
+                debug_info += f"\nCloud Cover: {weather_data.get('cloud_cover')}%"
+                debug_info += f"\nWeather Code: {weather_data.get('weathercode')}"
+            debug_info += f"\nRoom Modifiers: {self.db.weather_modifiers}"
+            debug_info += f"\nWeather Enabled: {self.db.weather_enabled}"
+            appearance += debug_info
             
-        # Get the description
-        desc = self.db.desc
-        if desc:
-            desc = self.wrap_text(desc)
-            
-        return super().return_appearance(looker, desc=desc, **kwargs)
+        return appearance

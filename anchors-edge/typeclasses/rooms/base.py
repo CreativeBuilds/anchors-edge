@@ -99,8 +99,9 @@ class WeatherAwareRoom(DefaultRoom):
         if not self.db.weather_enabled:
             return None
             
-        # Get the weather script
-        weather_script = self.search_script('weather_controller')
+        # Get the weather script using the correct search method
+        from evennia.utils.search import search_script
+        weather_script = search_script('weather_controller')
         if not weather_script:
             return None
             

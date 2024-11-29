@@ -340,14 +340,17 @@
 @tel tavern
 
 # Create kitchen
-@dig Kitchen;kitchen : typeclasses.rooms.tavern.TavernKitchen
+#@dig Kitchen;kitchen : typeclasses.rooms.tavern.TavernKitchen
 
-# Create staff-only exit to kitchen
-@open/typeclass kitchen door;door;k = kitchen : typeclasses.exits.StaffExit
+# Create staff-only exit to kitchen  
+#@open kitchen door;door;k = kitchen
+
+# Change exit typeclass
+#@typeclass kitchen door = typeclasses.exits.StaffExit
 
 # Set kitchen exit description
-@desc kitchen door = A sturdy wooden door leads to the kitchen.
+#@desc kitchen door = A sturdy wooden door leads to the kitchen.
 
 # Create exit back to tavern
-@tel kitchen
-@open out = tavern
+#@tel kitchen
+#@open out = tavern

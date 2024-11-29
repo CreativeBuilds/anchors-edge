@@ -4,9 +4,10 @@ Command module for building the entire game world.
 
 from evennia import Command, create_object, create_script
 from evennia.utils import search, logger
-from typeclasses.rooms import IslandRoom, WeatherAwareRoom, TavernRoom
+from typeclasses.rooms.tavern import MainTavernRoom, TavernHallway, SouthHarborRoom, NorthViewRoom, BoothRoom
+from typeclasses.rooms.island import IslandRoom
 from evennia.utils.evtable import EvTable
-from server.conf.settings import START_LOCATION, DEFAULT_HOME  # Direct import
+from server.conf.settings import START_LOCATION, DEFAULT_HOME
 from evennia.objects.models import ObjectDB
 
 
@@ -182,83 +183,72 @@ class CmdBuildWorld(Command):
         """Build the main island structure."""
         self.msg("Building main island...")
         
-        # Create the tavern first using TavernRoom typeclass
+        # Create the main tavern room using MainTavernRoom typeclass
         tavern = create_object(
-            TavernRoom,
-            key="The Rusty Anchor Tavern",
+            MainTavernRoom,  # Use specialized main tavern room
+            key="The Salty Maiden",
             location=None,
             attributes=(
-                ("desc", "A warm and inviting tavern that serves as a haven for sailors and locals alike. "
-                        "The main room stretches before you, with a well-worn bar running along the left wall. "
-                        "Three private booths line the back wall, offering more intimate spaces for quiet "
-                        "conversations. A large stone hearth dominates the western wall, while sturdy wooden "
-                        "stairs in the northwest corner lead up to the second floor. Polished wooden beams "
-                        "cross the ceiling, and iron sconces line the walls."),
                 ("weather_modifiers", {"sheltered": True, "indoor": True, "magical": False}),
-                ("base_desc", "A warm and inviting tavern that serves as a haven for sailors and locals alike. "
-                             "The main room stretches before you, with a well-worn bar running along the left wall. "
-                             "Three private booths line the back wall, offering more intimate spaces for quiet "
-                             "conversations. A large stone hearth dominates the western wall, while sturdy wooden "
-                             "stairs in the northwest corner lead up to the second floor. Polished wooden beams "
-                             "cross the ceiling, and iron sconces line the walls."),
                 ("weather_enabled", True),
                 ("is_tavern", True)
             )
         )
         
-        # Create the second floor landing first
+        # Create the second floor landing using TavernHallway
         second_floor = create_object(
-            TavernRoom,
+            TavernHallway,  # Use specialized hallway room
             key="Second Floor Landing",
             location=None,
             attributes=(
-                ("desc", "A well-maintained corridor stretches before you, lit by the natural light "
-                        "streaming through a tall window at the far end. A polished wooden table "
-                        "stands beneath the window, adorned with a clay pot containing fresh wildflowers. "
-                        "Four sturdy doors lead to the guest rooms, each marked with a brass number."),
-                ("weather_modifiers", {"sheltered": True, "indoor": True, "magical": False})
+                ("weather_modifiers", {"sheltered": True, "indoor": True, "magical": False}),
+                ("weather_enabled", True),
+                ("is_tavern", True)
             )
         )
         
         # Create stairs exit in both directions
         self._create_exit(tavern, second_floor, ["stairs", "up", "u"], ["down", "d"])
         
-        # Create the guest rooms connected to the landing
+        # Create the guest rooms
         for i in range(1, 5):
             room_name = f"Guest Room {i}"
-            room_desc = (
-                f"A simple but comfortable guest room. A wooden-framed bed with clean linen "
-                f"sheets rests against one wall, while a sturdy desk and chair sit beneath a "
-                f"window offering views of the harbor. A copper bathing tub sits in one corner, "
-                f"ready for hot water to be brought up from the kitchens below."
-            )
-            guest_room = create_object(
-                TavernRoom,
-                key=room_name,
-                location=None,
-                attributes=(
-                    ("desc", room_desc),
-                    ("weather_modifiers", {"sheltered": True, "indoor": True, "magical": False})
+            # Different room types based on which side of the hallway
+            if i <= 2:  # Rooms 1 and 2 face harbor
+                guest_room = create_object(
+                    SouthHarborRoom,  # Use specialized harbor-facing room
+                    key=room_name,
+                    location=None,
+                    attributes=(
+                        ("weather_modifiers", {"sheltered": True, "indoor": True, "magical": False}),
+                        ("weather_enabled", True),
+                        ("is_tavern", True)
+                    )
                 )
-            )
+            else:  # Rooms 3 and 4 face city
+                guest_room = create_object(
+                    NorthViewRoom,  # Use specialized city-facing room
+                    key=room_name,
+                    location=None,
+                    attributes=(
+                        ("weather_modifiers", {"sheltered": True, "indoor": True, "magical": False}),
+                        ("weather_enabled", True),
+                        ("is_tavern", True)
+                    )
+                )
             # Create exit from landing to room
             self._create_exit(second_floor, guest_room, [f"door {i}", f"room {i}"], ["out"])
 
         # Create the booth rooms
-        booth_desc = (
-            "A cozy private booth tucked away from the main tavern floor. High-backed wooden "
-            "benches and a solid oak table provide an intimate setting for private conversations. "
-            "A small lantern on the table provides warm illumination."
-        )
-        
         for i in range(1, 4):
             booth = create_object(
-                TavernRoom,
+                BoothRoom,  # Use specialized booth room
                 key=f"Private Booth {i}",
                 location=None,
                 attributes=(
-                    ("desc", booth_desc),
-                    ("weather_modifiers", {"sheltered": True, "indoor": True, "magical": False})
+                    ("weather_modifiers", {"sheltered": True, "indoor": True, "magical": False}),
+                    ("weather_enabled", True),
+                    ("is_tavern", True)
                 )
             )
             # Create exit from tavern to booth
@@ -278,7 +268,7 @@ class CmdBuildWorld(Command):
             location=None,
             attributes=(
                 ("desc", "A bustling harbor district with ships coming and going. "
-                        "The salty breeze carries the scent of the sea. The Rusty Anchor "
+                        "The salty breeze carries the scent of the sea. The Salty Maiden "
                         "Tavern provides shelter to the west, while the Market Square "
                         "lies to the north."),
                 ("weather_modifiers", {"sheltered": False, "indoor": False, "magical": False}),
@@ -452,11 +442,14 @@ class CmdBuildWorld(Command):
         """Add furnishings to the second floor landing."""
         furnishings = [
             ("the table", "A polished wooden table stands beneath the window, its surface gleaming in "
-                     "the natural light."),
-            ("the window", "A tall window looks out over the harbor, letting in plenty of natural light."),
+                     "the light."),
+            ("the window", "A tall window looks out over the harbor, letting in natural light during "
+                     "the day."),
             ("some flowers", "Fresh wildflowers arranged in a clay pot, their vibrant colors brightening "
                        "the space. You can smell their sweet fragrance from here."),
-            ("a clay pot", "A simple but elegant clay pot with delicate patterns etched around its rim.")
+            ("a clay pot", "A simple but elegant clay pot with delicate patterns etched around its rim."),
+            ("the sconces", "Brass sconces are mounted at regular intervals along the walls, their "
+                       "flames providing steady illumination throughout the night.")
         ]
         
         for key, desc in furnishings:

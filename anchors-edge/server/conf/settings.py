@@ -40,7 +40,7 @@ BASE_ROOM_TYPECLASS = "typeclasses.rooms.WeatherAwareRoom"
 # Default home location for new characters. This should be a valid dbref
 # (limbo #2 is created by default) or None for allowing character creation
 # anywhere. Can be overridden by buildworld command.
-DEFAULT_HOME = "#3"
+DEFAULT_HOME = "#2"
 # Remove or comment out the CLIENT_DEFAULT_WIDTH setting since we're not using it
 # CLIENT_DEFAULT_WIDTH = 80
 
@@ -58,6 +58,11 @@ GLOBAL_SCRIPTS = {
         'typeclass': 'typeclasses.scripts.IslandWeatherScript',
         'repeats': -1,  # Repeat indefinitely 
         'interval': 900,  # 15 minutes between updates
-        'desc': 'Global weather system controller'
+        'desc': 'Global weather system controller',
+        'persistent': True,
+        'start_delay': False  # Start immediately
     }
 }
+
+# Maximum width for wrapped text in room descriptions
+ROOM_DESCRIPTION_WIDTH = 78  # Standard terminal width is 80, leaving room for margins

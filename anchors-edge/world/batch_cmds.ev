@@ -1,26 +1,353 @@
 #
-# A batch-command file is a way to build a game world
-# in a programmatic way, by placing a sequence of
-# build commands after one another. This allows for
-# using a real text editor to edit e.g. descriptions
-# rather than entering text on the command line.
+# Anchors Edge batchfile - Main World Build
 #
-# A batch-command file is loaded with @batchprocess in-game:
-#
-#   @batchprocess[/interactive] tutorial_examples.batch_cmds
-#
-# A # as the first symbol on a line begins a comment and
-# marks the end of a previous command definition. This is important,
-# - every command must be separated by at least one line of comment.
-#
-# All supplied commands are given as normal, on their own line
-# and accept arguments in any format up until the first next
-# comment line begins. Extra whitespace is removed; an empty
-# line in a command definition translates into a newline.
-#
-# See `evennia/contrib/tutorial_examples/batch_cmds.ev` for
-# an example of a batch-command code. See also the batch-code
-# system for loading python-code this way.
+# This batchfile sets up the starting area for Anchors Edge.
+# To load this file, place yourself in Limbo (room #2) and load as admin with:
+#   @batchcommand world.batch_cmds
 #
 
+# Start from limbo
+@tel #2
 
+# Delete any existing weather scripts
+@py from evennia.utils import search; [s.delete() for s in search.search_script('weather_controller')]
+
+# Create and initialize weather system
+@py from evennia import create_script; script = create_script('typeclasses.scripts.IslandWeatherScript', key="weather_controller", persistent=True, interval=900, autostart=True)
+
+# Force first update
+@py from evennia.utils import search; script = search.search_script('weather_controller')[0]; script.update_weather()
+
+# Wait for script to initialize
+@force me = look
+
+# Verify script is running
+@py self.msg(f"Weather data: {script.get_weather_data('main_island')}")
+
+# Create the main tavern
+@dig/teleport The Salty Maiden;tavern;tut#01 : typeclasses.rooms.tavern.MainTavernRoom
+
+# Set the tavern's description
+@desc tavern = A warm and inviting tavern that serves as a haven for sailors and locals alike. The main room stretches before you, with a well-worn bar running along the north wall. Three private booths line the east wall, offering more intimate spaces for quiet conversations. A large stone hearth dominates the south wall, while sturdy wooden stairs in the northeast corner lead up to the second floor. The tavern's entrance in the southwest corner welcomes visitors from the street.
+
+# Create the second floor landing
+@dig Second Floor Landing;landing;tut#02 : typeclasses.rooms.tavern.TavernHallway
+
+# Create stairs up to landing
+@open stairs;up;u = landing
+
+# Move to landing
+@tel landing
+
+# Create stairs down to tavern
+@open down;d = tavern
+
+# Create first harbor-facing room
+@dig Guest Room 1;room1;tut#03 : typeclasses.rooms.tavern.SouthHarborRoom
+
+# Create door to room 1
+@open door 1;room 1 = room1
+
+# Move to room 1
+@tel room1
+
+# Create exit back to landing
+@open out = landing
+
+# Return to landing
+@tel landing
+
+# Create second harbor-facing room
+@dig Guest Room 2;room2;tut#04 : typeclasses.rooms.tavern.SouthHarborRoom
+
+# Create door to room 2
+@open door 2;room 2 = room2
+
+# Move to room 2
+@tel room2
+
+# Create exit back to landing
+@open out = landing
+
+# Return to landing
+@tel landing
+
+# Create first city-facing room
+@dig Guest Room 3;room3;tut#05 : typeclasses.rooms.tavern.NorthViewRoom
+
+# Create door to room 3
+@open door 3;room 3 = room3
+
+# Move to room 3
+@tel room3
+
+# Create exit back to landing
+@open out = landing
+
+# Return to landing
+@tel landing
+
+# Create second city-facing room
+@dig Guest Room 4;room4;tut#06 : typeclasses.rooms.tavern.NorthViewRoom
+
+# Create door to room 4
+@open door 4;room 4 = room4
+
+# Move to room 4
+@tel room4
+
+# Create exit back to landing
+@open out = landing
+
+# Return to tavern
+@tel tavern
+
+# Create first booth
+@dig Private Booth 1;booth1;tut#07 : typeclasses.rooms.tavern.BoothRoom
+
+# Create entrance to booth 1
+@open booth 1 = booth1
+
+# Move to booth 1
+@tel booth1
+
+# Create exit from booth 1
+@open out = tavern
+
+# Return to tavern
+@tel tavern
+
+# Create second booth
+@dig Private Booth 2;booth2;tut#08 : typeclasses.rooms.tavern.BoothRoom
+
+# Create entrance to booth 2
+@open booth 2 = booth2
+
+# Move to booth 2
+@tel booth2
+
+# Create exit from booth 2
+@open out = tavern
+
+# Return to tavern
+@tel tavern
+
+# Create third booth
+@dig Private Booth 3;booth3;tut#09 : typeclasses.rooms.tavern.BoothRoom
+
+# Create entrance to booth 3
+@open booth 3 = booth3
+
+# Move to booth 3
+@tel booth3
+
+# Create exit from booth 3
+@open out = tavern
+
+# Return to tavern
+@tel tavern
+
+# Create harbor district
+@dig Harbor District;harbor;tut#10 : typeclasses.rooms.island.IslandRoom
+
+# Create tavern exit to harbor
+@open exit;out;sw;southwest = harbor
+
+# Move to harbor
+@tel harbor
+
+# Create harbor entrance to tavern
+@open northeast;ne = tavern
+
+# Set harbor description
+@desc here = A bustling harbor district with ships coming and going. The salty breeze carries the scent of the sea. The Salty Maiden provides shelter to the northeast, while the Market Square lies to the north.
+
+# Create market square
+@dig Market Square;market;tut#11 : typeclasses.rooms.island.IslandRoom
+
+# Create path to market
+@open north;n = market
+
+# Move to market
+@tel market
+
+# Create path back to harbor
+@open south;s = harbor
+
+# Set market description
+@desc here = A lively marketplace filled with vendors and traders. Colorful stalls and awnings dot the open plaza. The Harbor District lies to the south.
+
+# Enable weather in market
+@set here/weather_enabled = True
+
+# Return to harbor
+@tel harbor
+
+# Enable weather in harbor
+@set here/weather_enabled = True
+
+# Return to tavern
+@tel tavern
+
+# Create bar object
+@create/drop the bar;bar : evennia.objects.objects.DefaultObject
+
+# Set bar description
+@desc bar = A long, polished wooden bar runs along the north wall, its surface marked by countless mugs and tales shared over the years. Various bottles and kegs line the shelves behind it.
+
+# Lock bar from being taken
+@lock bar = get:false()
+
+# Create hearth object
+@create/drop the hearth;hearth : evennia.objects.objects.DefaultObject
+
+# Set hearth description
+@desc hearth = A large stone hearth dominates the south wall. The well-maintained fireplace provides both warmth and a cozy atmosphere to the tavern.
+
+# Lock hearth from being taken
+@lock hearth = get:false()
+
+# Move to landing
+@tel landing
+
+# Create table object
+@create/drop wooden table;table : evennia.objects.objects.DefaultObject
+
+# Set table description
+@desc table = A polished wooden table stands beneath the window, its surface gleaming in the light.
+
+# Lock table from being taken
+@lock table = get:false()
+
+# Create pot object
+@create/drop clay pot;pot : evennia.objects.objects.DefaultObject
+
+# Set pot description
+@desc pot = A simple but elegant clay pot with delicate patterns etched around its rim. Fresh wildflowers brighten the space.
+
+# Lock pot from being taken
+@lock pot = get:false()
+
+# Return to tavern
+@tel tavern
+
+# Move to room 1 to add window
+@tel room1
+
+# Create window in room 1
+@create/drop large window;window : typeclasses.objects.HarborWindow
+
+# Set window description
+@desc window = A large south-facing window offering a panoramic view of the harbor.
+
+# Move to room 2 to add window
+@tel room2
+
+# Create window in room 2
+@create/drop large window;window : typeclasses.objects.HarborWindow
+
+# Set window description
+@desc window = A large south-facing window offering a panoramic view of the harbor.
+
+# Move to room 3 to add window
+@tel room3
+
+# Create window in room 3
+@create/drop large window;window : typeclasses.objects.TownWindow
+
+# Set window description
+@desc window = A large north-facing window overlooking the town's rooftops.
+
+# Move to room 4 to add window
+@tel room4
+
+# Create window in room 4
+@create/drop large window;window : typeclasses.objects.TownWindow
+
+# Set window description
+@desc window = A large north-facing window overlooking the town's rooftops.
+
+# Return to tavern to add its window
+@tel tavern
+
+# Create window in tavern
+@create/drop tavern window;window : typeclasses.objects.TavernWindow
+
+# Set tavern window description
+@desc window = A window letting in light and fresh air.
+
+# Teleport to landing
+@tel landing
+
+# Create hallway window
+@create/drop large window;window : typeclasses.objects.HallwayWindow
+
+# Set hallway window description
+@desc window = A large west-facing window that provides a view of the town and the setting sun.
+
+# Teleport to tavern
+@tel tavern
+
+# Add furniture to Room 1
+@tel room1
+
+# Create and set up bed
+@create/drop comfortable bed;bed : typeclasses.objects.Bed
+
+# Create and set up desk
+@create/drop wooden desk;desk : typeclasses.objects.Desk
+
+# Create and set up chair
+@create/drop wooden chair;chair : typeclasses.objects.Chair
+
+# Add furniture to Room 2
+@tel room2
+
+# Create and set up bed
+@create/drop comfortable bed;bed : typeclasses.objects.Bed
+
+# Create and set up desk
+@create/drop wooden desk;desk : typeclasses.objects.Desk
+
+# Create and set up chair
+@create/drop wooden chair;chair : typeclasses.objects.Chair
+
+# Add furniture to Room 3
+@tel room3
+
+# Create and set up bed
+@create/drop comfortable bed;bed : typeclasses.objects.Bed
+
+# Create and set up desk
+@create/drop wooden desk;desk : typeclasses.objects.Desk
+
+# Create and set up chair
+@create/drop wooden chair;chair : typeclasses.objects.Chair
+
+# Add furniture to Room 4
+@tel room4
+
+# Create and set up bed
+@create/drop comfortable bed;bed : typeclasses.objects.Bed
+
+# Create and set up desk
+@create/drop wooden desk;desk : typeclasses.objects.Desk
+
+# Create and set up chair
+@create/drop wooden chair;chair : typeclasses.objects.Chair
+
+# Return to tavern
+@tel tavern
+
+# Create kitchen
+@dig Kitchen;kitchen : typeclasses.rooms.tavern.TavernKitchen
+
+# Create staff-only exit to kitchen
+@open/typeclass kitchen door;door;k = kitchen : typeclasses.exits.StaffExit
+
+# Set kitchen exit description
+@desc kitchen door = A sturdy wooden door leads to the kitchen.
+
+# Create exit back to tavern
+@tel kitchen
+@open out = tavern

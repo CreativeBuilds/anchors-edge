@@ -192,19 +192,5 @@ class WeatherAwareRoom(DefaultRoom):
         # Get the base appearance
         appearance = super().return_appearance(looker)
         
-        # Only add weather debug info if enabled and viewer is an admin
-        if (getattr(settings, 'SHOW_WEATHER_DEBUG', False) and 
-            looker.permissions.check("Admin")):
-            weather_data = self.get_weather_data()
-            debug_info = "\n\n[Weather Debug Info]"
-            if weather_data:
-                debug_info += f"\nTemperature: {weather_data.get('apparent_temperature')}°F"
-                debug_info += f"\nWind Speed: {weather_data.get('wind_speed_10m')} mph"
-                debug_info += f"\nWind Direction: {weather_data.get('wind_direction_10m')}°"
-                debug_info += f"\nCloud Cover: {weather_data.get('cloud_cover')}%"
-                debug_info += f"\nWeather Code: {weather_data.get('weathercode')}"
-            debug_info += f"\nRoom Modifiers: {self.db.weather_modifiers}"
-            debug_info += f"\nWeather Enabled: {self.db.weather_enabled}"
-            appearance += debug_info
-            
+        # Debug info is now handled in get_display_desc
         return appearance

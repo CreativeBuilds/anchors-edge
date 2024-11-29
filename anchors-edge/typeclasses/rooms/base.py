@@ -25,12 +25,11 @@ class WeatherAwareRoom(DefaultRoom):
     def at_object_creation(self):
         """Called when room is first created."""
         super().at_object_creation()
-        self.db.weather_enabled = True  # Default to enabled
-        self.db.weather_data = {}
+        self.db.weather_enabled = False
         self.db.weather_modifiers = {
-            "sheltered": False,  # Is this area protected from rain/wind?
-            "indoor": False,     # Is this an indoor area?
-            "magical": False     # Does this area have magical weather effects?
+            "sheltered": False,
+            "indoor": False,
+            "magical": False
         }
     
     def ensure_weather_modifiers(self):
@@ -96,26 +95,73 @@ class WeatherAwareRoom(DefaultRoom):
         return ""
         
     def get_weather_data(self):
-        """Fetch weather data from the global weather script."""
-        try:
-            weather = GLOBAL_SCRIPTS.weather_controller
-            if weather:
-                data = weather.get_weather_data("main_island")
-                if data:
-                    # Ensure time_period exists and is valid
-                    if 'time_period' not in data or not data['time_period']:
-                        current_time = weather.get_current_time_period()
-                        data['time_period'] = current_time if current_time else 'day'
-                return data
+        """Get current weather data."""
+        if not self.db.weather_enabled:
+            return None
+            
+        # Get the weather script
+        weather_script = self.search_script('weather_controller')
+        if not weather_script:
+            return None
+            
+        # Get weather data for main island
+        return weather_script[0].get_weather_data('main_island')
+    
+    def _get_weather_description(self, weather_data):
+        """Get weather description based on current conditions."""
+        if not weather_data or not self.db.weather_enabled:
+            return ""
+            
+        weather_code = weather_data.get('weathercode')
+        temp = weather_data.get('apparent_temperature', 70)
+        wind_speed = weather_data.get('wind_speed_10m', 0)
+        
+        descriptions = []
+        
+        # Add temperature description if outdoors
+        if not self.db.weather_modifiers.get("indoor", False):
+            if temp > 85:
+                descriptions.append("The air is hot and humid")
+            elif temp > 75:
+                descriptions.append("The weather is pleasantly warm")
+            elif temp > 60:
+                descriptions.append("The temperature is mild")
+            elif temp > 45:
+                descriptions.append("There's a noticeable chill in the air")
             else:
-                from evennia.utils import logger
-                logger.log_err("Weather controller not found in GLOBAL_SCRIPTS")
-                return {}
-        except Exception as e:
-            from evennia.utils import logger
-            logger.log_err(f"Error getting weather data: {e}")
-            return {'time_period': 'day'}  # Provide a default fallback
-
+                descriptions.append("The air is quite cold")
+            
+        # Add wind description for outdoor or partially sheltered areas
+        if not (self.db.weather_modifiers.get("indoor", False) or 
+                self.db.weather_modifiers.get("sheltered", False)):
+            if wind_speed > 20:
+                descriptions.append("strong winds whip through the area")
+            elif wind_speed > 10:
+                descriptions.append("a steady breeze blows")
+            elif wind_speed > 5:
+                descriptions.append("a gentle breeze stirs the air")
+            
+        # Add weather condition description
+        if weather_code in [95, 96, 99]:  # Thunderstorm
+            if self.db.weather_modifiers.get("indoor", False):
+                descriptions.append("thunder rumbles in the distance")
+            else:
+                descriptions.append("thunder rumbles overhead as lightning flashes across the sky")
+        elif weather_code in [61, 63, 65]:  # Rain
+            if self.db.weather_modifiers.get("indoor", False):
+                descriptions.append("rain can be heard pattering outside")
+            else:
+                descriptions.append("rain falls steadily")
+        elif weather_code in [45, 48]:  # Foggy/cloudy
+            if not self.db.weather_modifiers.get("indoor", False):
+                descriptions.append("clouds fill the sky")
+            
+        # Combine descriptions
+        if descriptions:
+            weather_desc = ", ".join(descriptions)
+            return f"\nThe weather: {weather_desc}."
+        return ""
+    
     def update_weather(self):
         """Update the room's weather data."""
         weather_data = self.get_weather_data()

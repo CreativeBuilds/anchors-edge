@@ -49,7 +49,7 @@ DEFAULT_HOME = "#2"
 ######################################################################
 
 # Whether to show weather debug info in room descriptions
-SHOW_WEATHER_DEBUG = True  # Set to False in production
+SHOW_WEATHER_DEBUG = False  # Set to False in production
 
 # Maximum width for wrapped text in room descriptions
 ROOM_DESCRIPTION_WIDTH = 78  # Standard terminal width is 80, leaving room for margins
@@ -72,4 +72,14 @@ GLOBAL_SCRIPTS = {
         'persistent': True,
         'start_delay': False  # Start immediately
     }
+}
+
+# LLM Settings
+LLM_HOST = "http://127.0.0.1:5000"
+LLM_PATH = "/api/v1/generate"
+LLM_HEADERS = {"Content-Type": "application/json"}
+LLM_PROMPT_KEYNAME = "prompt"
+LLM_REQUEST_BODY = {
+    "max_new_tokens": 250,
+    "temperature": 0.7,
 }

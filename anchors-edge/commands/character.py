@@ -20,16 +20,31 @@ class CmdCharList(Command):
     def func(self):
         """Show available characters"""
         caller = self.caller
-        characters = caller.db._playable_characters
         
-        if not characters:
+        # Ensure _playable_characters exists and is a list
+        if not hasattr(caller.db, '_playable_characters'):
+            caller.db._playable_characters = []
+        
+        # Filter for valid character objects
+        valid_characters = []
+        for char in caller.db._playable_characters:
+            if (char and 
+                hasattr(char, 'is_typeclass') and 
+                char.is_typeclass('typeclasses.characters.Character')):
+                valid_characters.append(char)
+        
+        # Update the list to only include valid characters
+        caller.db._playable_characters = valid_characters
+        
+        if not valid_characters:
             caller.msg("You have no characters. Use |wcharcreate|n to make one!")
             return
             
         caller.msg("|wYour available characters:|n")
-        for char in characters:
+        for char in valid_characters:
+            race_info = f"[{char.db.race}{f' - {char.db.subrace}' if hasattr(char.db, 'subrace') and char.db.subrace else ''}]"
             status = "  (Online)" if char.has_account else ""
-            caller.msg(f"- |c{char.key}|n [{char.db.race}{f' - {char.db.subrace}' if char.db.subrace else ''}]{status}")
+            caller.msg(f"- |c{char.key}|n {race_info}{status}")
         caller.msg("\nUse |wcharselect <name>|n to play as a character.")
 
 class CmdCharSelect(Command):

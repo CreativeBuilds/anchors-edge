@@ -18,6 +18,9 @@ from time import time
 from dotenv import load_dotenv
 import re
 from server.conf.settings import START_LOCATION, DEFAULT_HOME  # Direct import
+from evennia import DefaultCharacter
+from evennia.utils import logger
+from django.conf import settings
 
 # Load environment variables from .env file
 load_dotenv()
@@ -70,6 +73,14 @@ class Character(ObjectParent, DefaultCharacter):
         self.db.last_consume_message = 0  # Timestamp of last consume message
         self.db.consume_cooldown = 5  # Seconds between consume messages
         
+        # Basic attributes
+        self.db.race = None
+        self.db.subrace = None
+        
+        # Initialize base stats
+        for stat, value in settings.BASE_CHARACTER_STATS.items():
+            setattr(self.db, stat.lower(), value)
+            
     def normalize_currency(self):
         """Convert currency to its most efficient form"""
         currency = self.get_currency()
@@ -304,6 +315,32 @@ class Character(ObjectParent, DefaultCharacter):
             self.db.last_consume_message = current_time
             return True
         return False
+
+    def apply_racial_modifiers(self, race, subrace=None):
+        """Apply racial stat modifiers."""
+        if race not in settings.AVAILABLE_RACES:
+            logger.log_err(f"Invalid race: {race}")
+            return False
+            
+        race_data = settings.AVAILABLE_RACES[race]
+        modifiers = race_data["modifiers"]
+        
+        # If race has subraces, use those modifiers instead
+        if subrace and "subraces" in race_data:
+            if subrace in race_data["modifiers"]:
+                modifiers = race_data["modifiers"][subrace]
+            else:
+                logger.log_err(f"Invalid subrace: {subrace} for race: {race}")
+                return False
+                
+        # Apply modifiers
+        for stat, mod in modifiers.items():
+            current = getattr(self.db, stat.lower())
+            setattr(self.db, stat.lower(), current + mod)
+            
+        self.db.race = race
+        self.db.subrace = subrace
+        return True
 
 class NPC(Character):
     """Base NPC class with conversation memory"""

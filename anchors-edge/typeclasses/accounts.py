@@ -23,6 +23,8 @@ several more options for customizing the Guest account system.
 """
 
 from evennia.accounts.accounts import DefaultAccount, DefaultGuest
+from evennia import search_object
+from django.conf import settings
 
 
 class Account(DefaultAccount):
@@ -136,7 +138,73 @@ class Account(DefaultAccount):
 
     """
 
-    pass
+    def at_account_creation(self):
+        """
+        Called when account is first created.
+        """
+        super().at_account_creation()
+        # Initialize empty playable characters list
+        self.db._playable_characters = []
+
+    def at_post_login(self, session=None):
+        """
+        Called after login is complete.
+        """
+        super().at_post_login(session=session)
+        
+        # Initialize or clean up playable characters list
+        if not hasattr(self.db, '_playable_characters'):
+            self.db._playable_characters = []
+        else:
+            # Clean up any invalid entries (like accounts mistakenly added)
+            valid_characters = []
+            for char in self.db._playable_characters:
+                if char and hasattr(char, 'is_typeclass') and char.is_typeclass('typeclasses.characters.Character'):
+                    valid_characters.append(char)
+            self.db._playable_characters = valid_characters
+        
+        # Get or create the character selection room
+        selection_room = search_object('Character Selection', typeclass='typeclasses.rooms.character_select.CharacterSelectRoom')
+        if not selection_room:
+            from evennia import create_object
+            selection_room = create_object(
+                'typeclasses.rooms.character_select.CharacterSelectRoom',
+                key='Character Selection',
+                location=None  # Not placed in any location
+            )
+        else:
+            selection_room = selection_room[0]
+            
+        # Unpuppet any existing character
+        if session and hasattr(session, 'puppet') and session.puppet:
+            self.unpuppet_object(session)
+            
+        # Show the character selection room
+        session.msg("\n" * 20)  # Clear screen
+        session.msg(selection_room.return_appearance(session))
+        
+        # Show character list
+        characters = self.db._playable_characters
+        if not characters:
+            session.msg("\n|wWelcome! You have no characters yet.|n")
+            session.msg("Use the |wcharcreate|n command to create a new character.")
+        else:
+            session.msg("\n|wYour available characters:|n")
+            for char in characters:
+                status = "  (Online)" if char.has_account else ""
+                session.msg(f"- |c{char.key}|n [{char.db.race}{f' - {char.db.subrace}' if char.db.subrace else ''}]{status}")
+            session.msg("\nUse |wcharselect <name>|n to play as a character or |wcharcreate|n to make a new one.")
+
+    def at_init(self):
+        """
+        This is always called whenever this account is initiated --
+        that is, whenever it its typeclass is cached from memory. This
+        happens on-demand first time the account is used or activated,
+        but also when the server is shutting down.
+        """
+        super().at_init()
+        if not hasattr(self.db, '_playable_characters'):
+            self.db._playable_characters = []
 
 
 class Guest(DefaultGuest):

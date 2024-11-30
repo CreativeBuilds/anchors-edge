@@ -83,3 +83,51 @@ LLM_REQUEST_BODY = {
     "max_new_tokens": 250,
     "temperature": 0.7,
 }
+
+# Disable automatic character creation
+AUTO_CREATE_CHARACTER_WITH_ACCOUNT = False
+
+# Define available races and their stat modifiers
+AVAILABLE_RACES = {
+    "Human": {
+        "subraces": ["halfling"],
+        "modifiers": {"DEX": 1, "CHA": 1}
+    },
+    "Elf": {
+        "subraces": ["high", "wood", "half"],
+        "modifiers": {
+            "high": {"INT": 2, "CON": -1, "WIS": 1},
+            "wood": {"DEX": 2, "INT": -1, "WIS": 1},
+            "half": {"CHA": 2, "CON": -1, "WIS": 1}
+        }
+    },
+    "Dwarf": {
+        "subraces": ["mountain", "hill"],
+        "modifiers": {
+            "mountain": {"STR": 2, "DEX": -1, "CON": 1},
+            "hill": {"CON": 2, "DEX": -1, "WIS": 1}
+        }
+    },
+    "Gnome": {
+        "modifiers": {"INT": 2, "STR": -1, "DEX": 1}
+    },
+    "Kobold": {
+        "modifiers": {"DEX": 2, "STR": -1, "INT": 1}
+    },
+    "Feline": {
+        "modifiers": {"DEX": 2, "INT": -1, "CHA": 1}
+    },
+    "Ashenkin": {
+        "modifiers": {"CHA": 2, "WIS": -1, "INT": 1}
+    }
+}
+
+# Base stats for all characters
+BASE_CHARACTER_STATS = {
+    "STR": 10,
+    "CON": 10,
+    "DEX": 10,
+    "INT": 10,
+    "WIS": 10,
+    "CHA": 10
+}

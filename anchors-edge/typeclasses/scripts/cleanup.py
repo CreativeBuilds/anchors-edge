@@ -1,51 +1,44 @@
 """
-Cleanup script for resetting the game world while preserving accounts.
+Cleanup script for resetting the game world
 """
-
-from django.conf import settings
-from evennia import DefaultScript, create_object
+from evennia import DefaultScript
 from evennia.objects.models import ObjectDB
 from evennia.accounts.models import AccountDB
-from evennia.utils import search
+from django.conf import settings
+from evennia import create_object
 from evennia.commands.default.cmdset_character import CharacterCmdSet
 
 class WorldCleanupScript(DefaultScript):
-    """Script to clean up the world while preserving accounts."""
+    """Script for cleaning up and resetting the game world"""
     
-    def at_script_creation(self):
-        """Set up the script."""
-        self.key = "world_cleanup"
-        self.desc = "Cleans up world while preserving accounts"
-        self.persistent = True
-        
     def clean_world(self):
-        """
-        Clean up the world, preserving accounts but moving their characters to Limbo.
-        """
-        limbo = search.search_object('#2')[0]  # Limbo is always #2
-        
-        # Get all accounts to preserve them
-        accounts = AccountDB.objects.all()
-        
-        # Store account-character links and data before cleanup
-        char_map = {}
-        for account in accounts:
-            if account.db._last_puppet:
-                char = account.db._last_puppet
-                char_map[account.id] = {
-                    'key': char.key,
-                    'desc': char.db.desc,
-                    'cmdsets': [cmdset.path for cmdset in char.cmdset.all()],
-                    'permissions': char.permissions.all()
-                }
-        
-        # Delete all objects except accounts and Limbo
-        for obj in ObjectDB.objects.all():
-            # Skip accounts and Limbo
-            if obj.id == 2 or hasattr(obj, 'is_account'):
-                continue
-            obj.delete()
+        """Clean up the game world"""
+        # Get limbo
+        limbo = ObjectDB.objects.get_id(2)
+        if not limbo:
+            print("Error: Could not find Limbo (#2)")
+            return
             
+        # Store character data before deletion
+        accounts = AccountDB.objects.all()
+        char_map = {}
+        
+        for account in accounts:
+            if hasattr(account.db, '_playable_characters'):
+                for char in account.db._playable_characters:
+                    if char:
+                        char_map[account.id] = {
+                            'key': char.key,
+                            'desc': char.db.desc if hasattr(char.db, 'desc') else '',
+                            'permissions': char.permissions.all(),
+                            'cmdsets': [cmdset.path for cmdset in char.cmdset.all()]
+                        }
+        
+        # Delete all objects except system rooms (limbo etc)
+        for obj in ObjectDB.objects.all():
+            if obj.id > 2:  # Keep #1 (void) and #2 (limbo)
+                obj.delete()
+                
         # Recreate characters for accounts and place them in Limbo
         for account in accounts:
             if account.id in char_map:

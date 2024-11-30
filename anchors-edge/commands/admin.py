@@ -5,6 +5,7 @@ Admin commands for managing players and characters.
 from evennia import Command
 from evennia.utils import search
 from evennia.objects.models import ObjectDB
+from evennia.accounts.models import AccountDB
 
 class CmdRespawn(Command):
     """
@@ -63,3 +64,58 @@ class CmdRespawn(Command):
             
         except Exception as e:
             self.msg(f"|rError respawning player: {e}|n") 
+
+class CmdCleanupAccounts(Command):
+    """
+    Admin command to clean up account character lists
+    
+    Usage:
+        @cleanupaccounts
+    """
+    key = "@cleanupaccounts"
+    locks = "cmd:perm(Admin)"
+    help_category = "Admin"
+    
+    def func(self):
+        """Execute command."""
+        count = 0
+        for account in AccountDB.objects.all():
+            if hasattr(account.db, '_playable_characters'):
+                valid_characters = []
+                for char in account.db._playable_characters:
+                    if char and hasattr(char, 'is_typeclass') and char.is_typeclass('typeclasses.characters.Character'):
+                        valid_characters.append(char)
+                if len(valid_characters) != len(account.db._playable_characters):
+                    count += 1
+                    account.db._playable_characters = valid_characters
+                    
+        self.caller.msg(f"Cleaned up {count} accounts.") 
+
+class CmdResetAccount(Command):
+    """
+    Admin command to reset an account's character list
+    
+    Usage:
+        @resetaccount <account>
+    """
+    key = "@resetaccount"
+    locks = "cmd:perm(Admin)"
+    help_category = "Admin"
+    
+    def func(self):
+        """Execute command."""
+        if not self.args:
+            self.caller.msg("Usage: @resetaccount <account>")
+            return
+            
+        # Find the account
+        from evennia.accounts.models import AccountDB
+        account = AccountDB.objects.filter(username__iexact=self.args.strip()).first()
+        
+        if not account:
+            self.caller.msg(f"Account '{self.args}' not found.")
+            return
+            
+        # Reset their character list
+        account.db._playable_characters = []
+        self.caller.msg(f"Reset character list for account {account.username}") 

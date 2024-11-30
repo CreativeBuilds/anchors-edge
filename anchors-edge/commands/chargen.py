@@ -207,6 +207,10 @@ class CmdCreateCharacter(Command):
     
     def func(self):
         """Start character creation menu."""
+        # Clean up any existing character creation data
+        if hasattr(self.caller.ndb, '_menutree'):
+            del self.caller.ndb._menutree
+            
         def custom_formatter(optionlist):
             """
             Don't display the options - they're already in the node text
@@ -228,7 +232,7 @@ class CmdCreateCharacter(Command):
                },
                startnode="node_race_select",
                cmd_on_exit=None,
-               options_formatter=custom_formatter,  # Use our custom formatter
-               node_formatter=node_formatter,     # Use our custom node formatter
-               options_separator="")    # This removes the separator line
+               options_formatter=custom_formatter,
+               node_formatter=node_formatter,
+               options_separator="")
   

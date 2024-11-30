@@ -152,6 +152,10 @@ class Account(DefaultAccount):
         """
         super().at_post_login(session=session)
         
+        # Clean up any lingering character creation data
+        if hasattr(self.ndb, '_menutree'):
+            del self.ndb._menutree
+        
         # Initialize or clean up playable characters list
         if not hasattr(self.db, '_playable_characters'):
             self.db._playable_characters = []
@@ -205,6 +209,16 @@ class Account(DefaultAccount):
         super().at_init()
         if not hasattr(self.db, '_playable_characters'):
             self.db._playable_characters = []
+
+    def at_disconnect(self, reason=None, **kwargs):
+        """
+        Called just before disconnecting.
+        """
+        super().at_disconnect(reason=None, **kwargs)
+        
+        # Clean up any character creation data
+        if hasattr(self.ndb, '_menutree'):
+            del self.ndb._menutree
 
 
 class Guest(DefaultGuest):

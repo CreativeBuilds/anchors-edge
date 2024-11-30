@@ -98,21 +98,24 @@ class CmdSignout(Command):
         signout
     """
     key = "signout"
-    locks = "cmd:all()"
+    locks = "cmd:puppeting"
     help_category = "Character"
     
     def func(self):
         """Handle the signout"""
         caller = self.caller
         
-        if not caller.account:
-            caller.msg("You're not currently playing a character.")
+        # Since we're using the puppeting lock, we know we're either
+        # a character object or an account puppeting a character
+        if hasattr(caller, 'account') and caller.account:
+            # We're a character object
+            account = caller.account
+            session = self.session
+        else:
+            # Something's wrong - shouldn't happen due to lock
+            self.msg("You're not currently playing a character.")
             return
             
-        # Get the account and session
-        account = caller.account
-        session = self.session
-        
         # Unpuppet the character
         account.unpuppet_object(session)
         

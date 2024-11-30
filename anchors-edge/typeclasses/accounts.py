@@ -156,16 +156,11 @@ class Account(DefaultAccount):
         if hasattr(self.ndb, '_menutree'):
             del self.ndb._menutree
         
-        # Initialize or clean up playable characters list
-        if not hasattr(self.db, '_playable_characters'):
+        # Ensure _playable_characters exists and is a list
+        if not hasattr(self.db, '_playable_characters') or self.db._playable_characters is None:
             self.db._playable_characters = []
-        else:
-            # Clean up any invalid entries (like accounts mistakenly added)
-            valid_characters = []
-            for char in self.db._playable_characters:
-                if char and hasattr(char, 'is_typeclass') and char.is_typeclass('typeclasses.characters.Character'):
-                    valid_characters.append(char)
-            self.db._playable_characters = valid_characters
+        elif not isinstance(self.db._playable_characters, list):
+            self.db._playable_characters = list(self.db._playable_characters)
         
         # Get or create the character selection room
         selection_room = search_object('Character Selection', typeclass='typeclasses.rooms.character_select.CharacterSelectRoom')
@@ -201,14 +196,14 @@ class Account(DefaultAccount):
 
     def at_init(self):
         """
-        This is always called whenever this account is initiated --
-        that is, whenever it its typeclass is cached from memory. This
-        happens on-demand first time the account is used or activated,
-        but also when the server is shutting down.
+        Called on first init and server reload.
         """
         super().at_init()
-        if not hasattr(self.db, '_playable_characters'):
+        # Ensure _playable_characters exists and is a list
+        if not hasattr(self.db, '_playable_characters') or self.db._playable_characters is None:
             self.db._playable_characters = []
+        elif not isinstance(self.db._playable_characters, list):
+            self.db._playable_characters = list(self.db._playable_characters)
 
     def at_disconnect(self, reason=None, **kwargs):
         """

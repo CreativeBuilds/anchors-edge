@@ -161,28 +161,37 @@ def node_create_char(caller):
     subrace = menu.subrace if hasattr(menu, 'subrace') else None
     charname = menu.charname
     
+    # Ensure _playable_characters exists
+    if not hasattr(caller.db, '_playable_characters'):
+        caller.db._playable_characters = []
+    elif caller.db._playable_characters is None:
+        caller.db._playable_characters = []
+    
     # Create character
-    char = create.create_object(
-        settings.BASE_CHARACTER_TYPECLASS,
-        key=charname,
-        location=settings.DEFAULT_HOME,
-        home=settings.DEFAULT_HOME)
+    try:
+        char = create.create_object(
+            settings.BASE_CHARACTER_TYPECLASS,
+            key=charname,
+            location=settings.DEFAULT_HOME,
+            home=settings.DEFAULT_HOME)
+            
+        # Set up character permissions
+        char.locks.add("puppet:id(%i) or pid(%i) or perm(Immortals) or pperm(Immortals);delete:id(%i) or perm(Wizards)" % 
+                      (char.id, caller.id, caller.id))
+        char.permissions.add("Player")
+            
+        # Apply racial modifiers
+        char.apply_racial_modifiers(race, subrace)
         
-    # Set up character permissions
-    char.locks.add("puppet:id(%i) or pid(%i) or perm(Immortals) or pperm(Immortals);delete:id(%i) or perm(Wizards)" % 
-                  (char.id, caller.id, caller.id))
-    char.permissions.add("Player")
+        # Link character to account
+        if not isinstance(caller.db._playable_characters, list):
+            caller.db._playable_characters = []
+        caller.db._playable_characters.append(char)
         
-    # Apply racial modifiers
-    char.apply_racial_modifiers(race, subrace)
-    
-    # Link character to account
-    caller.db._playable_characters.append(char)
-    
-    # Set account reference on character
-    char.db.account = caller
-    
-    text = f"""
+        # Set account reference on character
+        char.db.account = caller
+        
+        text = f"""
 |c== Character Creation Complete! ==|n
 
 |wCharacter Details:|n
@@ -192,7 +201,14 @@ Race: |y{race}{f" ({subrace})" if subrace else ""}|n
 Your character has been created and is ready to enter the world.
 Use |wcharselect {charname}|n to begin your adventure!
 """
-    return text, None
+        return text, None
+        
+    except Exception as e:
+        caller.msg(f"Error creating character: {e}")
+        # Clean up any partial creation
+        if 'char' in locals() and char:
+            char.delete()
+        return None
 
 class CmdCreateCharacter(Command):
     """

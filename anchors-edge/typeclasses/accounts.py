@@ -145,12 +145,20 @@ class Account(DefaultAccount):
         super().at_account_creation()
         # Initialize empty playable characters list
         self.db._playable_characters = []
+        
+        # Grant Player permission to all new accounts
+        self.permissions.add("Player")
 
     def at_post_login(self, session=None):
         """
         Called after login is complete.
         """
         super().at_post_login(session=session)
+        
+        # Ensure account has Player permission
+        if "Player" not in self.permissions.all():
+            self.permissions.add("Player")
+            self.msg("Granted Player permissions.")
         
         # Clean up any lingering character creation data
         if hasattr(self.ndb, '_menutree'):

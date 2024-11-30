@@ -381,7 +381,7 @@ class CmdCreateCharacter(Command):
         charcreate
     """
     key = "charcreate"
-    locks = "cmd:pperm(Player) and not puppeting"
+    locks = "cmd:all()"  # Allow all accounts to use this command
     help_category = "Character"
     
     def func(self):

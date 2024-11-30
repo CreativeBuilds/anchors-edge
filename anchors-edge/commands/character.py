@@ -14,7 +14,7 @@ class CmdCharList(Command):
         charlist
     """
     key = "charlist"
-    locks = "cmd:pperm(Player) and not puppeting"
+    locks = "cmd:all()"
     help_category = "Character"
 
     def func(self):
@@ -40,7 +40,7 @@ class CmdCharSelect(Command):
         charselect <character name>
     """
     key = "charselect"
-    locks = "cmd:pperm(Player) and not puppeting"
+    locks = "cmd:all()"
     help_category = "Character"
 
     def func(self):
@@ -98,7 +98,7 @@ class CmdSignout(Command):
         signout
     """
     key = "signout"
-    locks = "cmd:pperm(Player) and puppeting"
+    locks = "cmd:all()"
     help_category = "Character"
     
     def func(self):

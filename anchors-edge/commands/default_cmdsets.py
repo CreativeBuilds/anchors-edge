@@ -14,7 +14,7 @@ from evennia import default_cmds
 from commands.build_world import CmdBuildWorld
 from commands.character import CmdCharList, CmdCharSelect, CmdSignout
 from commands.chargen import CmdCreateCharacter
-from commands.admin import CmdCleanupAccounts, CmdResetAccount
+from commands.admin import CmdCleanupAccounts, CmdResetAccount, CmdDebugCharacter
 
 class CharacterCmdSet(default_cmds.CharacterCmdSet):
     """
@@ -61,6 +61,7 @@ class AccountCmdSet(default_cmds.AccountCmdSet):
         # Admin commands
         self.add(CmdCleanupAccounts())
         self.add(CmdResetAccount())
+        self.add(CmdDebugCharacter())
 
 
 class UnloggedinCmdSet(default_cmds.UnloggedinCmdSet):

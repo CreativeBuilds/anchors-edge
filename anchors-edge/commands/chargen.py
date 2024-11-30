@@ -169,6 +169,19 @@ def node_create_char(caller):
     
     # Create character
     try:
+        # First check if character already exists
+        existing = search_object(charname)
+        if existing:
+            # If character exists but isn't in playable_characters, add it
+            if existing[0] not in caller.db._playable_characters:
+                caller.db._playable_characters.append(existing[0])
+                caller.msg(f"Found existing character {charname} and linked it to your account.")
+                return None
+            else:
+                caller.msg(f"Character {charname} already exists and is already linked to your account.")
+                return None
+
+        # Create new character
         char = create.create_object(
             settings.BASE_CHARACTER_TYPECLASS,
             key=charname,
@@ -186,10 +199,20 @@ def node_create_char(caller):
         # Link character to account
         if not isinstance(caller.db._playable_characters, list):
             caller.db._playable_characters = []
-        caller.db._playable_characters.append(char)
+        
+        # Double check the character isn't already in the list
+        if char not in caller.db._playable_characters:
+            caller.db._playable_characters.append(char)
+            caller.msg(f"Added {charname} to your playable characters.")
         
         # Set account reference on character
         char.db.account = caller
+        
+        # Verify the link worked
+        if char in caller.db._playable_characters:
+            caller.msg("Character successfully linked to your account.")
+        else:
+            caller.msg("Warning: Character creation succeeded but linking may have failed.")
         
         text = f"""
 |c== Character Creation Complete! ==|n

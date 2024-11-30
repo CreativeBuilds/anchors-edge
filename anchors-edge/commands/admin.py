@@ -119,3 +119,46 @@ class CmdResetAccount(Command):
         # Reset their character list
         account.db._playable_characters = []
         self.caller.msg(f"Reset character list for account {account.username}") 
+
+class CmdDebugCharacter(Command):
+    """
+    Debug character links and permissions
+    
+    Usage:
+        @debugchar <character name>
+    """
+    key = "@debugchar"
+    locks = "cmd:perm(Admin)"
+    help_category = "Admin"
+    
+    def func(self):
+        """Execute command."""
+        if not self.args:
+            self.caller.msg("Usage: @debugchar <character name>")
+            return
+            
+        # Search for character
+        char = search.search_object(self.args.strip())
+        if not char:
+            self.caller.msg("Character not found.")
+            return
+            
+        char = char[0]
+        self.msg(f"Debug info for character: {char.key}")
+        self.msg(f"Object ID: {char.id}")
+        self.msg(f"Typeclass: {char.typeclass_path}")
+        self.msg(f"Location: {char.location}")
+        self.msg(f"Home: {char.home}")
+        self.msg(f"Permissions: {char.permissions.all()}")
+        self.msg(f"Locks: {char.locks}")
+        
+        if hasattr(char.db, 'account'):
+            self.msg(f"Linked account: {char.db.account}")
+        else:
+            self.msg("No account link found in char.db.account")
+            
+        # Check which accounts have this character in their playable_characters
+        for account in AccountDB.objects.all():
+            if hasattr(account.db, '_playable_characters'):
+                if char in account.db._playable_characters:
+                    self.msg(f"Found in account's playable_characters: {account}") 

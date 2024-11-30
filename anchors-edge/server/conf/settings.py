@@ -137,3 +137,35 @@ BASE_CHARACTER_STATS = {
 
 # Maximum number of characters per account
 MAX_CHARACTERS_PER_ACCOUNT = 5
+
+# Character backgrounds and their descriptions/effects
+CHARACTER_BACKGROUNDS = {
+    "Slave": {
+        "desc": "Brought to the island in chains, you've managed to win or buy your freedom. Though the scars remain, you're determined to build a new life far from your past.",
+        "stats": {"STR": 1, "CON": 1, "CHA": -1}
+    },
+    "Prisoner": {
+        "desc": "Given a choice between execution and serving your sentence helping build this colony, you chose life. Your crimes may be behind you, but trust is hard to come by.",
+        "stats": {"DEX": 1, "CON": 1, "CHA": -1}
+    },
+    "Conscript": {
+        "desc": "Drafted into service by the colony's militia, you patrol the wilderness and defend against threats. The pay is poor, but it beats prison or poverty.",
+        "stats": {"STR": 1, "DEX": 1, "INT": -1}
+    },
+    "Enlisted": {
+        "desc": "You signed up with the colony's military force willingly, seeking structure and purpose. The island's dangers ensure you'll never lack for work.",
+        "stats": {"STR": 2, "CHA": -1}
+    },
+    "Immigrant": {
+        "desc": "Fleeing war, famine, or persecution, you've come seeking refuge. The island may be dangerous, but anything is better than what you left behind.",
+        "stats": {"WIS": 1, "CON": 1, "STR": -1}
+    },
+    "Adventurer": {
+        "desc": "Tales of the island's mysteries and riches drew you here. Whether seeking fortune, fame, or just a good fight, you're ready for whatever comes.",
+        "stats": {"DEX": 1, "CHA": 1, "WIS": -1}
+    },
+    "Laborer": {
+        "desc": "The promise of steady work and fair pay brought you here. The colony always needs strong backs and skilled hands to help it grow.",
+        "stats": {"STR": 2, "CHA": -1}
+    }
+}

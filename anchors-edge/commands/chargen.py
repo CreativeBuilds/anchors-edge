@@ -118,9 +118,114 @@ and abilities in the world.
             # Store subrace on the menu
             caller.ndb._menutree.subrace = subrace
             
-        return "node_name_select"
+        return "node_race_confirm"
     
     options = {"key": "_default", "goto": _set_race}
+    return text, options
+
+def node_race_confirm(caller):
+    """Confirm race selection."""
+    race = caller.ndb._menutree.race
+    subrace = caller.ndb._menutree.subrace if hasattr(caller.ndb._menutree, 'subrace') else None
+    
+    text = f"""
+|c== Character Creation - Race Confirmation ==|n
+
+You have selected:
+Race: |y{race}|n
+{f"Subrace: |y{subrace}|n" if subrace else ""}
+
+Are you sure you want to play as {f"a {race} ({subrace})" if subrace else f"a {race}"}?
+
+|wEnter |gyes|w to confirm or |rno|w to choose again:|n
+"""
+    
+    def _confirm_race(caller, raw_string):
+        """Handle race confirmation."""
+        choice = raw_string.strip().lower()
+        if choice == "yes":
+            return "node_background_select"
+        elif choice == "no":
+            # Clear the stored race/subrace
+            if hasattr(caller.ndb._menutree, 'race'):
+                del caller.ndb._menutree.race
+            if hasattr(caller.ndb._menutree, 'subrace'):
+                del caller.ndb._menutree.subrace
+            return "node_race_select"
+        else:
+            caller.msg("Please enter 'yes' or 'no'.")
+            return None
+    
+    options = {"key": "_default", "goto": _confirm_race}
+    return text, options
+
+def node_background_select(caller):
+    """Select character background."""
+    text = """
+|c== Character Creation - Background Selection ==|n
+
+Your background represents your history and reason for coming to the island.
+This choice will affect your starting location and initial relationships.
+
+|wAvailable Backgrounds:|n"""
+    
+    # Display backgrounds and their descriptions
+    for bg, info in settings.CHARACTER_BACKGROUNDS.items():
+        text += f"\n\n|y{bg}|n"
+        text += f"\n    {info['desc']}"
+        text += f"\n    Stat Changes: "
+        for stat, mod in info['stats'].items():
+            text += f"{stat} {'+' if mod > 0 else ''}{mod} "
+    
+    text += "\n\n|wEnter the name of your chosen background:|n"
+    
+    def _set_background(caller, raw_string):
+        """Handle background selection."""
+        background = raw_string.strip().title()
+        if background not in settings.CHARACTER_BACKGROUNDS:
+            caller.msg(f"Invalid background. Please choose from: {', '.join(settings.CHARACTER_BACKGROUNDS.keys())}")
+            return None
+            
+        # Store background on the menu
+        caller.ndb._menutree.background = background
+        return "node_background_confirm"
+    
+    options = {"key": "_default", "goto": _set_background}
+    return text, options
+
+def node_background_confirm(caller):
+    """Confirm background selection."""
+    background = caller.ndb._menutree.background
+    bg_info = settings.CHARACTER_BACKGROUNDS[background]
+    
+    text = f"""
+|c== Character Creation - Background Confirmation ==|n
+
+You have selected: |y{background}|n
+
+{bg_info['desc']}
+
+This background will modify your stats: """
+    
+    for stat, mod in bg_info['stats'].items():
+        text += f"{stat} {'+' if mod > 0 else ''}{mod} "
+    
+    text += "\n\n|wEnter |gyes|w to confirm or |rno|w to choose again:|n"
+    
+    def _confirm_background(caller, raw_string):
+        """Handle background confirmation."""
+        choice = raw_string.strip().lower()
+        if choice == "yes":
+            return "node_name_select"
+        elif choice == "no":
+            if hasattr(caller.ndb._menutree, 'background'):
+                del caller.ndb._menutree.background
+            return "node_background_select"
+        else:
+            caller.msg("Please enter 'yes' or 'no'.")
+            return None
+    
+    options = {"key": "_default", "goto": _confirm_background}
     return text, options
 
 def node_name_select(caller):
@@ -142,10 +247,44 @@ Choose a name for your character. This name will identify you in the game world.
         name = raw_string.strip()
         if _check_name(caller, name):
             caller.ndb._menutree.charname = name
-            return "node_create_char"
+            return "node_name_confirm"
         return None
     
     options = {"key": "_default", "goto": _set_name}
+    return text, options
+
+def node_name_confirm(caller):
+    """Confirm name selection."""
+    name = caller.ndb._menutree.charname
+    race = caller.ndb._menutree.race
+    subrace = caller.ndb._menutree.subrace if hasattr(caller.ndb._menutree, 'subrace') else None
+    
+    text = f"""
+|c== Character Creation - Name Confirmation ==|n
+
+You have chosen the name: |y{name}|n
+For your {f"{race} ({subrace})" if subrace else race} character.
+
+Are you sure you want to use this name?
+
+|wEnter |gyes|w to confirm or |rno|w to choose again:|n
+"""
+    
+    def _confirm_name(caller, raw_string):
+        """Handle name confirmation."""
+        choice = raw_string.strip().lower()
+        if choice == "yes":
+            return "node_create_char"
+        elif choice == "no":
+            # Clear the stored name
+            if hasattr(caller.ndb._menutree, 'charname'):
+                del caller.ndb._menutree.charname
+            return "node_name_select"
+        else:
+            caller.msg("Please enter 'yes' or 'no'.")
+            return None
+    
+    options = {"key": "_default", "goto": _confirm_name}
     return text, options
 
 def node_create_char(caller):
@@ -153,13 +292,14 @@ def node_create_char(caller):
     menu = caller.ndb._menutree
     
     # Verify we have all required attributes
-    if not hasattr(menu, 'race') or not hasattr(menu, 'charname'):
+    if not hasattr(menu, 'race') or not hasattr(menu, 'charname') or not hasattr(menu, 'background'):
         caller.msg("Error: Missing required character information.")
         return "node_race_select"
     
     race = menu.race
     subrace = menu.subrace if hasattr(menu, 'subrace') else None
     charname = menu.charname
+    background = menu.background
     
     # Check character limit again (in case limit was reached during creation)
     if len(caller.db._playable_characters) >= settings.MAX_CHARACTERS_PER_ACCOUNT:
@@ -195,6 +335,15 @@ def node_create_char(caller):
         # Apply racial modifiers
         char.apply_racial_modifiers(race, subrace)
         
+        # Apply background modifiers
+        bg_info = settings.CHARACTER_BACKGROUNDS[background]
+        for stat, mod in bg_info['stats'].items():
+            current = getattr(char.db, stat.lower())
+            setattr(char.db, stat.lower(), current + mod)
+        
+        # Set background
+        char.db.background = background
+        
         # Add character to the list (don't overwrite)
         caller.db._playable_characters.append(char)
         caller.msg(f"Added {charname} to your playable characters.")
@@ -208,6 +357,7 @@ def node_create_char(caller):
 |wCharacter Details:|n
 Name: |y{charname}|n
 Race: |y{race}{f" ({subrace})" if subrace else ""}|n
+Background: |y{background}|n
 
 Your character has been created and is ready to enter the world.
 Use |wcharselect {charname}|n to begin your adventure!
@@ -262,7 +412,11 @@ class CmdCreateCharacter(Command):
         EvMenu(self.caller,
                {
                    "node_race_select": node_race_select,
+                   "node_race_confirm": node_race_confirm,
+                   "node_background_select": node_background_select,
+                   "node_background_confirm": node_background_confirm,
                    "node_name_select": node_name_select,
+                   "node_name_confirm": node_name_confirm,
                    "node_create_char": node_create_char
                },
                startnode="node_race_select",

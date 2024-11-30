@@ -161,6 +161,11 @@ def node_create_char(caller):
     subrace = menu.subrace if hasattr(menu, 'subrace') else None
     charname = menu.charname
     
+    # Check character limit again (in case limit was reached during creation)
+    if len(caller.db._playable_characters) >= settings.MAX_CHARACTERS_PER_ACCOUNT:
+        caller.msg("|rYou have reached the maximum number of characters allowed (5).|n")
+        return None
+    
     # Ensure _playable_characters exists
     if not hasattr(caller.db, '_playable_characters'):
         caller.db._playable_characters = []
@@ -172,14 +177,8 @@ def node_create_char(caller):
         # First check if character already exists
         existing = search_object(charname)
         if existing:
-            # If character exists but isn't in playable_characters, add it
-            if existing[0] not in caller.db._playable_characters:
-                caller.db._playable_characters.append(existing[0])
-                caller.msg(f"Found existing character {charname} and linked it to your account.")
-                return None
-            else:
-                caller.msg(f"Character {charname} already exists and is already linked to your account.")
-                return None
+            caller.msg(f"Character {charname} already exists.")
+            return None
 
         # Create new character
         char = create.create_object(
@@ -196,23 +195,12 @@ def node_create_char(caller):
         # Apply racial modifiers
         char.apply_racial_modifiers(race, subrace)
         
-        # Link character to account
-        if not isinstance(caller.db._playable_characters, list):
-            caller.db._playable_characters = []
-        
-        # Double check the character isn't already in the list
-        if char not in caller.db._playable_characters:
-            caller.db._playable_characters.append(char)
-            caller.msg(f"Added {charname} to your playable characters.")
+        # Add character to the list (don't overwrite)
+        caller.db._playable_characters.append(char)
+        caller.msg(f"Added {charname} to your playable characters.")
         
         # Set account reference on character
         char.db.account = caller
-        
-        # Verify the link worked
-        if char in caller.db._playable_characters:
-            caller.msg("Character successfully linked to your account.")
-        else:
-            caller.msg("Warning: Character creation succeeded but linking may have failed.")
         
         text = f"""
 |c== Character Creation Complete! ==|n
@@ -223,6 +211,8 @@ Race: |y{race}{f" ({subrace})" if subrace else ""}|n
 
 Your character has been created and is ready to enter the world.
 Use |wcharselect {charname}|n to begin your adventure!
+
+You have {settings.MAX_CHARACTERS_PER_ACCOUNT - len(caller.db._playable_characters)} character slots remaining.
 """
         return text, None
         
@@ -241,11 +231,17 @@ class CmdCreateCharacter(Command):
         charcreate
     """
     key = "charcreate"
-    locks = "cmd:pperm(Player) and not puppeting"  # Only when not puppeting a character
+    locks = "cmd:pperm(Player) and not puppeting"
     help_category = "Character"
     
     def func(self):
         """Start character creation menu."""
+        # Check character limit
+        if len(self.caller.db._playable_characters) >= settings.MAX_CHARACTERS_PER_ACCOUNT:
+            self.caller.msg("|rYou have reached the maximum number of characters allowed (5).|n")
+            self.caller.msg("You must delete a character before creating a new one.")
+            return
+            
         # Clean up any existing character creation data
         if hasattr(self.caller.ndb, '_menutree'):
             del self.caller.ndb._menutree

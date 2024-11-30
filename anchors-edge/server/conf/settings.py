@@ -134,3 +134,6 @@ BASE_CHARACTER_STATS = {
     "WIS": 10,
     "CHA": 10
 }
+
+# Maximum number of characters per account
+MAX_CHARACTERS_PER_ACCOUNT = 5

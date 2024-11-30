@@ -70,9 +70,14 @@ class CmdCharSelect(Command):
                 caller.msg("This character is already being played.")
             return
             
+        # Get the account object
+        account = caller
+        if hasattr(caller, 'account'):
+            account = caller.account
+            
         # Try to puppet the character
         try:
-            caller.puppet_object(session=self.session, obj=char)
+            account.puppet_object(session=self.session, obj=char)
             char.msg("|gYou become |c%s|n." % char.name)
             
             # If successful, move character to their proper location
@@ -83,7 +88,7 @@ class CmdCharSelect(Command):
             char.execute_cmd('look')
             
         except RuntimeError as err:
-            caller.msg("|rError assuming character:|n %s" % err) 
+            caller.msg("|rError assuming character:|n %s" % err)
 
 class CmdSignout(Command):
     """

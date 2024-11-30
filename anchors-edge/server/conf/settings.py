@@ -90,8 +90,11 @@ AUTO_CREATE_CHARACTER_WITH_ACCOUNT = False
 # Define available races and their stat modifiers
 AVAILABLE_RACES = {
     "Human": {
-        "subraces": ["halfling"],
-        "modifiers": {"DEX": 1, "CHA": 1}
+        "subraces": ["normal", "halfling"],
+        "modifiers": {
+            "normal": {"DEX": 1, "CHA": 1},
+            "halfling": {"DEX": 1, "CHA": 1}
+        }
     },
     "Elf": {
         "subraces": ["high", "wood", "half"],

@@ -35,8 +35,9 @@ and abilities in the world.
     race_info = {
         "Human": {
             "desc": "Versatile and adaptable",
-            "stats": "(+1 DEX, +1 CHA)",
+            "stats": "",
             "subraces": {
+                "normal": "(+1 DEX, +1 CHA) - Balanced and adaptable",
                 "halfling": "(+1 DEX, +1 CHA) - Small but lucky"
             }
         },
@@ -84,7 +85,7 @@ and abilities in the world.
         if info['subraces']:
             text += f"\n\n|y{race}|n - {info['desc']} {info['stats']}"
             for subrace, subdesc in info['subraces'].items():
-                text += f"\n  ├─ |w{subrace}|n {subdesc}"
+                text += f"\n    - |w{subrace}|n {subdesc}"
         else:
             text += f"\n\n|y{race}|n - {info['desc']} {info['stats']}"
     

@@ -14,7 +14,7 @@ class CmdCharList(Command):
         charlist
     """
     key = "charlist"
-    locks = "cmd:pperm(Player)"
+    locks = "cmd:pperm(Player) and not puppeting"
     help_category = "Character"
 
     def func(self):
@@ -40,7 +40,7 @@ class CmdCharSelect(Command):
         charselect <character name>
     """
     key = "charselect"
-    locks = "cmd:pperm(Player)"
+    locks = "cmd:pperm(Player) and not puppeting"
     help_category = "Character"
 
     def func(self):
@@ -84,3 +84,45 @@ class CmdCharSelect(Command):
             
         except RuntimeError as err:
             caller.msg("|rError assuming character:|n %s" % err) 
+
+class CmdSignout(Command):
+    """
+    Stop playing your current character and return to character selection.
+    
+    Usage:
+        signout
+    """
+    key = "signout"
+    locks = "cmd:pperm(Player) and puppeting"
+    help_category = "Character"
+    
+    def func(self):
+        """Handle the signout"""
+        caller = self.caller
+        
+        if not caller.account:
+            caller.msg("You're not currently playing a character.")
+            return
+            
+        # Get the account and session
+        account = caller.account
+        session = self.session
+        
+        # Unpuppet the character
+        account.unpuppet_object(session)
+        
+        # Show the character selection screen
+        selection_room = search_object('Character Selection', typeclass='typeclasses.rooms.character_select.CharacterSelectRoom')
+        if selection_room:
+            selection_room = selection_room[0]
+            session.msg("\n" * 20)  # Clear screen
+            session.msg(selection_room.return_appearance(session))
+            
+            # Show character list
+            characters = account.db._playable_characters
+            if characters:
+                session.msg("\n|wYour available characters:|n")
+                for char in characters:
+                    status = "  (Online)" if char.has_account else ""
+                    session.msg(f"- |c{char.key}|n [{char.db.race}{f' - {char.db.subrace}' if char.db.subrace else ''}]{status}")
+                session.msg("\nUse |wcharselect <name>|n to play as a character or |wcharcreate|n to make a new one.")

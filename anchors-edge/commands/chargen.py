@@ -218,7 +218,7 @@ class CmdCreateCharacter(Command):
         charcreate
     """
     key = "charcreate"
-    locks = "cmd:pperm(Player)"
+    locks = "cmd:pperm(Player) and not puppeting"  # Only when not puppeting a character
     help_category = "Character"
     
     def func(self):

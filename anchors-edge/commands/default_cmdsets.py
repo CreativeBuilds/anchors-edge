@@ -12,7 +12,7 @@ To create new commands to populate the cmdset, see
 
 from evennia import default_cmds
 from commands.build_world import CmdBuildWorld
-from commands.character import CmdCharList, CmdCharSelect
+from commands.character import CmdCharList, CmdCharSelect, CmdSignout
 from commands.chargen import CmdCreateCharacter
 from commands.admin import CmdCleanupAccounts, CmdResetAccount
 
@@ -56,6 +56,7 @@ class AccountCmdSet(default_cmds.AccountCmdSet):
         self.add(CmdCharList())
         self.add(CmdCharSelect())
         self.add(CmdCreateCharacter())
+        self.add(CmdSignout())
         
         # Admin commands
         self.add(CmdCleanupAccounts())

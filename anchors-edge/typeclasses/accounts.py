@@ -223,6 +223,61 @@ class Account(DefaultAccount):
         if hasattr(self.ndb, '_menutree'):
             del self.ndb._menutree
 
+    def at_pre_look(self, target=None, **kwargs):
+        """
+        Called before the look. Always return True to bypass default OOC look.
+        """
+        return True
+
+    def at_look(self, target=None, session=None, **kwargs):
+        """
+        Called when this object performs a look. Always show the character
+        selection screen when an account looks while OOC.
+        """
+        # Get or create the character selection room
+        selection_room = search_object('Character Selection', typeclass='typeclasses.rooms.character_select.CharacterSelectRoom')
+        if selection_room:
+            selection_room = selection_room[0]
+        else:
+            from evennia import create_object
+            selection_room = create_object(
+                'typeclasses.rooms.character_select.CharacterSelectRoom',
+                key='Character Selection',
+                location=None
+            )
+        
+        # Show the character selection screen
+        string = selection_room.return_appearance(self)
+        
+        # Show character list
+        characters = self.db._playable_characters
+        if not characters:
+            string += "\n\n|wWelcome! You have no characters yet.|n"
+            string += "\nUse the |wcharcreate|n command to create a new character."
+        else:
+            string += "\n\n|wYour available characters:|n"
+            for char in characters:
+                if char:  # Make sure character exists
+                    status = "  (Online)" if char.has_account else ""
+                    string += f"\n- |c{char.key}|n [{char.db.race}{f' - {char.db.subrace}' if hasattr(char.db, 'subrace') and char.db.subrace else ''}]{status}"
+            string += "\n\nUse |wcharselect <name>|n to play as a character or |wcharcreate|n to make a new one."
+        
+        # Send to session if available
+        if session:
+            session.msg(string)
+        return string
+
+    def return_appearance(self, looker, **kwargs):
+        """
+        This is called when someone looks at this object.
+        Always show the character selection screen for accounts.
+        """
+        return self.at_look(target=None, session=None, **kwargs)
+
+    # Remove these methods to prevent default OOC behavior
+    at_look_in_room = None
+    at_look_obj = None
+
 
 class Guest(DefaultGuest):
     """

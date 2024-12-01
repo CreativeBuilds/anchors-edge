@@ -12,9 +12,9 @@ To create new commands to populate the cmdset, see
 
 from evennia import default_cmds
 from commands.build_world import CmdBuildWorld
-from commands.character import CmdCharList, CmdCharSelect, CmdSignout
+from commands.character import CmdCharList, CmdCharSelect, CmdSignout, CmdIC
 from commands.chargen import CmdCreateCharacter
-from commands.admin import CmdCleanupAccounts, CmdResetAccount, CmdDebugCharacter
+from commands.admin import CmdCleanupAccounts, CmdResetAccount, CmdDebugCharacter, CmdLastWipe
 
 class CharacterCmdSet(default_cmds.CharacterCmdSet):
     """
@@ -34,6 +34,8 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         # any commands you add below will overload the default ones.
         #
         self.add(CmdBuildWorld())
+        # Remove ic command
+        self.remove(default_cmds.CmdIC)
 
 
 class AccountCmdSet(default_cmds.AccountCmdSet):
@@ -52,16 +54,21 @@ class AccountCmdSet(default_cmds.AccountCmdSet):
         """
         super().at_cmdset_creation()
         
+        # Remove ic command
+        self.remove(default_cmds.CmdIC)
+        
         # Character selection commands
         self.add(CmdCharList())
         self.add(CmdCharSelect())
         self.add(CmdCreateCharacter())
         self.add(CmdSignout())
+        self.add(CmdIC())
         
         # Admin commands
         self.add(CmdCleanupAccounts())
         self.add(CmdResetAccount())
         self.add(CmdDebugCharacter())
+        self.add(CmdLastWipe())
 
 
 class UnloggedinCmdSet(default_cmds.UnloggedinCmdSet):
@@ -77,6 +84,8 @@ class UnloggedinCmdSet(default_cmds.UnloggedinCmdSet):
         Populates the cmdset
         """
         super().at_cmdset_creation()
+        # Remove ic command
+        self.remove(default_cmds.CmdIC)
 
 
 class SessionCmdSet(default_cmds.SessionCmdSet):
@@ -93,3 +102,5 @@ class SessionCmdSet(default_cmds.SessionCmdSet):
         its creation. It should populate the set with command instances.
         """
         super().at_cmdset_creation()
+        # Remove ic command
+        self.remove(default_cmds.CmdIC)

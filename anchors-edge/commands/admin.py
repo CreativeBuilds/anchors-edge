@@ -162,3 +162,46 @@ class CmdDebugCharacter(Command):
             if hasattr(account.db, '_playable_characters'):
                 if char in account.db._playable_characters:
                     self.msg(f"Found in account's playable_characters: {account}") 
+
+class CmdLastWipe(Command):
+    """
+    Check when the last server wipe occurred.
+    
+    Usage:
+        @lastwipe
+    """
+    key = "@lastwipe"
+    locks = "cmd:all()"  # Everyone can check this
+    help_category = "Info"
+    
+    def func(self):
+        """Execute command."""
+        try:
+            from server.conf.last_wipe import LAST_WIPE
+            from datetime import datetime
+            
+            now = int(datetime.now().timestamp() * 1000)
+            diff = now - LAST_WIPE
+            
+            # Convert to seconds
+            seconds = int(diff / 1000)
+            
+            if seconds < 60:
+                time_str = f"{seconds} seconds"
+            elif seconds < 3600:
+                minutes = seconds // 60
+                time_str = f"{minutes} minute{'s' if minutes != 1 else ''}"
+            elif seconds < 86400:
+                hours = seconds // 3600
+                time_str = f"{hours} hour{'s' if hours != 1 else ''}"
+            elif seconds < 604800:
+                days = seconds // 86400
+                time_str = f"{days} day{'s' if days != 1 else ''}"
+            else:
+                weeks = seconds // 604800
+                time_str = f"{weeks} week{'s' if weeks != 1 else ''}"
+                
+            self.caller.msg(f"Time since last server wipe: {time_str}")
+            
+        except Exception as e:
+            self.caller.msg("Unable to determine last wipe time.") 

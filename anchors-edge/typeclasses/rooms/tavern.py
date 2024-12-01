@@ -52,126 +52,53 @@ class MainTavernRoom(TavernRoom):
     """The main tavern room with hearth and dynamic descriptions."""
     
     def _update_dynamic_description(self):
-        """Update the room's description based on current conditions."""
-        weather_data = self.get_weather_data()
-        if not weather_data:
-            return
+        """Update the room's description based on time of day and weather"""
+        # Initialize base_desc
+        base_desc = ""
+        
+        # Get current time and weather
+        current_hour = self.get_current_hour()
+        current_weather = self.get_current_weather()
+        
+        # Time-based lighting descriptions
+        if 5 <= current_hour < 7:  # Dawn
+            base_desc = "The early morning light filters softly through the tavern's windows, casting long shadows across the room."
+        elif 7 <= current_hour < 12:  # Morning
+            base_desc = "Morning light streams through the windows, bringing warmth to the tavern's well-worn surfaces."
+        elif 12 <= current_hour < 17:  # Afternoon
+            base_desc = "The sun at its peak bathes the tavern in bright, direct light."
+        elif 17 <= current_hour < 19:  # Dusk
+            base_desc = "The fading daylight casts a warm, golden glow throughout the tavern."
+        elif 19 <= current_hour < 22:  # Evening
+            base_desc = "Lantern light fills the tavern with a cozy, welcoming warmth as night settles outside."
+        else:  # Night
+            base_desc = "The tavern is lit by the warm glow of lanterns and the occasional flicker from the hearth."
 
-        time_period = weather_data.get('time_period', 'day')
-        temp = weather_data.get('apparent_temperature', 70)
-        weather_code = weather_data.get('weathercode')
-        wind_speed = weather_data.get('wind_speed_10m', 0)
-
-        # Build the description based on more granular time periods
-        if time_period == "dawn":
-            base_desc = (
-                "Early morning light filters through the windows of this welcoming tavern, where "
-                "a sturdy bar runs along the north wall and three snug booths line the east wall. "
-                "The first hints of dawn seep through the windows, promising a new day."
-            )
-        elif time_period == "morning":
-            base_desc = (
-                "Bright morning sunlight streams through the windows of this welcoming tavern, falling "
-                "across the well-worn bar along the north wall and illuminating three private booths "
-                "along the east. The morning light brings a fresh energy to the space."
-            )
-        elif time_period == "noon":
-            base_desc = (
-                "The sun at its peak bathes the tavern in bright, direct light. The well-worn bar along the "
-                "left wall gleams under the midday sun, while the three booths at the back offer welcome "
-                "shade for those seeking respite from the day's heat."
-            )
-        elif time_period == "afternoon":
-            base_desc = (
-                "The warm afternoon sun fills the tavern with golden light, casting long shadows from the "
-                "well-worn bar along the left wall and creating cozy pockets of shade in the three private "
-                "booths at the back."
-            )
-        elif time_period == "early_evening":
-            base_desc = (
-                "The fading daylight mingles with newly lit sconces, casting a warm glow throughout the tavern "
-                "as evening patrons begin to fill the space. The bar along the left wall gleams invitingly, "
-                "while the three booths at the back offer intimate spaces for early evening conversations."
-            )
-        elif time_period == "evening":
-            base_desc = (
-                "The tavern pulses with evening life, wall sconces casting their warm glow across the busy bar "
-                "that runs along the left wall. The three booths at the back are filled with the murmur of "
-                "conversations and the clink of glasses."
-            )
-        elif time_period == "late_night":
-            base_desc = (
-                "The Salty Maiden settles into its late-night rhythm. The polished bar along the "
-                "left wall reflects the warm glow of lanterns, while rings from countless mugs mark "
-                "its surface like a well-worn map. In the three high-backed booths, the occasional "
-                "patron nurses a drink or shares quiet conversation, their voices barely carrying "
-                "across the room. Brass sconces cast just enough light to keep the shadows at bay, "
-                "while the wooden beams overhead creak softly with the building's settling."
-            )
-        elif time_period == "witching_hour":
-            base_desc = (
-                "The quietest hours find the Salty Maiden in peaceful stillness. The bar stretches "
-                "along the left wall, its surface catching glints of light from the few remaining "
-                "lit sconces. The three booths at the back stand mostly empty now, though one or two "
-                "might shelter a sleepless traveler or late-working sailor. The familiar scents of "
-                "ale and woodsmoke linger in the air, mixing with the salt breeze that finds its "
-                "way through the windows."
-            )
-
-        # Add hearth description based on temperature and time
-        if temp > 75:
-            base_desc += " " + (
-                "A large stone hearth stands dormant in the warm weather, its presence still "
-                "dominating the south wall though no flames dance within."
-            )
-        elif time_period in ["late_night", "witching_hour"]:
-            base_desc += " " + (
-                "The massive stone hearth along the south wall cradles dying embers that cast "
-                "a faint, comforting glow across the room, their slow fade marking time's passage."
-            )
-        elif time_period == "dawn":
-            base_desc += " " + (
-                "Warm coals glow softly in the great stone hearth, awaiting fresh wood for the "
-                "day ahead while still providing gentle warmth to the early risers."
-            )
-        elif temp < 50:
-            base_desc += " " + (
-                "A roaring fire blazes in the imposing stone hearth, its warmth reaching every "
-                "corner of the room and drawing patrons closer to its comforting heat."
-            )
-        else:
-            base_desc += " " + (
-                "The grand stone hearth along the western wall maintains a modest flame, "
-                "its gentle warmth complementing the room's cozy atmosphere."
-            )
-
-        # Add weather elements seamlessly
-        if weather_code in WEATHER_CODES["thunderstorm"]:
-            base_desc += " " + (
-                "Each thunderclap makes the shuttered windows rattle, serving to emphasize the "
-                "tavern's role as a cozy haven from the storm."
-            )
-        elif weather_code in WEATHER_CODES["rain"]:
-            base_desc += " " + (
-                "Raindrops pattern against the windowpanes in a soothing rhythm that adds to "
-                "the tavern's comfortable atmosphere."
-            )
-        elif temp >= 70 and wind_speed > 0:
-            base_desc += " " + (
-                "A warm breeze drifts through the open windows, carrying with it the mingled "
-                "scents of the sea and the promise of adventure."
-            )
-
-        # Always end with the stairs
-        base_desc += " " + (
-            "Sturdy wooden stairs in the northeast corner lead up to the second floor, their "
-            "well-worn steps telling countless tales of travelers who've passed this way before. "
-            "The tavern's entrance in the southwest corner welcomes visitors from the street, "
-            "its heavy wooden door well-oiled and often in motion."
+        # Rest of the description
+        base_desc += " The well-worn bar along the left wall gleams under the %s, while the three booths at the back offer welcome shade for those seeking respite from the day's heat. A large stone hearth stands dormant in the warm weather, its presence still dominating the south wall though no flames dance within." % (
+            "midday sun" if 10 <= current_hour < 14 else
+            "morning light" if 6 <= current_hour < 10 else
+            "afternoon sun" if 14 <= current_hour < 18 else
+            "evening light" if 18 <= current_hour < 21 else
+            "lantern light"
         )
 
-        # Wrap the text before setting it
-        self.db.desc = self.wrap_text(base_desc)
+        # Weather effects
+        if current_weather:
+            weather_desc = {
+                'clear': "A warm breeze drifts through the open windows, carrying with it the mingled scents of the sea and the promise of adventure.",
+                'cloudy': "A cool breeze occasionally drifts through the windows, bringing with it the salt-tinged scent of the sea.",
+                'rain': "The sound of rain pattering against the windows adds a cozy atmosphere to the tavern's interior.",
+                'storm': "The occasional flash of lightning through the windows illuminates the tavern in brief, dramatic bursts."
+            }.get(current_weather, "A gentle breeze drifts through the open windows.")
+            
+            base_desc += " " + weather_desc
+
+        # Add static elements
+        base_desc += " Sturdy wooden stairs in the northeast corner lead up to the second floor, their well-worn steps telling countless tales of travelers who've passed this way before. The tavern's entrance in the southwest corner welcomes visitors from the street, its heavy wooden door well-oiled and often in motion."
+
+        # Update the room's description
+        self.db.desc = base_desc
 
 class TavernHallway(TavernRoom):
     """The second floor hallway of the tavern."""

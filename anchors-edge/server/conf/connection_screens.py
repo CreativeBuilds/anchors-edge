@@ -2,42 +2,63 @@
 """
 Connection screen
 
-This is the text to show the user when they first connect to the game (before
-they log in).
-
-To change the login screen in this module, do one of the following:
-
-- Define a function `connection_screen()`, taking no arguments. This will be
-  called first and must return the full string to act as the connection screen.
-  This can be used to produce more dynamic screens.
-- Alternatively, define a string variable in the outermost scope of this module
-  with the connection string that should be displayed. If more than one such
-  variable is given, Evennia will pick one of them at random.
-
-The commands available to the user when the connection screen is shown
-are defined in evennia.default_cmds.UnloggedinCmdSet. The parsing and display
-of the screen is done by the unlogged-in "look" command.
-
+This is the text shown to the player when they first connect to the game.
 """
 
 from django.conf import settings
-from evennia import utils
+from datetime import datetime
 
+def get_time_since_wipe():
+    """Get time since last server wipe in human-readable format"""
+    try:
+        from server.conf.last_wipe import LAST_WIPE
+        now = int(datetime.now().timestamp() * 1000)
+        diff = now - LAST_WIPE
+        
+        # Convert to seconds
+        seconds = int(diff / 1000)
+        
+        if seconds < 60:
+            return f"{seconds} seconds"
+        elif seconds < 3600:
+            minutes = seconds // 60
+            return f"{minutes} minute{'s' if minutes != 1 else ''}"
+        elif seconds < 86400:
+            hours = seconds // 3600
+            return f"{hours} hour{'s' if hours != 1 else ''}"
+        elif seconds < 604800:
+            days = seconds // 86400
+            return f"{days} day{'s' if days != 1 else ''}"
+        else:
+            weeks = seconds // 604800
+            return f"{weeks} week{'s' if weeks != 1 else ''}"
+    except:
+        return "unknown time"
+
+# Define the connection screen as a string
 CONNECTION_SCREEN = """
-|b==============================================================|n
- Welcome to |g{}|n!
- 
- If you have an existing account, connect to it by typing:
-      |wconnect <username> <password>|n
- If you need to create an account, type (without the <>'s):
-      |wcreate <username> <password>|n
+|=============================================================|
+|                                                             |
+|                  Welcome to Anchors Edge                    |
+|                                                             |
+|=============================================================|
 
- Enter |whelp|n for more info. |wlook|n will re-show this screen.
-|b==============================================================|n""" \
-    .format(settings.SERVERNAME)
+|yServer Status:|n
+Last Reset: %s ago
+Server Status: Early Alpha Testing
 
-def get_connection_screen():
-    """
-    Returns the connection screen as a string.
-    """
-    return utils.dedent(CONNECTION_SCREEN)
+|r== EARLY ALPHA WARNING ==|n
+This game is in early alpha development. Server resets occur frequently
+and without warning. All characters and progress may be wiped at any time.
+
+|wTo create a new account:|n
+    create <username> <password>
+
+|wTo connect to an existing account:|n
+    connect <username> <password>
+
+|wTo get help once connected:|n
+    help
+
+|=============================================================|
+""" % get_time_since_wipe()

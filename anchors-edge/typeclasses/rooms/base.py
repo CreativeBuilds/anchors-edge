@@ -1,175 +1,74 @@
 """
-Base room types and weather-aware functionality.
+Base room types and templates.
 """
 
-from evennia.objects.objects import DefaultRoom
-from evennia import GLOBAL_SCRIPTS
-import logging
-from textwrap import fill
+from evennia import DefaultRoom
 from django.conf import settings
-
-# Configure logging
-logging.basicConfig(level=logging.ERROR)
+from datetime import datetime
+import pytz
+from evennia.scripts.models import ScriptDB
+from textwrap import fill, TextWrapper
 
 class WeatherAwareRoom(DefaultRoom):
-    """Base class for rooms that respond to weather and time."""
-    
-    # Override the default appearance template with explicit newlines and spacing
-    appearance_template = """
-|/|/|w{name}|n|/
-{desc}|/
-{exits}
-{things}
-{footer}"""
+    """Base class for rooms that are affected by weather."""
     
     def at_object_creation(self):
         """Called when room is first created."""
         super().at_object_creation()
-        self.db.weather_enabled = False
+        self.db.weather_enabled = True
         self.db.weather_modifiers = {
             "sheltered": False,
             "indoor": False,
             "magical": False
         }
-    
-    def ensure_weather_modifiers(self):
-        """Ensure weather modifiers exist."""
-        if not hasattr(self.db, "weather_modifiers") or self.db.weather_modifiers is None:
-            self.db.weather_modifiers = {
-                "sheltered": False,
-                "indoor": False,
-                "magical": False
-            }
-    
-    def get_display_desc(self, looker, **kwargs):
-        """Get the description of the room."""
-        # Ensure weather modifiers exist
-        self.ensure_weather_modifiers()
         
-        desc = self.db.desc
-        desc = desc.strip()
+    def get_current_hour(self):
+        """Get the current hour (0-23) in Austin timezone."""
+        austin_tz = pytz.timezone('America/Chicago')
+        austin_time = datetime.now(austin_tz)
+        return austin_time.hour
         
-        # Add weather description if applicable
-        if self.db.weather_enabled and not self.db.weather_modifiers.get("indoor", False):
-            weather_data = self.get_weather_data()
-            if weather_data:
-                weather_desc = self._get_weather_description(weather_data)
-                if weather_desc:
-                    desc = f"{desc}|/|/{weather_desc}"
-        
-        # Add debug info for admins/builders
-        if looker.locks.check_lockstring(looker, "perm(Admin) or perm(Builder)") and settings.SHOW_WEATHER_DEBUG:
-            weather_data = self.get_weather_data()
-            debug_info = ["|/|r[Weather Debug Info]|n"]
-           
-            if weather_data:
-                debug_info.extend([
-                    f"Temperature: {weather_data.get('apparent_temperature')}°F",
-                    f"Wind Speed: {weather_data.get('wind_speed_10m')} mph", 
-                    f"Wind Direction: {weather_data.get('wind_direction_10m')}°",
-                    f"Cloud Cover: {weather_data.get('cloud_cover')}%",
-                    f"Weather Code: {weather_data.get('weathercode')}"
-                ])
-            else:
-                debug_info.append("No weather data available")
-                
-            debug_info.extend([
-                f"Room Modifiers: {self.db.weather_modifiers}",
-                f"Weather Enabled: {self.db.weather_enabled}"
-            ])
-            
-            desc = f"{desc}|/|/{'|/'.join(debug_info)}"
-        
-        return desc
-        
-    def get_display_exits(self, looker, **kwargs):
-        """Get the exits of the room."""
-        # Get raw exits without the "Exits:" prefix
-        exits = super().get_display_exits(looker, **kwargs)
-            
-        # Remove any existing "Exits:" prefix and clean up
-        exits = exits.replace("Exits:", "").strip()
-        return f"|/|wExits|n:{exits}"
-        
-    def get_display_things(self, looker, **kwargs):
-        """Hide objects by default."""
-        return ""
+    def get_current_weather(self):
+        """Get current weather condition."""
+        # Get the global weather script using ScriptDB
+        weather_script = ScriptDB.objects.filter(db_key='weather_controller').first()
+        if weather_script:
+            return weather_script.db.current_weather
+        return 'clear'  # Default to clear if no weather system
         
     def get_weather_data(self):
-        """Get current weather data."""
-        if not self.db.weather_enabled:
-            return None
-            
-        # Get the weather script using the correct search method
-        from evennia.utils.search import search_script
-        weather_script = search_script('weather_controller')
-        if not weather_script:
-            return None
-            
-        # Get weather data for main island
-        return weather_script[0].get_weather_data('main_island')
-    
-    def _get_weather_description(self, weather_data):
-        """Get weather description based on current conditions."""
-        if not weather_data or not self.db.weather_enabled:
-            return ""
-            
-        weather_code = weather_data.get('weathercode')
-        temp = weather_data.get('apparent_temperature', 70)
-        wind_speed = weather_data.get('wind_speed_10m', 0)
+        """Get complete weather data."""
+        # Get the global weather script using ScriptDB
+        weather_script = ScriptDB.objects.filter(db_key='weather_controller').first()
+        if weather_script:
+            return {
+                'weathercode': weather_script.db.current_weather,
+                'time_period': self.get_time_period(),
+                'apparent_temperature': weather_script.db.temperature
+            }
+        return None
         
-        descriptions = []
+    def get_time_period(self):
+        """Get the current time period of day."""
+        hour = self.get_current_hour()
         
-        # Add temperature description if outdoors
-        if not self.db.weather_modifiers.get("indoor", False):
-            if temp > 85:
-                descriptions.append("The air is hot and humid")
-            elif temp > 75:
-                descriptions.append("The weather is pleasantly warm")
-            elif temp > 60:
-                descriptions.append("The temperature is mild")
-            elif temp > 45:
-                descriptions.append("There's a noticeable chill in the air")
-            else:
-                descriptions.append("The air is quite cold")
+        if 5 <= hour < 7:
+            return "dawn"
+        elif 7 <= hour < 10:
+            return "morning"
+        elif 10 <= hour < 14:
+            return "noon"
+        elif 14 <= hour < 17:
+            return "afternoon"
+        elif 17 <= hour < 19:
+            return "early_evening"
+        elif 19 <= hour < 22:
+            return "evening"
+        elif 22 <= hour < 24:
+            return "late_night"
+        else:  # 0-5
+            return "witching_hour"
             
-        # Add wind description for outdoor or partially sheltered areas
-        if not (self.db.weather_modifiers.get("indoor", False) or 
-                self.db.weather_modifiers.get("sheltered", False)):
-            if wind_speed > 20:
-                descriptions.append("strong winds whip through the area")
-            elif wind_speed > 10:
-                descriptions.append("a steady breeze blows")
-            elif wind_speed > 5:
-                descriptions.append("a gentle breeze stirs the air")
-            
-        # Add weather condition description
-        if weather_code in [95, 96, 99]:  # Thunderstorm
-            if self.db.weather_modifiers.get("indoor", False):
-                descriptions.append("thunder rumbles in the distance")
-            else:
-                descriptions.append("thunder rumbles overhead as lightning flashes across the sky")
-        elif weather_code in [61, 63, 65]:  # Rain
-            if self.db.weather_modifiers.get("indoor", False):
-                descriptions.append("rain can be heard pattering outside")
-            else:
-                descriptions.append("rain falls steadily")
-        elif weather_code in [45, 48]:  # Foggy/cloudy
-            if not self.db.weather_modifiers.get("indoor", False):
-                descriptions.append("clouds fill the sky")
-            
-        # Combine descriptions
-        if descriptions:
-            weather_desc = ", ".join(descriptions)
-            return f"\nThe weather: {weather_desc}."
-        return ""
-    
-    def update_weather(self):
-        """Update the room's weather data."""
-        weather_data = self.get_weather_data()
-        if weather_data:
-            self.db.weather_data = weather_data 
-    
     def wrap_text(self, text):
         """
         Wraps text to the configured width.
@@ -181,18 +80,29 @@ class WeatherAwareRoom(DefaultRoom):
             str: Wrapped text
         """
         width = getattr(settings, 'ROOM_DESCRIPTION_WIDTH', 78)
-        return fill(text, width=width, expand_tabs=True, replace_whitespace=False)
-    
-    def return_appearance(self, looker):
-        """
-        This formats a description. It is the hook a 'look' command
-        should call.
-        """
-        if not looker:
-            return ""
-            
-        # Get the base appearance
-        appearance = super().return_appearance(looker)
+        wrapper = TextWrapper(width=width, expand_tabs=True, 
+                            replace_whitespace=False,
+                            break_long_words=False,
+                            break_on_hyphens=False)
+        return wrapper.fill(text)
         
-        # Debug info is now handled in get_display_desc
-        return appearance
+    def return_appearance(self, looker, **kwargs):
+        """
+        This is called when someone looks at this room.
+        Wrap the description text before returning.
+        """
+        # Get the base appearance
+        appearance = super().return_appearance(looker, **kwargs)
+        
+        # Split into lines, wrap each line separately to preserve formatting
+        lines = appearance.split('\n')
+        wrapped_lines = []
+        
+        for line in lines:
+            if line.strip():  # Only wrap non-empty lines
+                wrapped_lines.append(self.wrap_text(line))
+            else:
+                wrapped_lines.append(line)
+                
+        # Rejoin the lines
+        return '\n'.join(wrapped_lines)

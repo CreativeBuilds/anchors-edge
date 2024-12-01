@@ -205,3 +205,56 @@ class CmdLastWipe(Command):
             
         except Exception as e:
             self.caller.msg("Unable to determine last wipe time.") 
+
+class CmdChangelog(Command):
+    """
+    View the game's changelog.
+    Shows what's new and what has changed in the game.
+    
+    Usage:
+        changelog [version]
+        
+    Examples:
+        changelog        - Show full changelog
+        changelog 0.0.1  - Show changes for version 0.0.1
+    """
+    key = "changelog"
+    aliases = ["changes", "updates"]
+    locks = "cmd:all()"  # Everyone can view changelog
+    help_category = "General"  # Changed from Info to General
+    
+    def func(self):
+        """Execute command."""
+        try:
+            with open("CHANGELOG", 'r') as f:
+                changelog = f.read()
+            
+            if self.args:
+                # Show specific version
+                version = self.args.strip()
+                sections = changelog.split('v')
+                for section in sections:
+                    if section.startswith(version):
+                        # Color the version number blue
+                        section = section.replace(version, f"|c{version}|n", 1)
+                        self.caller.msg(f"v{section}")
+                        return
+                self.caller.msg(f"Version v{version} not found in changelog.")
+            else:
+                # Show full changelog with colored version numbers
+                self.caller.msg("|wAnchors Edge Changelog|n")
+                self.caller.msg("|y(Newest to Oldest)|n")
+                self.caller.msg("-" * 50)
+                
+                # Show full changelog with colored version numbers
+                colored_log = changelog.replace('v', '|cv')
+                colored_log = colored_log.replace('\n-', '|n\n-')
+                self.caller.msg(colored_log)
+                
+                self.caller.msg("-" * 50)
+                self.caller.msg("Use |wchangelog <version>|n to see a specific version.")
+                
+        except FileNotFoundError:
+            self.caller.msg("Changelog file not found.")
+        except Exception as e:
+            self.caller.msg(f"Error reading changelog: {e}") 

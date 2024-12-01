@@ -316,31 +316,59 @@ class Character(ObjectParent, DefaultCharacter):
             return True
         return False
 
-    def apply_racial_modifiers(self, race, subrace=None):
-        """Apply racial stat modifiers."""
-        if race not in settings.AVAILABLE_RACES:
-            logger.log_err(f"Invalid race: {race}")
-            return False
-            
-        race_data = settings.AVAILABLE_RACES[race]
-        modifiers = race_data["modifiers"]
+    def calculate_stats(self):
+        """
+        Calculate current stats based on race, subrace, and background modifiers.
+        """
+        # Start with base stats
+        stats = dict(settings.BASE_CHARACTER_STATS)
         
-        # If race has subraces, use those modifiers instead
-        if subrace and "subraces" in race_data:
-            if subrace in race_data["modifiers"]:
-                modifiers = race_data["modifiers"][subrace]
+        # Get race and subrace
+        race_tags = self.tags.get(category="race")
+        subrace_tags = self.tags.get(category="subrace")
+        background_tags = self.tags.get(category="background")
+        
+        race = race_tags[0] if race_tags else None
+        subrace = subrace_tags[0] if subrace_tags else None
+        background = background_tags[0] if background_tags else None
+        
+        if race:
+            race = race.capitalize()
+            # Apply racial modifiers
+            if subrace:
+                subrace = subrace.lower()
+                if subrace in settings.AVAILABLE_RACES[race]["modifiers"]:
+                    racial_mods = settings.AVAILABLE_RACES[race]["modifiers"][subrace]
+                    for stat, mod in racial_mods.items():
+                        stats[stat] += mod
             else:
-                logger.log_err(f"Invalid subrace: {subrace} for race: {race}")
-                return False
-                
-        # Apply modifiers
-        for stat, mod in modifiers.items():
-            current = getattr(self.db, stat.lower())
-            setattr(self.db, stat.lower(), current + mod)
-            
-        self.db.race = race
-        self.db.subrace = subrace
-        return True
+                if "modifiers" in settings.AVAILABLE_RACES[race]:
+                    racial_mods = settings.AVAILABLE_RACES[race]["modifiers"]
+                    for stat, mod in racial_mods.items():
+                        stats[stat] += mod
+        
+        if background:
+            background = background.capitalize()
+            # Apply background modifiers
+            if background in settings.CHARACTER_BACKGROUNDS:
+                bg_mods = settings.CHARACTER_BACKGROUNDS[background]["stats"]
+                for stat, mod in bg_mods.items():
+                    stats[stat] += mod
+        
+        return stats
+
+    def get_stat(self, stat):
+        """
+        Get a specific stat's current value.
+        
+        Args:
+            stat (str): The stat to get (STR, DEX, etc.)
+        
+        Returns:
+            int: The calculated stat value
+        """
+        stats = self.calculate_stats()
+        return stats.get(stat, 10)  # Default to 10 if stat not found
 
 class NPC(Character):
     """Base NPC class with conversation memory"""

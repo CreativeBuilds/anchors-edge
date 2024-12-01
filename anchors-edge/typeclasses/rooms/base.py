@@ -94,6 +94,29 @@ class WeatherAwareRoom(DefaultRoom):
         # Get the base appearance
         appearance = super().return_appearance(looker, **kwargs)
         
+        # Get all characters in the room
+        characters = [obj for obj in self.contents 
+                     if obj.is_typeclass('typeclasses.characters.Character') 
+                     and obj != looker]
+        
+        # Get all NPCs in the room (you might want to adjust this based on your NPC typeclass)
+        npcs = [obj for obj in self.contents 
+                if obj.is_typeclass('typeclasses.npcs.NPC')]
+        
+        # Add character and NPC section if there are any
+        if characters or npcs:
+            appearance += "\n\n|wPresent here:|n"
+            
+            # List characters
+            if characters:
+                for char in characters:
+                    appearance += f"\n- |c{char.name}|n"
+                    
+            # List NPCs
+            if npcs:
+                for npc in npcs:
+                    appearance += f"\n- |y{npc.name}|n"
+        
         # Split into lines, wrap each line separately to preserve formatting
         lines = appearance.split('\n')
         wrapped_lines = []
@@ -106,3 +129,13 @@ class WeatherAwareRoom(DefaultRoom):
                 
         # Rejoin the lines
         return '\n'.join(wrapped_lines)
+
+RESPAWN_MESSAGE = """
+The crushing darkness of death gives way to a gentle, phosphorescent glow. Your consciousness drifts through familiar waters - the same waters that lap at the shores of Anchors Edge. Ancient mariners spoke of the Tide Mother's mercy, how she claims no soul that still has purpose in her realm.
+
+The salt spray carries whispers of forgotten tales: of sailors lost at sea, of promises to loved ones left unfulfilled, of adventures yet to be had. The very essence of the harbor town seems to pull at you, refusing to let you drift into the great beyond.
+
+Gradually, the ethereal currents guide you back to shore. You feel your form solidifying as the waves gently deposit you on the sandy beach where the harbor meets the sea. The taste of salt lingers on your lips as consciousness fully returns, your body whole once more.
+
+The familiar creaking of ship timbers and calls of seabirds welcome you back to the world of the living. The weathered steps leading up to the harbor docks await nearby - another soul returned by the Tide Mother's grace to continue their tale in Anchors Edge.
+"""

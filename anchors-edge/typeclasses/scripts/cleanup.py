@@ -9,7 +9,7 @@ from evennia import create_object
 from evennia.commands.default.cmdset_character import CharacterCmdSet
 
 class WorldCleanupScript(DefaultScript):
-    """Script for cleaning up and resetting the game world"""
+    """Clean up the game world"""
     
     def clean_world(self):
         """Clean up the game world"""
@@ -38,7 +38,7 @@ class WorldCleanupScript(DefaultScript):
         for obj in ObjectDB.objects.all():
             if obj.id > 2:  # Keep #1 (void) and #2 (limbo)
                 obj.delete()
-                
+        
         # Recreate characters for accounts and place them in Limbo
         for account in accounts:
             if account.id in char_map:

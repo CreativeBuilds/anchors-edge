@@ -258,3 +258,85 @@ class CmdChangelog(Command):
             self.caller.msg("Changelog file not found.")
         except Exception as e:
             self.caller.msg(f"Error reading changelog: {e}") 
+
+class CmdResetWorld(Command):
+    """
+    Reset the game world by removing all objects except players and Limbo,
+    then rebuild using world batch commands.
+    
+    Usage:
+        @resetworld [--force]
+        
+    Options:
+        --force     Skip confirmation
+    """
+    key = "@resetworld"
+    locks = "cmd:perm(Admin)"
+    help_category = "Admin"
+    
+    def func(self):
+        """Execute command."""
+        caller = self.caller
+        force = "--force" in self.args
+        
+        if not force:
+            caller.msg("|rWARNING: This will delete all rooms, objects, and NPCs.|n")
+            caller.msg("Players will be moved to Limbo and the world will be rebuilt.")
+            caller.msg("Are you sure? Use |w@resetworld --force|n to confirm.")
+            return
+            
+        try:
+            # First, ensure Limbo exists
+            limbo = search.objects('Limbo')
+            if not limbo:
+                # Create Limbo if it doesn't exist
+                from evennia.objects.models import ObjectDB
+                from django.conf import settings
+                limbo = create.create_object(
+                    settings.BASE_ROOM_TYPECLASS,
+                    "Limbo",
+                    nohome=True
+                )
+                limbo.db.desc = "This is Limbo, the space between spaces."
+            else:
+                limbo = limbo[0]
+            
+            # Move all players to Limbo
+            caller.msg("Moving players to Limbo...")
+            for account in AccountDB.objects.all():
+                if hasattr(account.db, '_playable_characters'):
+                    for char in account.db._playable_characters:
+                        if char and char.location:
+                            char.location = limbo
+            
+            # Delete all objects except players, Limbo, and essential system objects
+            caller.msg("Deleting world objects...")
+            for obj in ObjectDB.objects.all():
+                if (not obj.is_typeclass('typeclasses.characters.Character') and  # Not a player character
+                    obj.id != limbo.id and                                        # Not Limbo
+                    not obj.is_superuser and                                      # Not a superuser object
+                    obj.id > 2):                                                  # Not system objects (#1, #2)
+                    try:
+                        obj.delete()
+                    except Exception as e:
+                        caller.msg(f"Error deleting {obj}: {e}")
+            
+            # Run world building commands
+            caller.msg("Rebuilding world...")
+            from evennia.utils import create
+            try:
+                # Create a temporary script to run the batch commands
+                script = create.create_script(
+                    'evennia.utils.batchprocessors.BatchCommandProcessor',
+                    key='world_builder'
+                )
+                script.db.commands = ['@batchcommand world.batch_cmds']
+                script.start()
+            except Exception as e:
+                caller.msg(f"|rError running world build commands: {e}|n")
+                return
+            
+            caller.msg("|gWorld reset complete!|n")
+            
+        except Exception as e:
+            caller.msg(f"|rError resetting world: {e}|n") 

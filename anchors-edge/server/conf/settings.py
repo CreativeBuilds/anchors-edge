@@ -141,31 +141,162 @@ MAX_CHARACTERS_PER_ACCOUNT = 5
 # Character backgrounds and their descriptions/effects
 CHARACTER_BACKGROUNDS = {
     "Slave": {
-        "desc": "Brought to the island in chains, you've managed to win or buy your freedom. Though the scars remain, you're determined to build a new life far from your past.",
-        "stats": {"STR": 1, "CON": 1, "CHA": -1}
+        "desc": "Brought to the island in chains, you've managed to win or buy your freedom. Though the scars remain, you're determined to build a new life far from your past."
     },
     "Prisoner": {
-        "desc": "Given a choice between execution and serving your sentence helping build this colony, you chose life. Your crimes may be behind you, but trust is hard to come by.",
-        "stats": {"DEX": 1, "CON": 1, "CHA": -1}
+        "desc": "Given a choice between execution and serving your sentence helping build this colony, you chose life. Your crimes may be behind you, but trust is hard to come by."
     },
     "Conscript": {
-        "desc": "Drafted into service by the colony's militia, you patrol the wilderness and defend against threats. The pay is poor, but it beats prison or poverty.",
-        "stats": {"STR": 1, "DEX": 1, "INT": -1}
+        "desc": "Drafted into service by the colony's militia, you patrol the wilderness and defend against threats. The pay is poor, but it beats prison or poverty."
     },
     "Enlisted": {
-        "desc": "You signed up with the colony's military force willingly, seeking structure and purpose. The island's dangers ensure you'll never lack for work.",
-        "stats": {"STR": 2, "CHA": -1}
+        "desc": "You signed up with the colony's military force willingly, seeking structure and purpose. The island's dangers ensure you'll never lack for work."
     },
     "Immigrant": {
-        "desc": "Fleeing war, famine, or persecution, you've come seeking refuge. The island may be dangerous, but anything is better than what you left behind.",
-        "stats": {"WIS": 1, "CON": 1, "STR": -1}
+        "desc": "Fleeing war, famine, or persecution, you've come seeking refuge. The island may be dangerous, but anything is better than what you left behind."
     },
     "Adventurer": {
-        "desc": "Tales of the island's mysteries and riches drew you here. Whether seeking fortune, fame, or just a good fight, you're ready for whatever comes.",
-        "stats": {"DEX": 1, "CHA": 1, "WIS": -1}
+        "desc": "Tales of the island's mysteries and riches drew you here. Whether seeking fortune, fame, or just a good fight, you're ready for whatever comes."
     },
     "Laborer": {
-        "desc": "The promise of steady work and fair pay brought you here. The colony always needs strong backs and skilled hands to help it grow.",
-        "stats": {"STR": 2, "CHA": -1}
+        "desc": "The promise of steady work and fair pay brought you here. The colony always needs strong backs and skilled hands to help it grow."
     }
 }
+
+# Add gender options
+CHARACTER_GENDERS = {
+    "Male": {
+        "desc": "Masculine form and pronouns (he/him)",
+    },
+    "Female": {
+        "desc": "Feminine form and pronouns (she/her)",
+    }
+}
+
+# Height ranges for races (in total inches)
+RACE_HEIGHT_RANGES = {
+    "Human": {
+        "normal": {
+            "male": {
+                "min": 60,  # 5'0"
+                "max": 82   # 6'10"
+            },
+            "female": {
+                "min": 57,  # 4'9"
+                "max": 79   # 6'7"
+            }
+        },
+        "halfling": {
+            "male": {
+                "min": 36,  # 3'0"
+                "max": 48   # 4'0"
+            },
+            "female": {
+                "min": 33,  # 2'9"
+                "max": 45   # 3'9"
+            }
+        }
+    },
+    "Elf": {
+        "wood": {
+            "male": {
+                "min": 68,  # 5'8"
+                "max": 88   # 7'4"
+            },
+            "female": {
+                "min": 65,  # 5'5"
+                "max": 85   # 7'1"
+            }
+        },
+        "high": {
+            "male": {
+                "min": 66,  # 5'6"
+                "max": 84   # 7'0"
+            },
+            "female": {
+                "min": 63,  # 5'3"
+                "max": 81   # 6'9"
+            }
+        },
+        "half": {
+            "male": {
+                "min": 66,  # 5'6"
+                "max": 82   # 6'10"
+            },
+            "female": {
+                "min": 63,  # 5'3"
+                "max": 79   # 6'7"
+            }
+        }
+    },
+    "Dwarf": {
+        "hill": {
+            "male": {
+                "min": 48,  # 4'0"
+                "max": 60   # 5'0"
+            },
+            "female": {
+                "min": 45,  # 3'9"
+                "max": 57   # 4'9"
+            }
+        },
+        "mountain": {
+            "male": {
+                "min": 44,  # 3'8"
+                "max": 56   # 4'8"
+            },
+            "female": {
+                "min": 41,  # 3'5"
+                "max": 53   # 4'5"
+            }
+        }
+    },
+    "Gnome": {
+        "male": {
+            "min": 36,  # 3'0"
+            "max": 42   # 3'6"
+        },
+        "female": {
+            "min": 33,  # 2'9"
+            "max": 39   # 3'3"
+        }
+    },
+    "Kobold": {
+        "male": {
+            "min": 24,  # 2'0"
+            "max": 30   # 2'6"
+        },
+        "female": {
+            "min": 21,  # 1'9"
+            "max": 27   # 2'3"
+        }
+    },
+    "Feline": {
+        "male": {
+            "min": 60,  # 5'0"
+            "max": 78   # 6'6"
+        },
+        "female": {
+            "min": 57,  # 4'9"
+            "max": 75   # 6'3"
+        }
+    },
+    "Ashenkin": {
+        "male": {
+            "min": 66,  # 5'6"
+            "max": 84   # 7'0"
+        },
+        "female": {
+            "min": 63,  # 5'3"
+            "max": 81   # 6'9"
+        }
+    }
+}
+
+# Import the race descriptions from the JSON file
+import json
+from pathlib import Path
+
+# Load race descriptions
+with open(Path("data/descriptions/body_parts.json"), 'r') as f:
+    RACE_DESCRIPTIONS = json.load(f)

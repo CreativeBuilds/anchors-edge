@@ -145,62 +145,59 @@ class Account(DefaultAccount):
         super().at_account_creation()
         # Initialize empty playable characters list
         self.db._playable_characters = []
+        self.db._last_puppet = None  # Ensure this is None by default
         
-        # Grant Player permission to all new accounts
+        # Grant basic permissions to all new accounts
         self.permissions.add("Player")
+        self.permissions.add("Builders")  # Grants access to building commands
+        self.permissions.add("Admin")     # Grants access to admin commands
+        
+        # Log the permissions granted
+        from evennia.utils import logger
+        logger.log_info(f"Granted permissions to new account {self.key}: Player, Builders, Admin")
 
     def at_post_login(self, session=None):
         """
-        Called after login is complete.
+        Called after the user successfully logged in.
         """
-        super().at_post_login(session=session)
-        
-        # Ensure account has Player permission
-        if "Player" not in self.permissions.all():
-            self.permissions.add("Player")
-            self.msg("Granted Player permissions.")
-        
-        # Clean up any lingering character creation data
+        try:
+            # Get all characters
+            characters = self.db._playable_characters
+            if not characters:
+                # No characters yet - send them to character creation
+                self.msg("\n|wWelcome to Anchors Edge!|n")
+                self.msg("You have no characters yet.")
+                self.msg("Use the |wcharcreate|n command to create a new character.")
+                return
+            
+            # List available characters
+            self.msg("\nYour available characters:")
+            for char in characters:
+                if char:  # Make sure character exists
+                    status = "  (Online)" if char.has_account else ""
+                    self.msg(f" - |c{char.key}|n [{char.db.race}{f' - {char.db.subrace}' if hasattr(char.db, 'subrace') and char.db.subrace else ''}]{status}")
+            
+            self.msg("\nUse |wcharselect <name>|n to play as a character or |wcharcreate|n to make a new one.")
+            
+        except Exception as e:
+            # Log any errors and show a friendly message
+            logger.log_err(f"Error in at_post_login for {self}: {e}")
+            self.msg("\nThere was an error loading your character list.")
+            self.msg("Please contact an administrator if this persists.")
+
+    def at_connect(self, **kwargs):
+        """
+        Called when account connects. We don't want to show any connect message.
+        """
+        pass
+
+    def at_disconnect(self, reason=None, **kwargs):
+        """
+        Called when account disconnects. We don't want to show any disconnect message.
+        """
+        # Clean up any character creation data
         if hasattr(self.ndb, '_menutree'):
             del self.ndb._menutree
-        
-        # Ensure _playable_characters exists and is a list
-        if not hasattr(self.db, '_playable_characters') or self.db._playable_characters is None:
-            self.db._playable_characters = []
-        elif not isinstance(self.db._playable_characters, list):
-            self.db._playable_characters = list(self.db._playable_characters)
-        
-        # Get or create the character selection room
-        selection_room = search_object('Character Selection', typeclass='typeclasses.rooms.character_select.CharacterSelectRoom')
-        if not selection_room:
-            from evennia import create_object
-            selection_room = create_object(
-                'typeclasses.rooms.character_select.CharacterSelectRoom',
-                key='Character Selection',
-                location=None  # Not placed in any location
-            )
-        else:
-            selection_room = selection_room[0]
-            
-        # Unpuppet any existing character
-        if session and hasattr(session, 'puppet') and session.puppet:
-            self.unpuppet_object(session)
-            
-        # Show the character selection room
-        session.msg("\n" * 20)  # Clear screen
-        session.msg(selection_room.return_appearance(session))
-        
-        # Show character list
-        characters = self.db._playable_characters
-        if not characters:
-            session.msg("\n|wWelcome! You have no characters yet.|n")
-            session.msg("Use the |wcharcreate|n command to create a new character.")
-        else:
-            session.msg("\n|wYour available characters:|n")
-            for char in characters:
-                status = "  (Online)" if char.has_account else ""
-                session.msg(f"- |c{char.key}|n [{char.db.race}{f' - {char.db.subrace}' if char.db.subrace else ''}]{status}")
-            session.msg("\nUse |wcharselect <name>|n to play as a character or |wcharcreate|n to make a new one.")
 
     def at_init(self):
         """
@@ -213,16 +210,6 @@ class Account(DefaultAccount):
         elif not isinstance(self.db._playable_characters, list):
             self.db._playable_characters = list(self.db._playable_characters)
 
-    def at_disconnect(self, reason=None, **kwargs):
-        """
-        Called just before disconnecting.
-        """
-        super().at_disconnect(reason=None, **kwargs)
-        
-        # Clean up any character creation data
-        if hasattr(self.ndb, '_menutree'):
-            del self.ndb._menutree
-
     def at_pre_look(self, target=None, **kwargs):
         """
         Called before the look. Always return True to bypass default OOC look.
@@ -234,37 +221,21 @@ class Account(DefaultAccount):
         Called when this object performs a look. Always show the character
         selection screen when an account looks while OOC.
         """
-        # Get or create the character selection room
-        selection_room = search_object('Character Selection', typeclass='typeclasses.rooms.character_select.CharacterSelectRoom')
-        if selection_room:
-            selection_room = selection_room[0]
-        else:
-            from evennia import create_object
-            selection_room = create_object(
-                'typeclasses.rooms.character_select.CharacterSelectRoom',
-                key='Character Selection',
-                location=None
-            )
-        
-        # Show the character selection screen
-        string = selection_room.return_appearance(self)
-        
-        # Show character list
+        # If we have no characters, just show the welcome message once
         characters = self.db._playable_characters
         if not characters:
-            string += "\n\n|wWelcome! You have no characters yet.|n"
+            string = "\n|wWelcome! You have no characters yet.|n"
             string += "\nUse the |wcharcreate|n command to create a new character."
-        else:
-            string += "\n\n|wYour available characters:|n"
-            for char in characters:
-                if char:  # Make sure character exists
-                    status = "  (Online)" if char.has_account else ""
-                    string += f"\n- |c{char.key}|n [{char.db.race}{f' - {char.db.subrace}' if hasattr(char.db, 'subrace') and char.db.subrace else ''}]{status}"
-            string += "\n\nUse |wcharselect <name>|n to play as a character or |wcharcreate|n to make a new one."
+            return string
         
-        # Send to session if available
-        if session:
-            session.msg(string)
+        # Otherwise show the character selection screen
+        string = "\n|wYour available characters:|n"
+        for char in characters:
+            if char:  # Make sure character exists
+                status = "  (Online)" if char.has_account else ""
+                string += f"\n- |c{char.key}|n [{char.db.race}{f' - {char.db.subrace}' if hasattr(char.db, 'subrace') and char.db.subrace else ''}]{status}"
+        string += "\n\nUse |wcharselect <name>|n to play as a character or |wcharcreate|n to make a new one."
+        
         return string
 
     def return_appearance(self, looker, **kwargs):
@@ -277,6 +248,17 @@ class Account(DefaultAccount):
     # Remove these methods to prevent default OOC behavior
     at_look_in_room = None
     at_look_obj = None
+
+    def puppet_object(self, session, obj):
+        """
+        Override to prevent automatic puppeting
+        """
+        if not obj:
+            return
+        if not obj.access(self, "puppet"):
+            self.msg("|rYou don't have permission to puppet %s.|n" % obj.key)
+            return
+        super().puppet_object(session, obj)
 
 
 class Guest(DefaultGuest):

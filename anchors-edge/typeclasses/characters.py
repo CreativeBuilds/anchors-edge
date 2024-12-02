@@ -204,96 +204,51 @@ class Character(ObjectParent, DefaultCharacter):
         else:
             return "You are barely conscious and should probably stop drinking."
 
+    def format_description(self):
+        """
+        Format the character's stored descriptions into a readable format.
+        Returns a string with all descriptions formatted.
+        """
+        if not self.db.descriptions:
+            return "You see nothing special."
+            
+        # Define the order we want to show parts in
+        part_order = [
+            'eyes', 'hair', 'face', 'hands', 'arms', 'chest', 
+            'stomach', 'back', 'legs', 'feet'
+        ]
+        
+        # Add race-specific parts
+        if hasattr(self.db, 'race'):
+            if self.db.race in ["Kobold", "Ashenkin"]:
+                part_order.extend(["horns", "tail"])
+            elif self.db.race == "Feline":
+                part_order.append("tail")
+        
+        # Build the description string
+        desc_lines = []
+        for part in part_order:
+            if part in self.db.descriptions:
+                desc_lines.append(f"|w{part}:|n {self.db.descriptions[part]}")
+                
+        return "\n".join(desc_lines)
+
     def return_appearance(self, looker, **kwargs):
         """
-        This formats a description. It is the hook a 'look' command
-        should call.
-        Args:
-            looker (Object): Object doing the looking.
-            **kwargs (dict): Arbitrary, optional arguments for users
-                overriding the call (unused by default).
+        This formats what another character sees when looking
+        at this character.
         """
         if not looker:
             return ""
-        
-        # Get the base description
-        string = f"{self.key}(#{self.id})|/"
-        if self.db.desc:
-            string += self.db.desc
-        
-        # Add intoxication level to the description if the character is drunk
-        if hasattr(self, 'db'):
-            intoxication = self.db.intoxication if hasattr(self.db, 'intoxication') else 0
-            if intoxication:
-                string += get_intoxication_description(intoxication)
-        
-        # Get room context
-        room = self.location
-        if room and hasattr(room, 'get_time_period') and hasattr(room, 'get_weather'):
-            time_period = room.get_time_period()
-            weather_data = room.db.weather_data if hasattr(room.db, 'weather_data') else {}
             
-            # Extract weather conditions
-            conditions = []
-            if weather_data.get('weather_code') in [51, 53, 55, 61, 63, 65, 80, 81, 82]:
-                conditions.append("rain")
-            if weather_data.get('wind_speed_10m', 0) > 15:
-                conditions.append("windy")
-            if weather_data.get('weather_code') in [95, 96, 99]:
-                conditions.append("thunderstorm")
-            if weather_data.get('cloud_cover', 0) > 80:
-                conditions.append("overcast")
-            elif weather_data.get('cloud_cover', 0) > 40:
-                conditions.append("partly cloudy")
-            
-            weather_str = " and ".join(conditions) if conditions else "clear"
-            
-            # Use OpenRouter to get dynamic description
-            if OPENROUTER_API_KEY:
-                url = "https://openrouter.ai/api/v1/chat/completions"
-                headers = {
-                    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-                    "Content-Type": "application/json",
-                    "HTTP-Referer": "http://localhost:4001",
-                    "X-Title": f"A.E. {looker.key} Character Look"
-                }
-                
-                data = {
-                    "model": "x-ai/grok-vision-beta",
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": (
-                                f"Character description: {string}|/|/"
-                                f"Current conditions:|/"
-                                f"Time: {time_period}|/"
-                                f"Weather: {weather_str}|/"
-                                f"Temperature: {weather_data.get('apparent_temperature', 'unknown')}°F|/"
-                                f"Wind Speed: {weather_data.get('wind_speed_10m', 'unknown')} mph|/|/"
-                                "Add a single, poetic sentence describing how these conditions affect "
-                                "the character's appearance. Focus on lighting, shadows, and atmospheric effects. "
-                                "Consider how the weather and time of day interact with their features.|/|/"
-                                "Examples based on conditions:|/"
-                                "- Rain: |cRaindrops glisten in her hair like tiny crystals.|n|/"
-                                "- Night + Clear: |wMoonlight catches her elven features, giving them an ethereal glow.|n|/"
-                                "- Dawn + Windy: |yThe morning breeze gently lifts her hair as dawn's first light touches her face.|n|/"
-                                "Keep it short, atmospheric, and focused on the current conditions."
-                            )
-                        }
-                    ],
-                    "temperature": 0.7,
-                    "max_tokens": 60
-                }
-                
-                try:
-                    response = requests.post(url, headers=headers, json=data)
-                    if response.status_code == 200:
-                        ai_description = response.json()['choices'][0]['message']['content'].strip()
-                        string += f"|/{ai_description}"
-                except Exception as e:
-                    print(f"Error getting dynamic appearance description: {e}")
+        # Get the character's name and any titles
+        name = self.get_display_name(looker)
         
-        return string
+        # Format the description
+        desc = self.format_description()
+        
+        # Combine into final appearance
+        return f"|c{name}|n\n\n{desc}"
 
     def can_show_consume_message(self):
         """Check if enough time has passed to show another consume message"""

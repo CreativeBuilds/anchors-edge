@@ -28,8 +28,8 @@ You must either select an existing character or create a new one to enter
 the game world.
 """
         
-        # Lock down most commands in this room
-        self.locks.add("call:false();puppet:false()")
+        # Lock down most commands in this room with proper lock syntax
+        self.locks.add("call:false();puppet:perm(Admin)")
         
     def return_appearance(self, looker, **kwargs):
         """
@@ -37,7 +37,8 @@ the game world.
         """
         # For sessions without a puppet (accounts in character selection)
         if hasattr(looker, 'account') and looker.account:
-            return self.db.desc
+            # Let the account's at_look handle the display
+            return ""
             
         # For normal characters (shouldn't be here anyway)
         return "|rYou shouldn't be here.|n"

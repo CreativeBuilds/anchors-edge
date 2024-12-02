@@ -1,53 +1,39 @@
 """
-At_initial_setup module template
-
-Custom at_initial_setup method. This allows you to hook special
-modifications to the initial server startup process. Note that this
-will only be run once - when the server starts up for the very first
-time! It is called last in the startup process and can thus be used to
-overload things that happened before it.
-
-The module must contain a global function at_initial_setup().  This
-will be called without arguments. Note that tracebacks in this module
-will be QUIETLY ignored, so make sure to check it well to make sure it
-does what you expect it to.
-
+At_initial_setup module that creates essential rooms and objects.
 """
 
-from evennia.utils import logger, create
-from evennia.objects.models import ObjectDB
+from evennia import create_object, settings, search_object
+from evennia.utils import logger
+from typeclasses.rooms.base import WeatherAwareRoom
+from typeclasses.rooms.character_select import CharacterSelectRoom
+from typeclasses.rooms.tavern import TavernRoom
+from typeclasses.exits import Exit
+from django.conf import settings as django_settings
+from evennia.commands.default.batchprocess import CmdBatchCommands
 
 def at_initial_setup():
     """
-    This is called only once, when the server starts up for the very first time.
+    Custom at_initial_setup hook.
     """
     try:
-        # Create weather system
-        from typeclasses.scripts import IslandWeatherScript
-        weather_script = create.create_script(IslandWeatherScript)
-        if weather_script:
-            logger.log_info("Weather system initialized successfully.")
-        else:
-            logger.log_err("Failed to create weather system!")
-            
-        # Set up Limbo as default spawn until buildworld command changes it
-        limbo = ObjectDB.objects.get_id(2)  # Limbo is always #2
-        if limbo:
-            # Update settings.py directly
-            settings_path = "server/conf/settings.py"
-            with open(settings_path, 'r') as f:
-                lines = f.readlines()
-            
-            with open(settings_path, 'w') as f:
-                for line in lines:
-                    if line.startswith('DEFAULT_HOME'):
-                        f.write('DEFAULT_HOME = "#2"\n')
-                    elif line.startswith('START_LOCATION'):
-                        f.write('START_LOCATION = "#2"\n')
-                    else:
-                        f.write(line)
-                        
-            logger.log_info("Set Limbo as initial spawn point.")
-            
+        # Get the existing Limbo room
+        default_home = search_object("Limbo")[0]
+        
+        # Update the DEFAULT_HOME setting
+        settings.DEFAULT_HOME = f"#{default_home.id}"
+        django_settings.DEFAULT_HOME = f"#{default_home.id}"
+        
+        # Create character selection room
+        character_select = create_object(
+            typeclass=CharacterSelectRoom,
+            key="Character Selection",
+            home=default_home,
+            report_to=None
+        )
+        character_select.db.desc = "Welcome to Anchors Edge! Here you can create or select your character."
+
+        
     except Exception as e:
-        logger.log_err(f"Error during initial setup: {e}")
+        logger.log_err(f"Error in at_initial_setup: {e}")
+        logger.log_trace()
+        raise

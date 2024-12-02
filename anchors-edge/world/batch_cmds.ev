@@ -12,8 +12,8 @@
 # Delete any existing weather scripts
 @py from evennia.utils import search; [s.delete() for s in search.search_script('weather_controller')]
 
-# Create and initialize weather system
-@py from evennia import create_script; script = create_script('typeclasses.scripts.IslandWeatherScript', key="weather_controller", persistent=True, interval=900, autostart=True)
+# Create and initialize weather system with default values
+@py from evennia import create_script; script = create_script('typeclasses.scripts.IslandWeatherScript', key="weather_controller", persistent=True, interval=900, autostart=True); script.db.temperature = 70; script.db.current_weather = 'clear'; script.db.wind_speed = 5
 
 # Force first update
 @py from evennia.utils import search; script = search.search_script('weather_controller')[0]; script.update_weather()
@@ -21,8 +21,8 @@
 # Wait for script to initialize
 @force me = look
 
-# Verify script is running
-@py self.msg(f"Weather data: {script.get_weather_data('main_island')}")
+# Verify script is running and has data
+@py from evennia.utils import search; script = search.search_script('weather_controller')[0]; self.msg(f"Weather data: Temperature={script.db.temperature}, Weather={script.db.current_weather}, Wind={script.db.wind_speed}")
 
 # Create the main tavern
 @dig/teleport The Salty Maiden;tavern;tut#01 : typeclasses.rooms.tavern.MainTavernRoom

@@ -4,9 +4,14 @@ Character generation commands
 from evennia import Command
 from evennia.utils.evmenu import EvMenu
 from evennia.utils import create
+from evennia.utils import search
 from django.conf import settings
 from evennia.utils.search import search_object
 from textwrap import TextWrapper
+import json
+import random
+from pathlib import Path
+from typeclasses.characters import Character
 
 def _check_name(caller, name):
     """Check if name is valid and unique."""
@@ -47,70 +52,44 @@ def node_race_select(caller):
     text = """
 |c== Character Creation - Race Selection ==|n
 
-Choose your race carefully, as it will determine your starting attributes 
-and abilities in the world.
+Choose your race carefully, as it will shape your character's natural abilities 
+and how they interact with the world.
 
-|wAvailable Races and Subraces:|n"""
+|wAvailable Races:|n"""
     
-    # Add each race with its basic description and subraces
+    # Define race descriptions
     race_info = {
         "Human": {
-            "desc": "Versatile and adaptable",
-            "stats": "",
-            "subraces": {
-                "normal": "(+1 DEX, +1 CHA) - Balanced and adaptable",
-                "halfling": "(+1 DEX, +1 CHA) - Small but lucky"
-            }
+            "desc": "Born with |y|wadaptable|n nature, humans excel at learning new skills and adjusting to any situation. Their |y|wnatural charisma|n and |y|wquick reflexes|n make them natural leaders and adventurers."
         },
         "Elf": {
-            "desc": "Graceful and long-lived",
-            "stats": "",
-            "subraces": {
-                "high": "(+2 INT, -1 CON, +1 WIS) - Magically attuned",
-                "wood": "(+2 DEX, -1 INT, +1 WIS) - One with nature",
-                "half": "(+2 CHA, -1 CON, +1 WIS) - Best of both worlds"
-            }
+            "desc": "Possessing graceful movements and long life, elves maintain an innate connection to the world around them. Their centuries of life grant them |y|wdeep wisdom|n and |y|wkeen intellect|n."
         },
         "Dwarf": {
-            "desc": "Hardy and strong",
-            "stats": "",
-            "subraces": {
-                "mountain": "(+2 STR, -1 DEX, +1 CON) - Strong and hardy",
-                "hill": "(+2 CON, -1 DEX, +1 WIS) - Wise and resilient"
-            }
+            "desc": "Renowned for their |y|wphysical might|n and |y|wresilience|n, dwarves possess legendary |y|wstrength|n and |y|wtoughness|n. Their connection to stone and metal is unmatched."
         },
         "Gnome": {
-            "desc": "Small but intelligent",
-            "stats": "(+2 INT, -1 STR, +1 DEX)",
-            "subraces": {}
+            "desc": "Though physically small, gnomes possess |y|wgreat intellect|n and approach life with curiosity. Their |y|wmental acuity|n and |y|wquick movements|n make them excellent inventors, despite their |y|wphysical limitations|n."
         },
         "Kobold": {
-            "desc": "Quick and cunning",
-            "stats": "(+2 DEX, -1 STR, +1 INT)",
-            "subraces": {}
+            "desc": "|y|wNimble|n and |y|wclever|n, kobolds move with |y|wsurprising agility|n. While |y|wphysically weak|n, they excel through |y|wmental sharpness|n, making them exceptional scouts and problem-solvers."
         },
         "Feline": {
-            "desc": "Agile and charismatic",
-            "stats": "(+2 DEX, -1 INT, +1 CHA)",
-            "subraces": {}
+            "desc": "Born with |y|wnatural agility|n and grace, feline folk move with |y|wfluid precision|n. Their |y|wquick reflexes|n and |y|wcharismatic nature|n make them excellent adventurers, though their |y|wacademic disinterest|n can be a hindrance."
         },
         "Ashenkin": {
-            "desc": "Mysterious and compelling",
-            "stats": "(+2 CHA, -1 WIS, +1 INT)",
-            "subraces": {}
+            "desc": "Mysterious and compelling, the ashenkin possess |y|wnatural charisma|n. Their |y|wmental prowess|n and |y|wcunning|n comes at the cost of their |y|wdiminished wisdom|n."
         }
     }
     
     # Display races and their descriptions
     for race, info in race_info.items():
-        if info['subraces']:
-            text += f"\n\n|y{race}|n - {info['desc']} {info['stats']}"
-            for subrace, subdesc in info['subraces'].items():
-                text += f"\n    - |w{subrace}|n {subdesc}"
-        else:
-            text += f"\n\n|y{race}|n - {info['desc']} {info['stats']}"
+        text += f"\n\n|520|w{race}|n"
+        text += f"\n{info['desc']}"
+        if race in settings.AVAILABLE_RACES and settings.AVAILABLE_RACES[race].get("subraces"):
+            text += f"\n|wVariants:|n {', '.join(settings.AVAILABLE_RACES[race]['subraces'])}"
     
-    text += "\n\n|wEnter your choice (e.g. 'gnome' or 'elf high'):|n"
+    text += "\n\n|wEnter your choice:|n"
 
     def _set_race(caller, raw_string):
         """Handle race selection."""
@@ -139,7 +118,7 @@ and abilities in the world.
             # Store subrace on the menu
             caller.ndb._menutree.subrace = subrace
             
-        return "node_background_select"
+        return "node_gender_select"
     
     options = {"key": "_default", "goto": _set_race}
     return wrap_text(text), options
@@ -156,25 +135,25 @@ Please select a subrace from the following options:
 
 |wAvailable Subraces:|n"""
     
-    # Display available subraces with their stats
+    # Display available subraces with their lore descriptions
     race_info = {
         "Human": {
-            "normal": "(+1 DEX, +1 CHA) - Balanced and adaptable",
-            "halfling": "(+1 DEX, +1 CHA) - Small but lucky"
+            "normal": "The most common variety of humans, known for their adaptability and determination. They represent the majority of human settlers in Anchors Edge.",
+            "halfling": "A diminutive variety of humans who compensate for their small stature with remarkable agility and an uncanny stroke of fortune that seems to follow them."
         },
         "Elf": {
-            "high": "(+2 INT, -1 CON, +1 WIS) - Magically attuned",
-            "wood": "(+2 DEX, -1 INT, +1 WIS) - One with nature",
-            "half": "(+2 CHA, -1 CON, +1 WIS) - Best of both worlds"
+            "wood": "Standing as tall as humans but with more elongated limbs, wood elves move with a fluid grace that speaks to their deep connection with the natural world. Their features are softer than their high elf kin, and their skin often bears the weathered marks of a life lived among the elements.",
+            "high": "Distinguished by their angular features and almost ethereal appearance, high elves possess an innate connection to magical energies. Their complexions tend to be pale and drawn, with sharp, aristocratic features that hint at their arcane affinity.",
+            "half": "Born of human and elven parents, half-elves combine the adaptability of humans with elven grace. Their features are a unique blend of both ancestries, neither fully elven nor fully human, but beautiful in their own distinct way."
         },
         "Dwarf": {
-            "mountain": "(+2 STR, -1 DEX, +1 CON) - Strong and hardy",
-            "hill": "(+2 CON, -1 DEX, +1 WIS) - Wise and resilient"
+            "mountain": "Powerfully built with broad shoulders and thick limbs, mountain dwarves are the embodiment of dwarven might. Their skin tends to be more weathered, bearing the marks of their forge work and mountain homes.",
+            "hill": "More rounded in feature than their mountain kin, hill dwarves possess an earthy wisdom and hardy constitution. Their builds are stockier, and they often sport more elaborate beards adorned with clan braids."
         }
     }
     
     for subrace, desc in race_info[race].items():
-        text += f"\n    - |w{subrace}|n {desc}"
+        text += f"\n\n|w{subrace}|n\n{desc}"
     
     text += "\n\n|wEnter your choice:|n"
     
@@ -187,7 +166,7 @@ Please select a subrace from the following options:
             
         # Store subrace on the menu
         caller.ndb._menutree.subrace = subrace
-        return "node_background_select"
+        return "node_gender_select"
     
     options = {"key": "_default", "goto": _set_subrace}
     return wrap_text(text), options
@@ -206,9 +185,6 @@ This choice will affect your starting location and initial relationships.
     for bg, info in settings.CHARACTER_BACKGROUNDS.items():
         text += f"\n\n|y{bg}|n"
         text += f"\n    {info['desc']}"
-        text += f"\n    |wStat Changes:|n "
-        for stat, mod in info['stats'].items():
-            text += f"|W{stat} {'+' if mod > 0 else ''}{mod}|n "
     
     text += "\n\n|wEnter the name of your chosen background:|n"
     
@@ -221,10 +197,166 @@ This choice will affect your starting location and initial relationships.
             
         # Store background on the menu
         caller.ndb._menutree.background = background
-        return "node_name_select"
+        return "node_description_select"
     
     options = {"key": "_default", "goto": _set_background}
     return wrap_text(text), options
+
+def format_full_description(descriptions):
+    """Format all descriptions into a cohesive character appearance."""
+    parts = []
+    
+    # Face area (eyes, hair, face)
+    face_features = []
+    for part in ['face', 'eyes', 'hair']:
+        if part in descriptions:
+            face_features.append(descriptions[part])
+    if face_features:
+        parts.append(" ".join(face_features))
+    
+    # Upper body (arms, chest, back)
+    upper_body = []
+    for part in ['arms', 'chest', 'back']:
+        if part in descriptions:
+            upper_body.append(descriptions[part])
+    if upper_body:
+        parts.append(" ".join(upper_body))
+    
+    # Lower body (stomach, legs, feet)
+    lower_body = []
+    for part in ['stomach', 'legs', 'feet']:
+        if part in descriptions:
+            lower_body.append(descriptions[part])
+    if lower_body:
+        parts.append(" ".join(lower_body))
+    
+    # Special features last (horns, tail)
+    special = []
+    for part in ['horns', 'tail']:
+        if part in descriptions:
+            special.append(descriptions[part])
+    if special:
+        parts.append(" ".join(special))
+    
+    # Join all parts with proper spacing
+    return " ".join(parts)
+
+def node_description_select(caller):
+    """Select character descriptions."""
+    text = """
+|c== Character Creation - Character Description ==|n
+
+Your character has been given default descriptions based on their race. You can:
+- Type |wshow|n to see your character's full appearance
+- Type |wshow <part>|n to see a specific description
+- Type |w<part> <description>|n to change a description
+- Type |whelp|n to see example descriptions for your race
+
+Available parts: eyes, hair, face, hands, arms, chest, stomach, back, legs, feet
+
+Type |wdone|n when finished.
+"""
+    
+    # Initialize descriptions dict if not exists
+    if not hasattr(caller.ndb._menutree, 'descriptions'):
+        # Generate default descriptions based on race
+        race = caller.ndb._menutree.race
+        if race in settings.RACE_DESCRIPTIONS:
+            default_descs = settings.RACE_DESCRIPTIONS[race]
+            descriptions = {}
+            for part, descs in default_descs.items():
+                if isinstance(descs, list) and descs:
+                    descriptions[part] = random.choice(descs)
+            caller.ndb._menutree.descriptions = descriptions
+        else:
+            caller.ndb._menutree.descriptions = {}
+
+    def _handle_description(caller, raw_string):
+        """Handle description input."""
+        args = raw_string.strip().lower().split(None, 1)
+        if not args:
+            return None
+
+        command = args[0]
+
+        if command == 'done':
+            return "node_name_select"
+            
+        if command == 'help':
+            race = caller.ndb._menutree.race
+            if race in settings.RACE_DESCRIPTIONS:
+                examples = settings.RACE_DESCRIPTIONS[race]
+                caller.msg("\n|cExample descriptions for your race:|n")
+                for part, descs in examples.items():
+                    if isinstance(descs, list) and descs:
+                        caller.msg(f"|w{part}:|n {descs[0]}")
+            return None
+            
+        if command == 'show':
+            if len(args) > 1:
+                # Show specific part
+                part = args[1]
+                if part in caller.ndb._menutree.descriptions:
+                    caller.msg(f"|w{part}:|n {caller.ndb._menutree.descriptions[part]}")
+                else:
+                    caller.msg(f"No description set for {part}.")
+            else:
+                # Show all descriptions in structured format
+                caller.msg("|c== Character Description ==|n")
+                # Define the order we want to show parts in
+                part_order = [
+                    'eyes', 'hair', 'face', 'hands', 'arms', 'chest', 
+                    'stomach', 'back', 'legs', 'feet'
+                ]
+                # Add race-specific parts
+                race = caller.ndb._menutree.race
+                if race in ["Kobold", "Ashenkin"]:
+                    part_order.extend(["horns", "tail"])
+                elif race == "Feline":
+                    part_order.append("tail")
+                
+                # Display descriptions in order
+                for part in part_order:
+                    if part in caller.ndb._menutree.descriptions:
+                        caller.msg(f"|w{part}:|n {caller.ndb._menutree.descriptions[part]}")
+            return None
+
+        # Handle setting a description
+        valid_parts = [
+            'eyes', 'hair', 'face', 'hands', 'arms', 'chest', 
+            'stomach', 'back', 'legs', 'feet'
+        ]
+        
+        # Add race-specific parts
+        race = caller.ndb._menutree.race
+        if race in ["Kobold", "Ashenkin"]:
+            valid_parts.extend(["horns", "tail"])
+        elif race == "Feline":
+            valid_parts.append("tail")
+
+        if command not in valid_parts:
+            caller.msg(f"Invalid body part. Valid parts are: {', '.join(valid_parts)}")
+            return None
+
+        if len(args) < 2:
+            caller.msg(f"Please provide a description for {command}.")
+            return None
+
+        # Store the description
+        caller.ndb._menutree.descriptions[command] = args[1]
+        caller.msg(f"\nUpdated description for |w{command}|n:")
+        caller.msg(f"{args[1]}")
+        
+        # Show the current description list
+        caller.msg("\n|cCurrent Descriptions:|n")
+        for part in valid_parts:
+            if part in caller.ndb._menutree.descriptions:
+                caller.msg(f"|w{part}:|n {caller.ndb._menutree.descriptions[part]}")
+        
+        return None
+            
+    options = {"key": "_default", "goto": _handle_description}
+    return text, options
 
 def node_name_select(caller):
     """Select character name."""
@@ -286,56 +418,40 @@ Are you sure you want to use this name?
 
 def node_create_char(caller):
     """Create the character."""
-    menu = caller.ndb._menutree
-    
-    # Verify we have all required attributes
-    if not hasattr(menu, 'race') or not hasattr(menu, 'charname') or not hasattr(menu, 'background'):
-        caller.msg("Error: Missing required character information.")
-        return "node_race_select"
-    
-    race = menu.race
-    subrace = menu.subrace if hasattr(menu, 'subrace') else None
-    charname = menu.charname
-    background = menu.background
-    
-    # Check character limit again (in case limit was reached during creation)
-    if len(caller.db._playable_characters) >= settings.MAX_CHARACTERS_PER_ACCOUNT:
-        caller.msg("|rYou have reached the maximum number of characters allowed (5).|n")
-        return None
-    
-    # Ensure _playable_characters exists
-    if not hasattr(caller.db, '_playable_characters'):
-        caller.db._playable_characters = []
-    elif caller.db._playable_characters is None:
-        caller.db._playable_characters = []
-    
     try:
-        # Create new character
+        charname = caller.ndb._menutree.charname
+        race = caller.ndb._menutree.race
+        subrace = caller.ndb._menutree.subrace if hasattr(caller.ndb._menutree, 'subrace') else None
+        gender = caller.ndb._menutree.gender if hasattr(caller.ndb._menutree, 'gender') else None
+        background = caller.ndb._menutree.background if hasattr(caller.ndb._menutree, 'background') else None
+
+        # Create character using the imported create.create_object
         char = create.create_object(
-            settings.BASE_CHARACTER_TYPECLASS,
+            Character,
             key=charname,
-            location=settings.DEFAULT_HOME,
-            home=settings.DEFAULT_HOME)
-            
-        # Set up character permissions
-        char.locks.add("puppet:id(%i) or pid(%i) or perm(Immortals) or pperm(Immortals);delete:id(%i) or perm(Wizards)" % 
-                      (char.id, caller.id, caller.id))
-        char.permissions.add("Player")
-            
-        # Store race and background as tags
-        char.tags.add(race.lower(), category="race")
-        if subrace:
-            char.tags.add(subrace.lower(), category="subrace")
-        char.tags.add(background.lower(), category="background")
-        
-        # Store these for display purposes
+            home=settings.START_LOCATION,
+            location=settings.START_LOCATION,
+            permissions=["Player"],
+            locks=f"puppet:id({caller.id}) or pid({caller.id}) or perm(Admin);delete:id({caller.id}) or perm(Admin)"
+        )
+
+        # Set character attributes
         char.db.race = race
-        char.db.subrace = subrace
-        char.db.background = background
-        
-        # Add character to the list
+        if subrace:
+            char.db.subrace = subrace
+        if gender:
+            char.db.gender = gender
+        if background:
+            char.db.background = background
+
+        # Store descriptions
+        if hasattr(caller.ndb._menutree, 'descriptions'):
+            char.db.descriptions = caller.ndb._menutree.descriptions
+
+        # Add character to account's playable characters
+        if not caller.db._playable_characters:
+            caller.db._playable_characters = []
         caller.db._playable_characters.append(char)
-        caller.msg(f"Added {charname} to your playable characters.")
         
         # Set account reference on character
         char.db.account = caller
@@ -346,7 +462,11 @@ def node_create_char(caller):
 |wCharacter Details:|n
 Name: |y{charname}|n
 Race: |y{race}{f" ({subrace})" if subrace else ""}|n
-Background: |y{background}|n
+Gender: |y{gender if gender else "Not specified"}|n
+Background: |y{background if background else "Not specified"}|n
+
+|wAppearance:|n
+{char.format_description()}
 
 Your character has been created and is ready to enter the world.
 Use |wcharselect {charname}|n to begin your adventure!
@@ -362,63 +482,49 @@ You have {settings.MAX_CHARACTERS_PER_ACCOUNT - len(caller.db._playable_characte
         return None
 
 def node_final_confirm(caller):
-    """Final confirmation showing total stats."""
-    menu = caller.ndb._menutree
-    race = menu.race
-    subrace = menu.subrace if hasattr(menu, 'subrace') else None
-    charname = menu.charname
-    background = menu.background
+    """Final confirmation before character creation."""
+    race = caller.ndb._menutree.race
+    subrace = caller.ndb._menutree.subrace if hasattr(caller.ndb._menutree, 'subrace') else None
+    gender = caller.ndb._menutree.gender if hasattr(caller.ndb._menutree, 'gender') else None
+    background = caller.ndb._menutree.background if hasattr(caller.ndb._menutree, 'background') else None
+    charname = caller.ndb._menutree.charname if hasattr(caller.ndb._menutree, 'charname') else None
     
-    # Create a temporary character to calculate stats
-    temp_char = create.create_object(
-        settings.BASE_CHARACTER_TYPECLASS,
-        key="temp_" + charname,
-        location=None,  # Don't place it in the game
-        home=None
-    )
-    
-    try:
-        # Add the tags that will determine stats
-        temp_char.tags.add(race.lower(), category="race")
-        if subrace:
-            temp_char.tags.add(subrace.lower(), category="subrace")
-        temp_char.tags.add(background.lower(), category="background")
-        
-        # Get the calculated stats
-        stats = temp_char.calculate_stats()
-        
-        text = f"""
-|c== Character Creation - Final Review ==|n
+    text = f"""
+|c== Character Creation - Final Confirmation ==|n
 
-Please review your character details carefully:
+Please review your character details:
 
 |wName:|n {charname}
 |wRace:|n {race}{f" ({subrace})" if subrace else ""}
-|wBackground:|n {background}
+|wGender:|n {gender if gender else "Not specified"}
+|wBackground:|n {background if background else "Not specified"}
 
-|wFinal Stats:|n
+|wAppearance:|n
 """
-        
-        # Add stats with color coding
-        for stat, value in stats.items():
-            # Color code based on value compared to base stat (10)
-            if value > 10:
-                text += f"  |g{stat}: {value}|n"  # Green for above average
-            elif value < 10:
-                text += f"  |r{stat}: {value}|n"  # Red for below average
-            else:
-                text += f"  |w{stat}: {value}|n"  # White for average
-            text += "\n"
-        
-        text += "\n|wAre you ready to create this character?|n"
-        text += "\n|wEnter |gyes|w to create or |rno|w to start over:|n"
-        
-    finally:
-        # Clean up the temporary character
-        temp_char.delete()
     
+    # Add description details
+    if hasattr(caller.ndb._menutree, 'descriptions'):
+        # Define the order we want to show parts in
+        part_order = [
+            'eyes', 'hair', 'face', 'hands', 'arms', 'chest', 
+            'stomach', 'back', 'legs', 'feet'
+        ]
+        
+        # Add race-specific parts
+        if race in ["Kobold", "Ashenkin"]:
+            part_order.extend(["horns", "tail"])
+        elif race == "Feline":
+            part_order.append("tail")
+            
+        # Display descriptions in order
+        for part in part_order:
+            if part in caller.ndb._menutree.descriptions:
+                text += f"\n|w{part}:|n {caller.ndb._menutree.descriptions[part]}"
+    
+    text += "\n\n|wIs this correct? Enter |gyes|w to create your character or |rno|w to start over:|n"
+
     def _final_confirm(caller, raw_string):
-        """Handle final confirmation."""
+        """Handle final confirmation input."""
         choice = raw_string.strip().lower()
         if choice == "yes":
             return "node_create_char"
@@ -428,17 +534,335 @@ Please review your character details carefully:
                 del caller.ndb._menutree.race
             if hasattr(caller.ndb._menutree, 'subrace'):
                 del caller.ndb._menutree.subrace
+            if hasattr(caller.ndb._menutree, 'gender'):
+                del caller.ndb._menutree.gender
             if hasattr(caller.ndb._menutree, 'background'):
                 del caller.ndb._menutree.background
             if hasattr(caller.ndb._menutree, 'charname'):
                 del caller.ndb._menutree.charname
+            if hasattr(caller.ndb._menutree, 'descriptions'):
+                del caller.ndb._menutree.descriptions
             return "node_race_select"
         else:
             caller.msg("Please enter 'yes' or 'no'.")
             return None
-    
+
     options = {"key": "_default", "goto": _final_confirm}
+    return text, options
+
+def node_gender_select(caller):
+    """Select character gender."""
+    text = """
+|c== Character Creation - Gender Selection ==|n
+
+Is your character male or female?
+Enter |wm|n or |wf|n:"""
+    
+    def _set_gender(caller, raw_string):
+        """Handle gender selection."""
+        choice = raw_string.strip().lower()
+        
+        if choice in ['m', 'male']:
+            caller.ndb._menutree.gender = 'Male'
+            return "node_height_select"
+        elif choice in ['f', 'female']:
+            caller.ndb._menutree.gender = 'Female'
+            return "node_height_select"
+        else:
+            caller.msg("Please enter 'm' or 'f'.")
+            return None
+    
+    options = {"key": "_default", "goto": _set_gender}
     return wrap_text(text), options
+
+def node_height_select(caller):
+    """Select character height."""
+    race = caller.ndb._menutree.race
+    subrace = caller.ndb._menutree.subrace if hasattr(caller.ndb._menutree, 'subrace') else None
+    gender = caller.ndb._menutree.gender.lower()
+    
+    text = f"""
+|c== Character Creation - Height Selection ==|n
+
+Choose your character's height. Different races have different natural height ranges.
+
+|wHeight Range for {race}{f" ({subrace})" if subrace else ""}:|n"""
+
+    # Get height ranges for race/subrace/gender
+    if subrace and race in settings.RACE_HEIGHT_RANGES and subrace in settings.RACE_HEIGHT_RANGES[race]:
+        height_range = settings.RACE_HEIGHT_RANGES[race][subrace][gender]
+    elif race in settings.RACE_HEIGHT_RANGES:
+        if isinstance(settings.RACE_HEIGHT_RANGES[race], dict) and gender in settings.RACE_HEIGHT_RANGES[race]:
+            height_range = settings.RACE_HEIGHT_RANGES[race][gender]
+        else:
+            height_range = settings.RACE_HEIGHT_RANGES["Human"]["normal"][gender]
+    else:
+        height_range = settings.RACE_HEIGHT_RANGES["Human"]["normal"][gender]
+
+    # Convert min/max to feet and inches for display
+    min_feet = height_range["min"] // 12
+    min_inches = height_range["min"] % 12
+    max_feet = height_range["max"] // 12
+    max_inches = height_range["max"] % 12
+    
+    # Calculate average height for example
+    avg_inches = (height_range["min"] + height_range["max"]) // 2
+    avg_feet = avg_inches // 12
+    avg_inch = avg_inches % 12
+    
+    text += f"\nMinimum: {min_feet}'{min_inches}"
+    text += f"\nMaximum: {max_feet}'{max_inches}"
+
+    text += f"\n\n|wEnter your desired height (in feet/inches like {avg_feet}'{avg_inch}):|n"
+
+    def _set_height(caller, raw_string):
+        """Handle height selection."""
+        try:
+            # Clean up the input string
+            height_str = raw_string.replace("'", " ").replace(".", " ")
+            parts = height_str.split()
+            
+            if len(parts) >= 2:
+                feet = int(parts[0])
+                inches = int(parts[1])
+            else:
+                feet = int(parts[0])
+                inches = 0
+                
+            # Convert to total inches
+            total_inches = (feet * 12) + inches
+            
+            # Get gender
+            gender = caller.ndb._menutree.gender.lower()
+            
+            # Get valid height range
+            if subrace and race in settings.RACE_HEIGHT_RANGES and subrace in settings.RACE_HEIGHT_RANGES[race]:
+                valid_range = settings.RACE_HEIGHT_RANGES[race][subrace][gender]
+            elif race in settings.RACE_HEIGHT_RANGES:
+                if isinstance(settings.RACE_HEIGHT_RANGES[race], dict) and gender in settings.RACE_HEIGHT_RANGES[race]:
+                    valid_range = settings.RACE_HEIGHT_RANGES[race][gender]
+                else:
+                    valid_range = settings.RACE_HEIGHT_RANGES["Human"]["normal"][gender]
+            else:
+                valid_range = settings.RACE_HEIGHT_RANGES["Human"]["normal"][gender]
+            
+            # Check if height is within valid range
+            if total_inches < valid_range["min"] or total_inches > valid_range["max"]:
+                min_feet = valid_range["min"] // 12
+                min_inches = valid_range["min"] % 12
+                max_feet = valid_range["max"] // 12
+                max_inches = valid_range["max"] % 12
+                caller.msg(f"Height must be between {min_feet}'{min_inches} and {max_feet}'{max_inches}")
+                return None
+            
+            # Store height in inches
+            caller.ndb._menutree.height = total_inches
+            return "node_height_confirm"
+            
+        except ValueError:
+            caller.msg("Please enter a valid height (e.g. 6'2)")
+            return None
+    
+    options = {"key": "_default", "goto": _set_height}
+    return wrap_text(text), options
+
+def node_height_confirm(caller):
+    """Confirm height selection."""
+    total_inches = caller.ndb._menutree.height
+    feet = total_inches // 12
+    inches = total_inches % 12
+    
+    text = f"""
+|c== Character Creation - Height Confirmation ==|n
+
+You have selected a height of:
+|w{feet}'{inches}|n
+
+Is this the height you want?
+|wEnter |gyes|w to confirm or |rno|w to choose again:|n
+"""
+    
+    def _confirm_height(caller, raw_string):
+        """Handle height confirmation."""
+        choice = raw_string.strip().lower()
+        if choice == "yes":
+            return "node_background_select"
+        elif choice == "no":
+            return "node_height_select"
+        else:
+            caller.msg("Please enter 'yes' or 'no'.")
+            return None
+    
+    options = {"key": "_default", "goto": _confirm_height}
+    return wrap_text(text), options
+
+def node_description_edit(caller):
+    """Allow editing of character descriptions."""
+    # Set flag to allow desc command
+    caller.ndb._menutree.chargen_in_progress = True
+    
+    text = """
+|c== Character Creation - Description Editing ==|n
+
+You can now edit the descriptions of your character's features.
+Use the following command to view and edit descriptions:
+
+|wdesc|n                  - Show all current descriptions
+|wdesc <part>|n          - Show description for specific part
+|wdesc <part> <text>|n   - Set new description for part
+
+Available body parts: eyes, hair, face, hands, arms, chest, stomach, back, legs, feet
+"""
+
+    # Add race-specific parts to the help text
+    race = caller.ndb._menutree.race
+    if race in ["Kobold", "Ashenkin"]:
+        text += ", horns, tail"
+    elif race == "Feline":
+        text += ", tail"
+
+    text += "\n\nWhen you are satisfied with your descriptions, type |wcontinue|n to proceed."
+
+    def _desc_done(caller, raw_string):
+        """Handle completion of description editing."""
+        if raw_string.strip().lower() == "continue":
+            # Remove the flag that allows desc command
+            del caller.ndb._menutree.chargen_in_progress
+            return "node_final_confirm"
+        return None
+
+    options = {"key": "_default", "goto": _desc_done}
+    return text, options
+
+class CharacterGenerator:
+    def __init__(self):
+        # Load body part descriptions
+        data_path = Path("data/descriptions/body_parts.json")
+        with open(data_path, 'r') as f:
+            self.body_descriptions = json.load(f)
+
+    def generate_default_descriptions(self, race):
+        """
+        Generate default descriptions for all body parts based on race
+        Returns a dictionary of body parts and their randomly selected descriptions
+        """
+        if race not in self.body_descriptions:
+            # Fallback to Human if race not found
+            race = "Human"
+        
+        race_descriptions = self.body_descriptions[race]
+        default_descriptions = {}
+        
+        for part, descriptions in race_descriptions.items():
+            # Handle both single string and list of descriptions
+            if isinstance(descriptions, list):
+                default_descriptions[part] = random.choice(descriptions)
+            else:
+                default_descriptions[part] = descriptions
+                
+        return default_descriptions
+
+    def apply_descriptions_to_character(self, character, descriptions):
+        """
+        Apply the generated descriptions to the character's db attributes
+        """
+        # Initialize descriptions dict if it doesn't exist
+        if not character.db.descriptions:
+            character.db.descriptions = {}
+            
+        # Apply the descriptions
+        for part, desc in descriptions.items():
+            character.db.descriptions[part] = desc
+
+class DescCommand(Command):
+    """
+    Set the description for a body part during character creation
+    
+    Usage:
+        desc <body_part> <description>
+        desc <body_part>          - shows current description
+        desc                      - shows all body part descriptions
+    """
+    
+    key = "desc"
+    locks = "cmd:all()"
+    
+    def func(self):
+        # Check if we're in character creation
+        if not self.caller.ndb._menutree or not hasattr(self.caller.ndb._menutree, 'chargen_in_progress'):
+            self.caller.msg("This command is only available during character creation.")
+            return
+            
+        # Initialize descriptions if they don't exist
+        if not self.caller.db.descriptions:
+            self.caller.db.descriptions = {}
+            
+        if not self.args:
+            # Show all descriptions
+            self.caller.msg("|c== Your Body Part Descriptions ==|n")
+            for part, desc in self.caller.db.descriptions.items():
+                self.caller.msg(f"\n|w{part.title()}:|n\n{desc}")
+            return
+            
+        try:
+            part = self.args.split(" ", 1)[0].lower()
+        except ValueError:
+            self.caller.msg("Usage: desc <body_part> <description>")
+            return
+            
+        # If no description provided, show current description
+        if len(self.args.split(" ", 1)) == 1:
+            if part in self.caller.db.descriptions:
+                self.caller.msg(f"|w{part.title()}:|n\n{self.caller.db.descriptions[part]}")
+            else:
+                self.caller.msg(f"No description set for {part}.")
+            return
+            
+        part, description = self.args.split(" ", 1)
+        part = part.lower()
+        
+        valid_parts = [
+            "eyes", "hair", "face", "hands", "arms", "chest", 
+            "stomach", "back", "legs", "feet"
+        ]
+        
+        # Add race-specific parts if character has them
+        if hasattr(self.caller, "race"):
+            if self.caller.race in ["Kobold", "Ashenkin"]:
+                valid_parts.extend(["horns", "tail"])
+            elif self.caller.race == "Feline":
+                valid_parts.append("tail")
+        
+        if part not in valid_parts:
+            self.caller.msg(f"Valid body parts are: {', '.join(valid_parts)}")
+            return
+            
+        # Set the new description
+        self.caller.db.descriptions[part] = description
+        self.caller.msg(f"Your {part} description has been updated.")
+
+def ensure_default_home():
+    """Ensure the default home location exists."""
+    from evennia.utils import create, search
+    from django.conf import settings
+    
+    # First try to find Limbo
+    limbo = search.search_object("Limbo")
+    if limbo:
+        return limbo[0]
+    
+    # If Limbo doesn't exist, create it
+    limbo = create.create_object(
+        "typeclasses.rooms.WeatherAwareRoom",
+        key="Limbo",
+        nohome=True
+    )
+    limbo.db.desc = "This is a blank room serving as the default home location."
+    
+    # Set the default home setting
+    settings.DEFAULT_HOME = "#{}".format(limbo.id)
+    
+    return limbo
 
 class CmdCreateCharacter(Command):
     """
@@ -459,10 +883,16 @@ class CmdCreateCharacter(Command):
             self.caller.msg("You must delete a character before creating a new one.")
             return
             
+        # Ensure we have a default home location
+        default_home = ensure_default_home()
+        
         # Clean up any existing character creation data
         if hasattr(self.caller.ndb, '_menutree'):
             del self.caller.ndb._menutree
             
+        # Store the default home in the menu tree for later use
+        self.caller.ndb._menutree = type('MenuData', (), {'default_home': default_home})
+        
         def custom_formatter(optionlist):
             """
             Don't display the options - they're already in the node text
@@ -478,13 +908,17 @@ class CmdCreateCharacter(Command):
         # Start the menu with custom formatting
         EvMenu(self.caller,
                {
-                   "node_race_select": node_race_select,
-                   "node_subrace_select": node_subrace_select,
-                   "node_background_select": node_background_select,
-                   "node_name_select": node_name_select,
-                   "node_name_confirm": node_name_confirm,
-                   "node_final_confirm": node_final_confirm,
-                   "node_create_char": node_create_char
+                   "node_race_select": node_race_select,           # 1. Select race
+                   "node_subrace_select": node_subrace_select,     # 2. Select subrace (if applicable)
+                   "node_gender_select": node_gender_select,       # 3. Select gender
+                   "node_height_select": node_height_select,       # 4. Select height
+                   "node_height_confirm": node_height_confirm,     # 5. Confirm height
+                   "node_background_select": node_background_select, # 6. Select background
+                   "node_description_select": node_description_select, # 7. Customize descriptions
+                   "node_name_select": node_name_select,           # 8. Choose name
+                   "node_name_confirm": node_name_confirm,         # 9. Confirm name
+                   "node_final_confirm": node_final_confirm,       # 10. Final review
+                   "node_create_char": node_create_char           # 11. Create character
                },
                startnode="node_race_select",
                cmd_on_exit=None,

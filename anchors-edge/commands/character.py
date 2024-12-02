@@ -22,9 +22,13 @@ class CmdCharList(Command):
         """Show available characters"""
         caller = self.caller
         
-        # Ensure _playable_characters exists and is a list
-        if not hasattr(caller.db, '_playable_characters'):
+        # Initialize _playable_characters if it doesn't exist or is None
+        if not hasattr(caller.db, '_playable_characters') or caller.db._playable_characters is None:
             caller.db._playable_characters = []
+        
+        # Ensure it's a list
+        if not isinstance(caller.db._playable_characters, list):
+            caller.db._playable_characters = list(caller.db._playable_characters)
         
         # Filter for valid character objects
         valid_characters = []

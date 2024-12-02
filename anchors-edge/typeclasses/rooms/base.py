@@ -89,46 +89,43 @@ class WeatherAwareRoom(DefaultRoom):
     def return_appearance(self, looker, **kwargs):
         """
         This is called when someone looks at this room.
-        Wrap the description text before returning.
+        Only show other characters in the 'You see:' section.
         """
-        # Get the base appearance
-        appearance = super().return_appearance(looker, **kwargs)
+        # Get room title with proper spacing (two lines before, one after)
+        title = f"|/|/|c{self.get_display_name(looker)}|n|/|/"
         
-        # Get all characters in the room
+        # Get the room description and wrap it
+        description = self.wrap_text(self.get_display_desc(looker, **kwargs))
+        
+        # Combine title and description
+        full_text = f"{title}{description}"
+        
+        # Get exits without the "Exits:" prefix
+        exits = self.get_display_exits(looker, **kwargs)
+        if exits:
+            # Remove any existing "Exits:" prefix that might be in the string
+            exits = exits.replace("Exits:", "").strip()
+            # Wrap the exits text and add spacing (one line before)
+            exits = self.wrap_text(f"Exits: {exits}")
+            full_text += f"|/|/{exits}"
+        
+        # Get only characters (excluding the looker)
         characters = [obj for obj in self.contents 
                      if obj.is_typeclass('typeclasses.characters.Character') 
-                     and obj != looker]
+                     and obj != looker 
+                     and obj.access(looker, "view")]
         
-        # Get all NPCs in the room (you might want to adjust this based on your NPC typeclass)
-        npcs = [obj for obj in self.contents 
-                if obj.is_typeclass('typeclasses.npcs.NPC')]
+        # Only add the "You see:" section if there are other characters present
+        if characters:
+            full_text += f"|/|/|wYou see:|n"
+            char_list = []
+            for char in characters:
+                char_list.append(f"  |c{char.get_display_name(looker)}|n")
+            # Wrap the character list
+            char_text = self.wrap_text(", ".join(char_list))
+            full_text += f"|/{char_text}"
         
-        # Add character and NPC section if there are any
-        if characters or npcs:
-            appearance += "\n\n|wPresent here:|n"
-            
-            # List characters
-            if characters:
-                for char in characters:
-                    appearance += f"\n- |c{char.name}|n"
-                    
-            # List NPCs
-            if npcs:
-                for npc in npcs:
-                    appearance += f"\n- |y{npc.name}|n"
-        
-        # Split into lines, wrap each line separately to preserve formatting
-        lines = appearance.split('\n')
-        wrapped_lines = []
-        
-        for line in lines:
-            if line.strip():  # Only wrap non-empty lines
-                wrapped_lines.append(self.wrap_text(line))
-            else:
-                wrapped_lines.append(line)
-                
-        # Rejoin the lines
-        return '\n'.join(wrapped_lines)
+        return full_text
 
 RESPAWN_MESSAGE = """
 The crushing darkness of death gives way to a gentle, phosphorescent glow. Your consciousness drifts through familiar waters - the same waters that lap at the shores of Anchors Edge. Ancient mariners spoke of the Tide Mother's mercy, how she claims no soul that still has purpose in her realm.

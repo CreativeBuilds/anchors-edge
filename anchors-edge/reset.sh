@@ -40,13 +40,10 @@ import os
 from datetime import datetime
 
 timestamp = int(datetime.now().timestamp() * 1000)
-# Use a simpler, direct path to the timestamp file
 timestamp_file = 'server/conf/last_wipe_timestamp'
 
 try:
-    # Create directories if they don't exist
     os.makedirs(os.path.dirname(timestamp_file), exist_ok=True)
-    
     with open(timestamp_file, 'w') as f:
         f.write(str(timestamp))
     print(f"Created new timestamp file: {timestamp_file}")
@@ -77,6 +74,35 @@ else
     fi
 fi
 
+# Delete the existing database
+rm -f server/evennia.db3
+
+# load backup database
+cp server/backup.evennia.db3 server/evennia.db3
+
+# Run initial setup script
+echo "Running initial setup..."
+evennia shell << END
+from evennia.utils import create, search
+from server.conf.at_initial_setup import at_initial_setup
+from evennia.accounts.models import AccountDB
+
+# Run the initial setup
+try:
+    at_initial_setup()
+    print("Initial setup completed successfully")
+    
+    # Ensure all accounts have necessary permissions
+    for account in AccountDB.objects.all():
+        account.permissions.add("Player")
+        account.permissions.add("Builders")
+        account.permissions.add("Admin")
+        print(f"Updated permissions for account: {account.key}")
+        
+except Exception as e:
+    print(f"Error during initial setup: {e}")
+END
+
 echo "Starting Evennia..."
 evennia start
 
@@ -90,8 +116,6 @@ def time_since_wipe():
         from server.conf.last_wipe import LAST_WIPE
         now = int(datetime.now().timestamp() * 1000)
         diff = now - LAST_WIPE
-        
-        # Convert to seconds
         seconds = int(diff / 1000)
         
         if seconds < 60:

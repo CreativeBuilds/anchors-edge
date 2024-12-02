@@ -1,541 +1,1200 @@
 {
     "Human": {
-        "eyes": [
-            "Deep brown eyes that hold warmth like sunlight through autumn leaves",
-            "Alert blue eyes that catch light like morning sky on still water",
-            "Green eyes flecked with gold, bright with curiosity and purpose",
-            "Gray eyes that shift like storm clouds, watching and measuring",
-            "Hazel eyes that change with the light, holding hints of earth and forest"
-        ],
-        "hair": [
-            "Dark waves cascade past the shoulders, catching light like ripples on midnight waters",
-            "Sun-kissed strands fall in a practical style, touched by wind and weather",
-            "A crown of tight curls frames the face, each coil perfectly shaped",
-            "Straight locks shimmer with health, cut to frame features with purpose",
-            "Rich auburn tresses catch the light, styled with care but ready for action"
-        ],
-        "face": [
-            "Features carved with quiet determination, each line telling tales of paths walked",
-            "An expressive countenance that shifts easily between thought and emotion",
-            "Strong features softened by experience, wearing both smiles and frowns with equal grace",
-            "A face that speaks of decisions made and consequences weathered",
-            "Clear features marked by purpose, neither harsh nor soft but ready"
-        ],
-        "hands": [
-            "Strong hands marked by life's labors, each callus a chapter of their journey",
-            "Capable fingers that know both delicate work and firm grip",
-            "Hands that speak of experience, marked by both triumph and toil",
-            "Practical hands with purpose in every movement, neither hesitant nor rushed",
-            "Weathered hands that hold stories of work and craft in every line"
-        ],
-        "arms": [
-            "Arms that speak of honest work, strength earned through purpose rather than vanity",
-            "Limbs shaped by daily tasks, carrying both burden and skill with equal measure",
-            "Strong arms built by necessity, ready for whatever the day might bring",
-            "Capable limbs that know both gentle touch and firm grip",
-            "Arms marked by life's work, neither overly muscled nor soft"
-        ],
-        "chest": [
-            "A frame shaped by life's demands, neither sculpted for show nor left to idle",
-            "A sturdy build that speaks of practical strength and endurance",
-            "A form that balances strength with mobility, ready for action",
-            "A practical build that serves its purpose without pretense",
-            "A frame built by real work rather than artificial exercise"
-        ],
-        "stomach": [
-            "A core built by practical strength, telling of real work rather than trained perfection",
-            "A midsection shaped by actual labor rather than vanity",
-            "A build that speaks of function over form, ready for any task",
-            "A center of practical strength, neither overly defined nor soft",
-            "A core that knows both feast and famine, but stays ready for work"
-        ],
-        "back": [
-            "A back that's carried its share of burdens, standing straight with earned dignity",
-            "A spine that knows both labor and rest, but never truly bows",
-            "A strong back built by necessity rather than choice",
-            "A framework of practical strength, ready for whatever comes",
-            "A back that speaks of endurance, marked by years of purpose"
-        ],
-        "legs": [
-            "Legs tempered by countless miles, each step grounded in purpose",
-            "Strong limbs that know both sprint and marathon",
-            "A steady foundation built by years of standing and walking",
-            "Legs shaped by real use rather than artificial training",
-            "Limbs that carry their owner with sure purpose and strength"
-        ],
-        "feet": [
-            "Feet that know the worth of solid ground, marked by the paths they've chosen",
-            "Sturdy foundations that have walked many roads and known many lands",
-            "Feet that understand both swift flight and firm stance",
-            "A traveler's feet, marked by miles but never weary",
-            "Reliable feet that know when to stand and when to run"
-        ]
+        "male": {
+            "eyes": [
+                "Deep brown eyes that hold warmth like sunlight through autumn leaves",
+                "Alert blue eyes that catch light like morning sky on still water",
+                "Green eyes flecked with gold, bright with curiosity and purpose",
+                "Gray eyes that shift like storm clouds, watching and measuring",
+                "Hazel eyes that change with the light, holding hints of earth and forest"
+            ],
+            "hair": [
+                "Dark waves cut short but styled with care, catching light like ripples on midnight waters",
+                "Sun-kissed strands in a practical style, touched by wind and weather", 
+                "A crown of tight curls frames the face, each coil perfectly shaped",
+                "Straight locks cut short but neat, framing strong features",
+                "Rich brown hair styled simply but with purpose"
+            ],
+            "face": [
+                "Strong, masculine features carved with quiet determination",
+                "An expressive countenance that shifts easily between thought and emotion",
+                "Angular features softened by experience, wearing both smiles and frowns with equal grace",
+                "A face that speaks of decisions made and consequences weathered",
+                "Clear features marked by purpose, neither harsh nor soft but ready"
+            ],
+            "hands": [
+                "Strong hands marked by life's labors, each callus a chapter of their journey",
+                "Capable fingers that know both delicate work and firm grip",
+                "Broad hands that speak of experience, marked by both triumph and toil",
+                "Practical hands with purpose in every movement, neither hesitant nor rushed",
+                "Weathered hands that hold stories of work and craft in every line"
+            ],
+            "arms": [
+                "Muscled arms that speak of honest work, strength earned through purpose rather than vanity",
+                "Powerful limbs shaped by daily tasks, carrying both burden and skill with equal measure",
+                "Strong arms built by necessity, ready for whatever the day might bring",
+                "Capable limbs that know both gentle touch and firm grip",
+                "Arms marked by life's work, corded with practical muscle"
+            ],
+            "chest": [
+                "A broad frame shaped by life's demands, neither sculpted for show nor left to idle",
+                "A sturdy build that speaks of practical strength and endurance",
+                "A muscular form that balances strength with mobility, ready for action",
+                "A practical build that serves its purpose without pretense",
+                "A strong frame built by real work rather than artificial exercise"
+            ],
+            "stomach": [
+                "A solid core built by practical strength, telling of real work rather than trained perfection",
+                "A midsection shaped by actual labor rather than vanity",
+                "A build that speaks of function over form, ready for any task",
+                "A center of practical strength, neither overly defined nor soft",
+                "A core that knows both feast and famine, but stays ready for work"
+            ],
+            "back": [
+                "A broad back that's carried its share of burdens, standing straight with earned dignity",
+                "A spine that knows both labor and rest, but never truly bows",
+                "A strong back built by necessity rather than choice",
+                "A framework of practical strength, ready for whatever comes",
+                "A back that speaks of endurance, marked by years of purpose"
+            ],
+            "legs": [
+                "Strong legs tempered by countless miles, each step grounded in purpose",
+                "Powerful limbs that know both sprint and marathon",
+                "A steady foundation built by years of standing and walking",
+                "Legs shaped by real use rather than artificial training",
+                "Muscled limbs that carry their owner with sure purpose and strength"
+            ],
+            "feet": [
+                "Large feet that know the worth of solid ground, marked by the paths they've chosen",
+                "Sturdy foundations that have walked many roads and known many lands",
+                "Feet that understand both swift flight and firm stance",
+                "A traveler's feet, marked by miles but never weary",
+                "Reliable feet that know when to stand and when to run"
+            ],
+            "groin": [
+                "A well-groomed area that suggests careful attention to personal maintenance",
+                "His intimate regions hint at both strength and sensitivity",
+                "His private area shows a perfect balance of form and function"
+            ],
+            "bottom": [
+                "A muscular posterior that would make a sculptor weep with joy",
+                "His rear end has clearly seen its share of squats and exercise",
+                "A bottom that manages to be both athletic and aesthetically pleasing"
+            ]
+        },
+        "female": {
+            "eyes": [
+                "Deep brown eyes that hold warmth like sunlight through autumn leaves",
+                "Bright blue eyes that catch light like morning sky on still water",
+                "Green eyes flecked with gold, bright with curiosity and purpose",
+                "Gray eyes that shift like storm clouds, watching and measuring",
+                "Hazel eyes that change with the light, holding hints of earth and forest"
+            ],
+            "hair": [
+                "Dark waves cascade past the shoulders, catching light like ripples on midnight waters",
+                "Sun-kissed strands fall in a practical style, touched by wind and weather",
+                "A crown of tight curls frames the face, each coil perfectly shaped",
+                "Straight locks shimmer with health, cut to frame features with purpose",
+                "Rich auburn tresses catch the light, styled with care but ready for action"
+            ],
+            "face": [
+                "Feminine features carved with quiet determination, each line telling tales of paths walked",
+                "An expressive countenance that shifts easily between thought and emotion",
+                "Soft features tempered by experience, wearing both smiles and frowns with equal grace",
+                "A face that speaks of decisions made and consequences weathered",
+                "Clear features marked by purpose, neither harsh nor soft but ready"
+            ],
+            "hands": [
+                "Graceful hands marked by life's labors, each callus a chapter of their journey",
+                "Capable fingers that know both delicate work and firm grip",
+                "Hands that speak of experience, marked by both triumph and toil",
+                "Practical hands with purpose in every movement, neither hesitant nor rushed",
+                "Weathered hands that hold stories of work and craft in every line"
+            ],
+            "arms": [
+                "Toned arms that speak of honest work, strength earned through purpose rather than vanity",
+                "Limbs shaped by daily tasks, carrying both burden and skill with equal measure",
+                "Strong arms built by necessity, ready for whatever the day might bring",
+                "Capable limbs that know both gentle touch and firm grip",
+                "Arms marked by life's work, neither overly muscled nor soft"
+            ],
+            "chest": [
+                "A feminine frame shaped by life's demands, neither sculpted for show nor left to idle",
+                "A sturdy build that speaks of practical strength and endurance",
+                "A form that balances strength with mobility, ready for action",
+                "A practical build that serves its purpose without pretense",
+                "A frame built by real work rather than artificial exercise"
+            ],
+            "stomach": [
+                "A core built by practical strength, telling of real work rather than trained perfection",
+                "A midsection shaped by actual labor rather than vanity",
+                "A build that speaks of function over form, ready for any task",
+                "A center of practical strength, neither overly defined nor soft",
+                "A core that knows both feast and famine, but stays ready for work"
+            ],
+            "back": [
+                "A graceful back that's carried its share of burdens, standing straight with earned dignity",
+                "A spine that knows both labor and rest, but never truly bows",
+                "A strong back built by necessity rather than choice",
+                "A framework of practical strength, ready for whatever comes",
+                "A back that speaks of endurance, marked by years of purpose"
+            ],
+            "legs": [
+                "Shapely legs tempered by countless miles, each step grounded in purpose",
+                "Strong limbs that know both sprint and marathon",
+                "A steady foundation built by years of standing and walking",
+                "Legs shaped by real use rather than artificial training",
+                "Limbs that carry their owner with sure purpose and strength"
+            ],
+            "feet": [
+                "Feet that know the worth of solid ground, marked by the paths they've chosen",
+                "Sturdy foundations that have walked many roads and known many lands",
+                "Feet that understand both swift flight and firm stance",
+                "A traveler's feet, marked by miles but never weary",
+                "Reliable feet that know when to stand and when to run"
+            ],
+            "groin": [
+                "A well-groomed area that suggests careful attention to personal maintenance",
+                "Her intimate regions hint at both strength and sensitivity",
+                "Her private area shows a perfect balance of form and function"
+            ],
+            "bottom": [
+                "A shapely posterior that would make a sculptor weep with joy",
+                "Her rear end has clearly seen its share of squats and exercise",
+                "A bottom that manages to be both athletic and aesthetically pleasing"
+            ]
+        }
     },
     "Elf": {
-        "eyes": [
-            "Luminous eyes like twilight captured in crystal, holding centuries of silent observation",
-            "Ancient eyes that shimmer with starlight and forgotten wisdom",
-            "Eyes of liquid moonlight that pierce through shadows and secrets",
-            "Ethereal orbs that hold the changing colors of dawn and dusk",
-            "Ageless eyes that reflect the eternal dance of light and shadow"
-        ],
-        "hair": [
-            "Silk-spun strands that catch moonlight like threads of liquid silver",
-            "Flowing locks that dance like sunlight through ancient forest canopies",
-            "Ethereal tresses that shimmer with the colors of twilight and starshine",
-            "Hair that moves like wind-touched water, each strand perfectly placed",
-            "Lustrous strands that hold memories of starlit nights and ancient songs"
-        ],
-        "face": [
-            "Features that echo ancient bloodlines, each angle carved by time's patient hand",
-            "A countenance that speaks of ageless grace and timeless beauty",
-            "Features that blend strength and delicacy like frost on morning flowers",
-            "A face that carries the memory of forgotten kingdoms in its lines",
-            "Elegant features that hold both wisdom and eternal youth in perfect balance"
-        ],
-        "hands": [
-            "Fingers that move with the deliberate grace of falling leaves, each gesture a dance of its own",
-            "Hands that weave magic and memory with equal delicacy",
-            "Graceful hands that speak of centuries of refined craftsmanship",
-            "Fingers that remember the touch of ancient scrolls and sacred artifacts",
-            "Hands that move with fluid precision, each motion perfectly measured"
-        ],
-        "arms": [
-            "Limbs that flow like windswept branches, strength hidden beneath fluid grace",
-            "Arms that carry the strength of ancient bowstrings and sword-songs",
-            "Graceful limbs that move with the precision of practiced warriors",
-            "Arms that blend power and elegance like morning mist over still waters",
-            "Limbs that hold the strength of young trees and the grace of wind-dancers"
-        ],
-        "chest": [
-            "A form that carries the weight of ages with ethereal lightness",
-            "A frame built for both battle-dance and courtly grace",
-            "A chest that rises and falls with the rhythm of ancient forests",
-            "A form that blends strength and elegance like moonlight on water",
-            "A build that speaks of endurance tempered by immortal grace"
-        ],
-        "stomach": [
-            "A core that speaks of natural poise, muscles flowing like water beneath skin",
-            "A center of balance perfect for both dance and battle",
-            "A midsection that moves with fluid grace, every motion precise",
-            "A core shaped by centuries of refined movement and purpose",
-            "A form that holds strength like a young tree, flexible yet unbreaking"
-        ],
-        "back": [
-            "A spine that remembers the proud bearing of ancient courts",
-            "A back straight as ancient trees, yet fluid as flowing water",
-            "A posture that speaks of centuries of dignity and grace",
-            "A framework of elegant strength, carved by ages of purpose",
-            "A back that carries both wisdom and power with timeless grace"
-        ],
-        "legs": [
-            "Limbs that move with the quiet surety of forest shadows",
-            "Legs that carry their owner with the grace of wind through leaves",
-            "Steps that dance between worlds with ethereal precision",
-            "Limbs that blend speed and silence like moonlight on water",
-            "Legs shaped by centuries of swift movement through ancient woods"
-        ],
-        "feet": [
-            "Steps that whisper secrets to the earth, leaving no trace of their passing",
-            "Feet that know the ancient paths between root and stone",
-            "Silent steps that could dance on fallen leaves without a sound",
-            "Feet that remember the paths of forgotten kingdoms",
-            "Steps that move with the precision of starlight through branches"
-        ]
+        "male": {
+            "eyes": [
+                "Luminous eyes like twilight captured in crystal, holding centuries of silent observation",
+                "Ancient eyes that shimmer with starlight and forgotten wisdom",
+                "Eyes of liquid moonlight that pierce through shadows and secrets",
+                "Ethereal orbs that hold the changing colors of dawn and dusk",
+                "Ageless eyes that reflect the eternal dance of light and shadow"
+            ],
+            "hair": [
+                "Silk-spun strands that catch moonlight like threads of liquid silver",
+                "Flowing locks that dance like sunlight through ancient forest canopies",
+                "Ethereal tresses that shimmer with the colors of twilight and starshine",
+                "Hair that moves like wind-touched water, each strand perfectly placed",
+                "Lustrous strands that hold memories of starlit nights and ancient songs"
+            ],
+            "face": [
+                "Noble features that echo ancient bloodlines, each angle carved by time's patient hand",
+                "A countenance that speaks of ageless grace and timeless beauty",
+                "Sharp features that blend strength and delicacy like frost on morning flowers",
+                "A face that carries the memory of forgotten kingdoms in its lines",
+                "Elegant features that hold both wisdom and eternal youth in perfect balance"
+            ],
+            "hands": [
+                "Long fingers that move with the deliberate grace of falling leaves",
+                "Hands that weave magic and memory with equal delicacy",
+                "Graceful hands that speak of centuries of refined craftsmanship",
+                "Fingers that remember the touch of ancient scrolls and sacred artifacts",
+                "Hands that move with fluid precision, each motion perfectly measured"
+            ],
+            "arms": [
+                "Lean limbs that flow like windswept branches, strength hidden beneath fluid grace",
+                "Arms that carry the strength of ancient bowstrings and sword-songs",
+                "Graceful limbs that move with the precision of practiced warriors",
+                "Arms that blend power and elegance like morning mist over still waters",
+                "Limbs that hold the strength of young trees and the grace of wind-dancers"
+            ],
+            "chest": [
+                "A lean form that carries the weight of ages with ethereal lightness",
+                "A frame built for both battle-dance and courtly grace",
+                "A chest that rises and falls with the rhythm of ancient forests",
+                "A form that blends strength and elegance like moonlight on water",
+                "A build that speaks of endurance tempered by immortal grace"
+            ],
+            "stomach": [
+                "A core that speaks of natural poise, muscles flowing like water beneath skin",
+                "A center of balance perfect for both dance and battle",
+                "A midsection that moves with fluid grace, every motion precise",
+                "A core shaped by centuries of refined movement and purpose",
+                "A form that holds strength like a young tree, flexible yet unbreaking"
+            ],
+            "back": [
+                "A spine that remembers the proud bearing of ancient courts",
+                "A back straight as ancient trees, yet fluid as flowing water",
+                "A posture that speaks of centuries of dignity and grace",
+                "A framework of elegant strength, carved by ages of purpose",
+                "A back that carries both wisdom and power with timeless grace"
+            ],
+            "legs": [
+                "Limbs that move with the quiet surety of forest shadows",
+                "Legs that carry their owner with the grace of wind through leaves",
+                "Steps that dance between worlds with ethereal precision",
+                "Limbs that blend speed and silence like moonlight on water",
+                "Legs shaped by centuries of swift movement through ancient woods"
+            ],
+            "feet": [
+                "Steps that whisper secrets to the earth, leaving no trace of their passing",
+                "Feet that know the ancient paths between root and stone",
+                "Silent steps that could dance on fallen leaves without a sound",
+                "Feet that remember the paths of forgotten kingdoms",
+                "Steps that move with the precision of starlight through branches"
+            ],
+            "groin": [
+                "His intimate area bears delicate patterns that seem to shimmer in the light",
+                "An elegant arrangement that speaks of his fey ancestry",
+                "His private regions hold an almost ethereal beauty"
+            ],
+            "bottom": [
+                "A perfectly sculpted rear that seems to defy gravity",
+                "His posterior moves with hypnotic elven grace",
+                "A bottom that could have been carved from marble by master artisans"
+            ]
+        },
+        "female": {
+            "eyes": [
+                "Luminous eyes like twilight captured in crystal, holding centuries of silent observation",
+                "Ancient eyes that shimmer with starlight and forgotten wisdom",
+                "Eyes of liquid moonlight that pierce through shadows and secrets",
+                "Ethereal orbs that hold the changing colors of dawn and dusk",
+                "Ageless eyes that reflect the eternal dance of light and shadow"
+            ],
+            "hair": [
+                "Silk-spun strands that cascade like threads of liquid starlight",
+                "Flowing locks that dance like moonlight through ancient forest canopies",
+                "Ethereal tresses that shimmer with the colors of twilight and starshine",
+                "Hair that moves like wind-touched water, each strand perfectly placed",
+                "Lustrous strands that hold memories of starlit nights and ancient songs"
+            ],
+            "face": [
+                "Delicate features that echo ancient bloodlines, each angle carved by time's patient hand",
+                "A countenance that speaks of ageless grace and timeless beauty",
+                "Features that blend strength and delicacy like frost on morning flowers",
+                "A face that carries the memory of forgotten kingdoms in its lines",
+                "Elegant features that hold both wisdom and eternal youth in perfect balance"
+            ],
+            "hands": [
+                "Slender fingers that move with the deliberate grace of falling leaves",
+                "Hands that weave magic and memory with equal delicacy",
+                "Graceful hands that speak of centuries of refined craftsmanship",
+                "Fingers that remember the touch of ancient scrolls and sacred artifacts",
+                "Hands that move with fluid precision, each motion perfectly measured"
+            ],
+            "arms": [
+                "Graceful limbs that flow like windswept branches, strength hidden beneath fluid grace",
+                "Arms that carry the strength of ancient bowstrings and sword-songs",
+                "Elegant limbs that move with the precision of practiced warriors",
+                "Arms that blend power and elegance like morning mist over still waters",
+                "Limbs that hold the strength of young trees and the grace of wind-dancers"
+            ],
+            "chest": [
+                "A feminine form that carries the weight of ages with ethereal lightness",
+                "A frame built for both battle-dance and courtly grace",
+                "A chest that rises and falls with the rhythm of ancient forests",
+                "A form that blends strength and elegance like moonlight on water",
+                "A build that speaks of endurance tempered by immortal grace"
+            ],
+            "stomach": [
+                "A core that speaks of natural poise, muscles flowing like water beneath skin",
+                "A center of balance perfect for both dance and battle",
+                "A midsection that moves with fluid grace, every motion precise",
+                "A core shaped by centuries of refined movement and purpose",
+                "A form that holds strength like a young tree, flexible yet unbreaking"
+            ],
+            "back": [
+                "A spine that remembers the proud bearing of ancient courts",
+                "A back straight as ancient trees, yet fluid as flowing water",
+                "A posture that speaks of centuries of dignity and grace",
+                "A framework of elegant strength, carved by ages of purpose",
+                "A back that carries both wisdom and power with timeless grace"
+            ],
+            "legs": [
+                "Limbs that move with the quiet surety of forest shadows",
+                "Legs that carry their owner with the grace of wind through leaves",
+                "Steps that dance between worlds with ethereal precision",
+                "Limbs that blend speed and silence like moonlight on water",
+                "Legs shaped by centuries of swift movement through ancient woods"
+            ],
+            "feet": [
+                "Steps that whisper secrets to the earth, leaving no trace of their passing",
+                "Feet that know the ancient paths between root and stone",
+                "Silent steps that could dance on fallen leaves without a sound",
+                "Feet that remember the paths of forgotten kingdoms",
+                "Steps that move with the precision of starlight through branches"
+            ],
+            "groin": [
+                "Her intimate area bears delicate patterns that seem to shimmer in the light",
+                "An elegant arrangement that speaks of her fey ancestry",
+                "Her private regions hold an almost ethereal beauty"
+            ],
+            "bottom": [
+                "A perfectly sculpted rear that seems to defy gravity",
+                "Her posterior moves with hypnotic elven grace",
+                "A bottom that could have been carved from marble by master artisans"
+            ]
+        }
     },
     "Dwarf": {
-        "eyes": [
-            "Eyes deep as mountain pools, holding the gleam of buried gems",
-            "Keen eyes that read stone like scholars read text, seeing secrets in the layers",
-            "Sharp eyes that catch the glint of precious metals in the deepest dark",
-            "Eyes that hold the warmth of forge-fire and the wisdom of ancient stone",
-            "Steadfast gaze that measures worth in both craft and character"
-        ],
-        "hair": [
-            "Thick braids woven with the care of a master craftsman, each plait a story of clan and deed",
-            "A magnificent beard adorned with rings of ancestry and achievement",
-            "Hair strong as metal threads, each braid a testament to tradition",
-            "Carefully tended locks that speak of both pride and practicality",
-            "Intricate braids that tell tales of lineage and personal triumph"
-        ],
-        "face": [
-            "Features hewn from living stone, weathered by time and tempered by tradition",
-            "A face that could have been carved from mountain granite, strong and enduring",
-            "Features that hold the dignity of ancient halls and the warmth of hearth-fire",
-            "A countenance that speaks of stubborn determination and hard-won wisdom",
-            "A face marked by laughter lines deep as mine shafts and just as rich"
-        ],
-        "hands": [
-            "Hands that read stone like others read books, each callus earned in pursuit of perfection",
-            "Fingers strong enough to shape metal yet gentle enough to set gems",
-            "Hands that hold generations of craft-wisdom in every line and scar",
-            "Powerful digits that know the speech of stone and the songs of metal",
-            "Skilled hands that create beauty from raw earth with practiced precision"
-        ],
-        "arms": [
-            "Arms corded with strength like veins of iron through granite",
-            "Limbs powerful as support beams, shaped by forge and mine",
-            "Arms that swing hammers and wield axes with equal mastery",
-            "Sturdy limbs built for both crafting and combat",
-            "Arms strong as mountain roots and steady as stone"
-        ],
-        "chest": [
-            "A barrel-deep chest that echoes with mountain songs and forge-fire breaths",
-            "A frame built like the foundations of ancient halls, unshakeable",
-            "A chest broad as mineshaft supports, housing a heart of gold",
-            "A torso solid as bedrock, shaped by generations of honest labor",
-            "A build that speaks of endurance and strength, like the mountains themselves"
-        ],
-        "stomach": [
-            "A core solid as the roots of mountains, built by generations of unwavering purpose",
-            "A midsection stable as bedrock, anchoring every movement",
-            "A center of gravity low and strong as ancient stone",
-            "A core built by real work, solid as the heart of the mountain",
-            "A trunk sturdy as an old growth oak, rooted in tradition"
-        ],
-        "back": [
-            "A back straight as mineshaft supports, bearing the weight of ancient traditions",
-            "A spine strong as forged steel, unyielding to burden or pressure",
-            "A back broad as cavern walls, supporting the weight of generations",
-            "A framework solid as mountain stone, shaped by centuries of labor",
-            "A back that knows the weight of tradition and bears it proudly"
-        ],
-        "legs": [
-            "Legs sturdy as support pillars, planted firm as mountain foundations",
-            "Limbs strong as ancient roots, gripping stone like old friends",
-            "Legs that carry their weight with the surety of bedrock",
-            "Sturdy pillars that know the value of standing ground",
-            "Steps that echo with the strength of mountain halls"
-        ],
-        "feet": [
-            "Feet that know the secret paths of stone, each step sure as bedrock",
-            "Sturdy foundations that read the rock beneath like old runes",
-            "Feet that grip stone paths with the surety of mountain goats",
-            "Steps that carry their owner through the deepest mines without falter",
-            "Feet that understand the language of stone and steep paths"
-        ]
+        "male": {
+            "eyes": [
+                "Eyes deep as mountain pools, holding the gleam of buried gems",
+                "Keen eyes that read stone like scholars read text, seeing secrets in the layers",
+                "Sharp eyes that catch the glint of precious metals in the deepest dark",
+                "Eyes that hold the warmth of forge-fire and the wisdom of ancient stone",
+                "Steadfast gaze that measures worth in both craft and character"
+            ],
+            "hair": [
+                "Thick braids woven with the care of a master craftsman, each plait a story of clan and deed",
+                "A magnificent beard adorned with rings of ancestry and achievement",
+                "Hair strong as metal threads, each braid a testament to tradition",
+                "Carefully tended locks and beard that speak of both pride and practicality",
+                "Intricate braids that tell tales of lineage and personal triumph"
+            ],
+            "face": [
+                "Features hewn from living stone, weathered by time and tempered by tradition",
+                "A face that could have been carved from mountain granite, strong and enduring",
+                "Features that hold the dignity of ancient halls and the warmth of hearth-fire",
+                "A countenance that speaks of stubborn determination and hard-won wisdom",
+                "A face marked by laughter lines deep as mine shafts and just as rich"
+            ],
+            "hands": [
+                "Hands that read stone like others read books, each callus earned in pursuit of perfection",
+                "Fingers strong enough to shape metal yet gentle enough to set gems",
+                "Hands that hold generations of craft-wisdom in every line and scar",
+                "Powerful digits that know the speech of stone and the songs of metal",
+                "Skilled hands that create beauty from raw earth with practiced precision"
+            ],
+            "arms": [
+                "Arms corded with strength like veins of iron through granite",
+                "Limbs powerful as support beams, shaped by forge and mine",
+                "Arms that swing hammers and wield axes with equal mastery",
+                "Sturdy limbs built for both crafting and combat",
+                "Arms strong as mountain roots and steady as stone"
+            ],
+            "chest": [
+                "A barrel-deep chest that echoes with mountain songs and forge-fire breaths",
+                "A frame built like the foundations of ancient halls, unshakeable",
+                "A chest broad as mineshaft supports, housing a heart of gold",
+                "A torso solid as bedrock, shaped by generations of honest labor",
+                "A build that speaks of endurance and strength, like the mountains themselves"
+            ],
+            "stomach": [
+                "A core solid as the roots of mountains, built by generations of unwavering purpose",
+                "A midsection stable as bedrock, anchoring every movement",
+                "A center of gravity low and strong as ancient stone",
+                "A core built by real work, solid as the heart of the mountain",
+                "A trunk sturdy as an old growth oak, rooted in tradition"
+            ],
+            "back": [
+                "A back straight as mineshaft supports, bearing the weight of ancient traditions",
+                "A spine strong as forged steel, unyielding to burden or pressure",
+                "A back broad as cavern walls, supporting the weight of generations",
+                "A framework solid as mountain stone, shaped by centuries of labor",
+                "A back that knows the weight of tradition and bears it proudly"
+            ],
+            "legs": [
+                "Legs sturdy as support pillars, planted firm as mountain foundations",
+                "Limbs strong as ancient roots, gripping stone like old friends",
+                "Legs that carry their weight with the surety of bedrock",
+                "Sturdy pillars that know the value of standing ground",
+                "Steps that echo with the strength of mountain halls"
+            ],
+            "feet": [
+                "Feet that know the secret paths of stone, each step sure as bedrock",
+                "Sturdy foundations that read the rock beneath like old runes",
+                "Feet that grip stone paths with the surety of mountain goats",
+                "Steps that carry their owner through the deepest mines without falter",
+                "Feet that understand the language of stone and steep paths"
+            ],
+            "groin": [
+                "His intimate area is as solidly built as a dwarven vault",
+                "A private region that would make his ancestors proud",
+                "His groin area shows the same attention to detail as his finest crafts"
+            ],
+            "bottom": [
+                "A bottom as solid as the mountains themselves",
+                "His rear end could crack walnuts - and probably has",
+                "A posterior that's seen countless hours at the forge"
+            ]
+        },
+        "female": {
+            "eyes": [
+                "Eyes deep as mountain pools, holding the gleam of buried gems",
+                "Keen eyes that read stone like scholars read text, seeing secrets in the layers",
+                "Sharp eyes that catch the glint of precious metals in the deepest dark",
+                "Eyes that hold the warmth of forge-fire and the wisdom of ancient stone",
+                "Steadfast gaze that measures worth in both craft and character"
+            ],
+            "hair": [
+                "Thick braids woven with the care of a master craftsman, each plait a story of clan and deed",
+                "Luxuriant hair adorned with rings of ancestry and achievement",
+                "Hair strong as metal threads, each braid a testament to tradition",
+                "Carefully tended locks that speak of both pride and practicality",
+                "Intricate braids that tell tales of lineage and personal triumph"
+            ],
+            "face": [
+                "Features hewn from living stone, weathered by time and tempered by tradition",
+                "A face that could have been carved from mountain granite, strong yet feminine",
+                "Features that hold the dignity of ancient halls and the warmth of hearth-fire",
+                "A countenance that speaks of stubborn determination and hard-won wisdom",
+                "A face marked by laughter lines deep as mine shafts and just as rich"
+            ],
+            "hands": [
+                "Hands that read stone like others read books, each callus earned in pursuit of perfection",
+                "Fingers strong enough to shape metal yet gentle enough to set gems",
+                "Hands that hold generations of craft-wisdom in every line and scar",
+                "Skilled digits that know the speech of stone and the songs of metal",
+                "Capable hands that create beauty from raw earth with practiced precision"
+            ],
+            "arms": [
+                "Arms strong like veins of iron through granite",
+                "Limbs powerful as support beams, shaped by forge and mine",
+                "Arms that swing hammers and wield axes with equal mastery",
+                "Sturdy limbs built for both crafting and combat",
+                "Arms strong as mountain roots and steady as stone"
+            ],
+            "chest": [
+                "A proud chest that echoes with mountain songs and forge-fire breaths",
+                "A frame built like the foundations of ancient halls, unshakeable",
+                "A form strong as mineshaft supports, housing a heart of gold",
+                "A torso solid as bedrock, shaped by generations of honest labor",
+                "A build that speaks of endurance and strength, like the mountains themselves"
+            ],
+            "stomach": [
+                "A core solid as the roots of mountains, built by generations of unwavering purpose",
+                "A midsection stable as bedrock, anchoring every movement",
+                "A center of gravity low and strong as ancient stone",
+                "A core built by real work, solid as the heart of the mountain",
+                "A trunk sturdy as an old growth oak, rooted in tradition"
+            ],
+            "back": [
+                "A back straight as mineshaft supports, bearing the weight of ancient traditions",
+                "A spine strong as forged steel, unyielding to burden or pressure",
+                "A back proud as cavern walls, supporting the weight of generations",
+                "A framework solid as mountain stone, shaped by centuries of labor",
+                "A back that knows the weight of tradition and bears it proudly"
+            ],
+            "legs": [
+                "Legs sturdy as support pillars, planted firm as mountain foundations",
+                "Limbs strong as ancient roots, gripping stone like old friends",
+                "Legs that carry their weight with the surety of bedrock",
+                "Sturdy pillars that know the value of standing ground",
+                "Steps that echo with the strength of mountain halls"
+            ],
+            "feet": [
+                "Feet that know the secret paths of stone, each step sure as bedrock",
+                "Sturdy foundations that read the rock beneath like old runes",
+                "Feet that grip stone paths with the surety of mountain goats",
+                "Steps that carry their owner through the deepest mines without falter",
+                "Feet that understand the language of stone and steep paths"
+            ],
+            "groin": [
+                "Her intimate area is as solidly built as a dwarven vault",
+                "A private region that would make her ancestors proud",
+                "Her groin area shows the same attention to detail as her finest crafts"
+            ],
+            "bottom": [
+                "A bottom as solid as the mountains themselves",
+                "Her rear end could crack walnuts - and probably has",
+                "A posterior that's seen countless hours at the forge"
+            ]
+        }
     },
     "Gnome": {
-        "eyes": [
-            "Quick-bright eyes that sparkle with endless invention, each glance calculating possibilities",
-            "Curious eyes that dance with the light of discovery and wonder",
-            "Sharp eyes that see connections others miss, gleaming with inspiration",
-            "Eyes that shine with the fire of innovation and endless possibilities",
-            "Keen orbs that sparkle with mischief and mechanical insight"
-        ],
-        "hair": [
-            "Wild locks that seem to defy gravity, styled by enthusiasm rather than convention",
-            "Hair that springs and coils like copper wire with a mind of its own",
-            "Tresses that reflect their inventive nature, each style an experiment",
-            "Locks arranged in elaborate patterns that hint at mathematical precision",
-            "Hair that seems to crackle with creative energy and barely contained ideas"
-        ],
-        "face": [
-            "Features animated by constant thought, each expression a new idea taking flight",
-            "A face that shifts through emotions like gears through their positions",
-            "Features quick to smile and quicker still to show curiosity",
-            "A countenance that reveals the rapid workings of an innovative mind",
-            "Expressive features that telegraph each flash of inspiration"
-        ],
-        "hands": [
-            "Clever fingers that dance through complex patterns, never still and always creating",
-            "Hands that speak their own language of invention and discovery",
-            "Nimble digits that solve puzzles others haven't even noticed",
-            "Fingers that remember the shapes of a thousand clever devices",
-            "Hands that move with precision earned through countless experiments"
-        ],
-        "arms": [
-            "Arms that move with precise efficiency, each gesture part of some greater scheme",
-            "Limbs that conduct the symphony of creation with practiced grace",
-            "Arms marked with the small scars and stains of endless tinkering",
-            "Nimble limbs that navigate workshops with practiced ease",
-            "Arms that swing between tools and inventions with fluid grace"
-        ],
-        "chest": [
-            "A frame that barely contains boundless energy, humming with potential",
-            "A build that combines efficiency with surprising resilience",
-            "A chest that rises and falls with the rhythm of innovation",
-            "A form shaped by hours bent over workbenches and experiments",
-            "A frame that holds more strength than its size suggests"
-        ],
-        "stomach": [
-            "A core that shifts and turns like gears in motion, always ready for the next adventure",
-            "A midsection built for squeezing through tight spaces in pursuit of discovery",
-            "A center of balance perfect for reaching and climbing",
-            "A core that pivots and bends with mechanical precision",
-            "A build that combines flexibility with unexpected endurance"
-        ],
-        "back": [
-            "A spine that bends but never breaks, flexible as their innovative minds",
-            "A back strengthened by hours of careful work and sudden inspiration",
-            "A framework built for both precision and adaptability",
-            "A posture that shifts between intense focus and boundless energy",
-            "A back that knows both workshop bench and adventurous scramble"
-        ],
-        "legs": [
-            "Legs that carry them swiftly from one discovery to the next",
-            "Nimble limbs that navigate cluttered workshops with practiced ease",
-            "Steps that dance between inspiration and execution",
-            "Legs built for both patient work and sudden excitement",
-            "Limbs that move with the precision of well-oiled machinery"
-        ],
-        "feet": [
-            "Feet that find the clever paths, stepping lightly between convention and inspiration",
-            "Sure steps that navigate the maze of creativity without falter",
-            "Feet that know the dance of workshop and laboratory",
-            "Steps that carry their owner through both caution and excitement",
-            "Feet that understand both careful precision and swift action"
-        ]
+        "male": {
+            "eyes": [
+                "Quick-bright eyes that sparkle with endless invention, each glance calculating possibilities",
+                "Curious eyes that dance with the light of discovery and wonder",
+                "Sharp eyes that see connections others miss, gleaming with inspiration",
+                "Eyes that shine with the fire of innovation and endless possibilities",
+                "Keen orbs that sparkle with mischief and mechanical insight"
+            ],
+            "hair": [
+                "Wild locks that seem to defy gravity, styled by enthusiasm rather than convention",
+                "Hair that springs and coils like copper wire with a mind of its own",
+                "Tresses that reflect their inventive nature, each style an experiment",
+                "Locks arranged in elaborate patterns that hint at mathematical precision",
+                "Hair that seems to crackle with creative energy and barely contained ideas"
+            ],
+            "face": [
+                "Features animated by constant thought, each expression a new idea taking flight",
+                "A face that shifts through emotions like gears through their positions",
+                "Features quick to smile and quicker still to show curiosity",
+                "A countenance that reveals the rapid workings of an innovative mind",
+                "Expressive features that telegraph each flash of inspiration"
+            ],
+            "hands": [
+                "Clever fingers that dance through complex patterns, never still and always creating",
+                "Hands that speak their own language of invention and discovery",
+                "Nimble digits that solve puzzles others haven't even noticed",
+                "Fingers that remember the shapes of a thousand clever devices",
+                "Hands that move with precision earned through countless experiments"
+            ],
+            "arms": [
+                "Arms that move with precise efficiency, each gesture part of some greater scheme",
+                "Limbs that conduct the symphony of creation with practiced grace",
+                "Arms marked with the small scars and stains of endless tinkering",
+                "Nimble limbs that navigate workshops with practiced ease",
+                "Arms that swing between tools and inventions with fluid grace"
+            ],
+            "chest": [
+                "A compact frame that barely contains boundless energy",
+                "A build that combines efficiency with surprising resilience",
+                "A chest that rises and falls with the rhythm of innovation",
+                "A form shaped by hours bent over workbenches and experiments",
+                "A frame that holds more strength than its size suggests"
+            ],
+            "stomach": [
+                "A core that shifts and turns like gears in motion, always ready for the next adventure",
+                "A midsection built for squeezing through tight spaces in pursuit of discovery",
+                "A center of balance perfect for reaching and climbing",
+                "A core that pivots and bends with mechanical precision",
+                "A build that combines flexibility with unexpected endurance"
+            ],
+            "back": [
+                "A spine that bends but never breaks, flexible as their innovative minds",
+                "A back strengthened by hours of careful work and sudden inspiration",
+                "A framework built for both precision and adaptability",
+                "A posture that shifts between intense focus and boundless energy",
+                "A back that knows both workshop bench and adventurous scramble"
+            ],
+            "legs": [
+                "Legs that carry him swiftly from one discovery to the next",
+                "Nimble limbs that navigate cluttered workshops with practiced ease",
+                "Steps that dance between inspiration and execution",
+                "Legs built for both patient work and sudden excitement",
+                "Limbs that move with the precision of well-oiled machinery"
+            ],
+            "feet": [
+                "Feet that find the clever paths, stepping lightly between convention and inspiration",
+                "Sure steps that navigate the maze of creativity without falter",
+                "Feet that know the dance of workshop and laboratory",
+                "Steps that carry their owner through both caution and excitement",
+                "Feet that understand both careful precision and swift action"
+            ],
+            "groin": [
+                "His intimate area shows the same precision as his mechanical creations",
+                "A private region that's as meticulously maintained as his workshop",
+                "His groin area bears the same innovative spirit as his inventions"
+            ],
+            "bottom": [
+                "A surprisingly muscular bottom from hours of tinkering and inventing",
+                "His rear end bounces with the same energy as his personality",
+                "A posterior that's as perfectly engineered as his gadgets"
+            ]
+        },
+        "female": {
+            "eyes": [
+                "Quick-bright eyes that sparkle with endless invention, each glance calculating possibilities",
+                "Curious eyes that dance with the light of discovery and wonder",
+                "Sharp eyes that see connections others miss, gleaming with inspiration",
+                "Eyes that shine with the fire of innovation and endless possibilities",
+                "Keen orbs that sparkle with mischief and mechanical insight"
+            ],
+            "hair": [
+                "Wild locks that seem to defy gravity, styled by enthusiasm rather than convention",
+                "Hair that springs and coils like copper wire with a mind of its own",
+                "Tresses that reflect their inventive nature, each style an experiment",
+                "Locks arranged in elaborate patterns that hint at mathematical precision",
+                "Hair that seems to crackle with creative energy and barely contained ideas"
+            ],
+            "face": [
+                "Delicate features animated by constant thought, each expression a new idea taking flight",
+                "A face that shifts through emotions like gears through their positions",
+                "Features quick to smile and quicker still to show curiosity",
+                "A countenance that reveals the rapid workings of an innovative mind",
+                "Expressive features that telegraph each flash of inspiration"
+            ],
+            "hands": [
+                "Clever fingers that dance through complex patterns, never still and always creating",
+                "Hands that speak their own language of invention and discovery",
+                "Nimble digits that solve puzzles others haven't even noticed",
+                "Fingers that remember the shapes of a thousand clever devices",
+                "Hands that move with precision earned through countless experiments"
+            ],
+            "arms": [
+                "Arms that move with precise efficiency, each gesture part of some greater scheme",
+                "Limbs that conduct the symphony of creation with practiced grace",
+                "Arms that carry tools and components with careful precision",
+                "Slender arms strengthened by hours of detailed work",
+                "Limbs that move with the efficiency of well-oiled machinery",
+                "Arms marked with small burns and scars from countless experiments"
+            ],
+            "groin": [
+                "Her intimate area shows the same precision as her mechanical creations",
+                "A private region that's as meticulously maintained as her workshop",
+                "Her groin area bears the same innovative spirit as her inventions"
+            ],
+            "bottom": [
+                "A surprisingly muscular bottom from hours of tinkering and inventing",
+                "Her rear end bounces with the same energy as her personality",
+                "A posterior that's as perfectly engineered as her gadgets"
+            ]
+        }
     },
     "Kobold": {
-        "eyes": [
-            "Gem-bright eyes that hold ancient dragon-fire, pupils sliding like liquid obsidian",
-            "Eyes that gleam with cunning intelligence and ancestral memory",
-            "Sharp eyes that catch light like perfectly cut jewels",
-            "Gaze that holds both draconic majesty and clever calculation",
-            "Eyes that shift like molten metal, reflecting inner fire"
-        ],
-        "hair": [
-            "Scales that shimmer like polished bronze in sunlight, each one a tiny mirror",
-            "Scales arranged in patterns that catch light like scattered coins",
-            "A crown of delicate scales that whisper of dragon heritage",
-            "Metallic scales that flow like liquid copper in motion",
-            "Scales that gleam with the subtle colors of precious metals"
-        ],
-        "face": [
-            "Features that echo draconic majesty in miniature, sharp and precisely formed",
-            "A face that blends ancient heritage with quick intelligence",
-            "Sharp features that speak of both predator and craftsman",
-            "A countenance that holds both wisdom and mischief in balance",
-            "Features that shift between fierce pride and clever calculation"
-        ],
-        "hands": [
-            "Dexterous claws that work with surprising delicacy, each movement precisely controlled",
-            "Hands that combine dragon-strength with artisan's precision",
-            "Clever claws that craft beauty from raw materials",
-            "Fingers that remember both ancient crafts and modern innovations",
-            "Hands that work with the patience of their draconic ancestors"
-        ],
-        "arms": [
-            "Wiry limbs adorned with patterns like flowing water over metal",
-            "Arms strong as forged steel yet precise as jeweler's tools",
-            "Limbs that move with serpentine grace and surprising strength",
-            "Arms marked with scale-patterns that catch light like armor",
-            "Powerful limbs wrapped in scales like living chainmail"
-        ],
-        "chest": [
-            "A frame built for swift movement, scales flowing like liquid metal",
-            "A chest protected by scales that shine like burnished armor",
-            "A form that combines strength with surprising agility",
-            "A build that speaks of both dragon might and swift cunning",
-            "A torso covered in scales that shift like living metal"
-        ],
-        "stomach": [
-            "A core that moves with serpentine grace, muscles rippling beneath gleaming scales",
-            "A midsection flexible as flowing water yet strong as steel",
-            "A center built for both swift movement and surprising power",
-            "A core wrapped in scales that catch light like scattered gems",
-            "A build that combines draconic strength with nimble grace"
-        ],
-        "back": [
-            "A spine that flows like quicksilver, each scale a note in a cascade of motion",
-            "A back adorned with intricate patterns of metallic scales",
-            "A framework that combines flexibility with draconic strength",
-            "A back that moves with the fluid grace of ancient wyrms",
-            "A spine protected by scales that shimmer like polished armor"
-        ],
-        "legs": [
-            "Legs coiled with hidden strength, ready to spring or sprint at a moment's notice",
-            "Limbs that carry their weight with predatory grace",
-            "Legs that combine power with surprising agility",
-            "Steps that move with the precision of ancient hunters",
-            "Limbs wrapped in scales that catch light like flowing metal"
-        ],
-        "feet": [
-            "Clawed feet that grip and guide with equal skill, leaving barely a whisper of passage",
-            "Feet that combine draconic strength with silent grace",
-            "Steps that remember the hunting patterns of ancient wyrms",
-            "Feet that move with predatory precision and craftsman's care",
-            "Claws that grip any surface with natural confidence"
-        ],
-        "horns": [
-            "Delicate horns that catch light like burnished bronze, each ridge precisely placed",
-            "Horns that curve with draconic elegance, marking ancient heritage",
-            "Crown-like horns that speak of noble dragon blood",
-            "Horns that gleam like polished metal in sunlight",
-            "Proud horns that mark their bearer as dragon-kin"
-        ],
-        "tail": [
-            "A tail that moves with hypnotic grace, each scale catching light like scattered coins",
-            "A tail that serves as both balance and weapon, ever-moving",
-            "A graceful tail that writes stories in the air with its motion",
-            "A tail adorned with scales that shimmer like precious metals",
-            "A powerful tail that moves with serpentine precision"
-        ]
+        "male": {
+            "eyes": [
+                "Gem-bright eyes that hold ancient dragon-fire, pupils sliding like liquid obsidian",
+                "Eyes that gleam with cunning intelligence and ancestral memory", 
+                "Sharp eyes that catch light like perfectly cut jewels",
+                "Gaze that holds both draconic majesty and clever calculation",
+                "Eyes that shift like molten metal, reflecting inner fire"
+            ],
+            "hair": [
+                "Scales that shimmer like polished bronze in sunlight, each one a tiny mirror",
+                "Scales arranged in patterns that catch light like scattered coins",
+                "A crown of delicate scales that whisper of dragon heritage",
+                "Metallic scales that flow like liquid copper in motion",
+                "Scales that gleam with the subtle colors of precious metals"
+            ],
+            "face": [
+                "Features that echo draconic majesty in miniature, sharp and precisely formed",
+                "A face that blends ancient heritage with quick intelligence",
+                "Sharp features that speak of both predator and craftsman",
+                "A countenance that holds both wisdom and mischief in balance",
+                "Features that shift between fierce pride and clever calculation"
+            ],
+            "hands": [
+                "Dexterous claws that work with surprising delicacy, each movement precisely controlled",
+                "Hands that combine dragon-strength with artisan's precision",
+                "Clever claws that craft beauty from raw materials",
+                "Fingers that remember both ancient crafts and modern innovations",
+                "Hands that work with the patience of their draconic ancestors"
+            ],
+            "arms": [
+                "Wiry limbs adorned with patterns like flowing water over metal",
+                "Arms strong as forged steel yet precise as jeweler's tools",
+                "Limbs that move with serpentine grace and surprising strength",
+                "Arms marked with scale-patterns that catch light like armor",
+                "Powerful limbs wrapped in scales like living chainmail"
+            ],
+            "chest": [
+                "A frame built for swift movement, scales flowing like liquid metal",
+                "A chest protected by scales that shine like burnished armor",
+                "A form that combines strength with surprising agility",
+                "A build that speaks of both dragon might and swift cunning",
+                "A torso covered in scales that shift like living metal"
+            ],
+            "stomach": [
+                "A core that moves with serpentine grace, muscles rippling beneath gleaming scales",
+                "A midsection flexible as flowing water yet strong as steel",
+                "A center built for both swift movement and surprising power",
+                "A core wrapped in scales that catch light like scattered gems",
+                "A build that combines draconic strength with nimble grace"
+            ],
+            "back": [
+                "A spine that flows like quicksilver, each scale a note in a cascade of motion",
+                "A back adorned with intricate patterns of metallic scales",
+                "A framework that combines flexibility with draconic strength",
+                "A back that moves with the fluid grace of ancient wyrms",
+                "A spine protected by scales that shimmer like polished armor"
+            ],
+            "legs": [
+                "Legs coiled with hidden strength, ready to spring or sprint at a moment's notice",
+                "Limbs that carry their weight with predatory grace",
+                "Legs that combine power with surprising agility",
+                "Steps that move with the precision of ancient hunters",
+                "Limbs wrapped in scales that catch light like flowing metal"
+            ],
+            "feet": [
+                "Clawed feet that grip and guide with equal skill, leaving barely a whisper of passage",
+                "Feet that combine draconic strength with silent grace",
+                "Steps that remember the hunting patterns of ancient wyrms",
+                "Feet that move with predatory precision and craftsman's care",
+                "Claws that grip any surface with natural confidence"
+            ],
+            "groin": [
+                "Delicate scales in mesmerizing patterns protect his intimate areas",
+                "His private region gleams with iridescent dragon-like scales",
+                "A fascinating arrangement of scales that catch the light like gems"
+            ],
+            "bottom": [
+                "His scaled posterior reflects light like polished dragon scales",
+                "A tail-complemented bottom that moves with reptilian grace",
+                "His rear is covered in scales that shimmer like mother-of-pearl"
+            ],
+            "horns": [
+                "Delicate horns that catch light like burnished bronze, each ridge precisely placed",
+                "Horns that curve with draconic elegance, marking ancient heritage",
+                "Crown-like horns that speak of noble dragon blood",
+                "Horns that gleam like polished metal in sunlight",
+                "Proud horns that mark their bearer as dragon-kin"
+            ],
+            "tail": [
+                "A tail that moves with hypnotic grace, each scale catching light like scattered coins",
+                "A tail that serves as both balance and weapon, ever-moving",
+                "A graceful tail that writes stories in the air with its motion",
+                "A tail adorned with scales that shimmer like precious metals",
+                "A powerful tail that moves with serpentine precision"
+            ]
+        },
+        "female": {
+            "eyes": [
+                "Gem-bright eyes that sparkle with draconic fire, pupils dancing like liquid gold",
+                "Eyes that gleam with ancient wisdom and fierce determination",
+                "Sharp eyes that flash like precious stones in firelight",
+                "Gaze that combines draconic pride with feminine grace",
+                "Eyes that shimmer like molten copper, full of inner fire"
+            ],
+            "hair": [
+                "Scales that glitter like precious gems, each catching light with delicate precision",
+                "Scales arranged in elegant patterns that flow like liquid metal",
+                "A crown of fine scales that whisper of noble dragon blood",
+                "Metallic scales that dance like starlight on water",
+                "Scales that shine with the subtle colors of dawn"
+            ],
+            "face": [
+                "Delicate features that echo draconic beauty, each scale perfectly placed",
+                "A face that combines fierce pride with feminine grace",
+                "Sharp features that speak of both predator and artist",
+                "A countenance that holds both ancient wisdom and playful spirit",
+                "Features that shift between regal dignity and clever charm"
+            ],
+            "hands": [
+                "Graceful claws that work with artist's precision, each movement fluid and controlled",
+                "Hands that blend dragon-strength with feminine delicacy",
+                "Clever claws that create beauty with every touch",
+                "Fingers that weave both magic and craft with equal skill",
+                "Hands that work with both power and grace"
+            ],
+            "arms": [
+                "Slender limbs adorned with scales like flowing silk",
+                "Arms that combine draconic strength with feminine grace",
+                "Limbs that move with serpentine elegance",
+                "Arms marked with scale-patterns that shimmer like jewelry",
+                "Graceful limbs wrapped in scales like living lace"
+            ],
+            "chest": [
+                "A feminine frame adorned with scales like precious gems",
+                "A form that combines draconic strength with graceful curves",
+                "A build that speaks of both power and elegance",
+                "A chest protected by scales that shine like morning dew",
+                "A torso covered in scales that flow like liquid light"
+            ],
+            "stomach": [
+                "A core that moves with serpentine grace, scales shimmering like starlight",
+                "A midsection that combines flexibility with subtle strength",
+                "A center built for both power and grace",
+                "A core wrapped in scales that dance like moonlight",
+                "A build that blends draconic power with feminine curves"
+            ],
+            "back": [
+                "A spine that curves like a river of stars, each scale perfectly placed",
+                "A back adorned with delicate patterns of shimmering scales",
+                "A framework that combines flexibility with feminine grace",
+                "A back that moves with the elegance of ancient wyrms",
+                "A spine protected by scales that gleam like morning frost"
+            ],
+            "legs": [
+                "Legs that move with dancer's grace, scales flowing like liquid silver",
+                "Limbs that carry their weight with elegant precision",
+                "Legs that combine draconic strength with feminine grace",
+                "Steps that flow with the grace of ancient queens",
+                "Limbs wrapped in scales that shimmer like moonlight"
+            ],
+            "feet": [
+                "Delicate claws that move with dancer's precision, leaving whispered footsteps",
+                "Feet that combine draconic power with graceful movement",
+                "Steps that flow like water over stone",
+                "Feet that dance with predatory elegance",
+                "Claws that move with natural grace and confidence"
+            ],
+            "groin": [
+                "Her intimate areas are protected by scales fine as silk",
+                "Delicate scales arrange themselves in mesmerizing patterns",
+                "Her private region gleams with the subtle colors of dawn"
+            ],
+            "bottom": [
+                "Her scaled posterior moves with serpentine grace",
+                "A tail-complemented bottom that flows like liquid metal",
+                "Her rear catches light like scattered diamonds"
+            ],
+            "horns": [
+                "Elegant horns that curve like frozen moonlight",
+                "Horns that speak of noble heritage and feminine grace",
+                "Crown-like horns that shimmer with inner fire",
+                "Horns that catch light like morning frost",
+                "Delicate horns that mark her as dragon-blessed"
+            ],
+            "tail": [
+                "A tail that moves like flowing silk, scales catching light like stars",
+                "A tail that dances with feminine grace and draconic power",
+                "A graceful tail that writes poetry in the air",
+                "A tail adorned with scales fine as lace",
+                "A tail that moves with hypnotic elegance"
+            ]
+        }
     },
     "Feline": {
-        "eyes": [
-            "Eyes like captured moonlight, pupils expanding and contracting with predatory focus",
-            "Gaze that holds both night's mystery and hunter's precision",
-            "Eyes that shift between alert watchfulness and lazy contentment",
-            "Orbs that gleam with both wisdom and wild nature",
-            "Eyes that see through darkness and into souls with equal ease"
-        ],
-        "hair": [
-            "Fur that ripples like silk in shadow, each movement a study in liquid grace",
-            "A coat that catches light like water at midnight",
-            "Fur that speaks of both wild freedom and elegant refinement",
-            "A pelt that shimmers with health and natural beauty",
-            "Coat marked with patterns that tell tales of ancient bloodlines"
-        ],
-        "face": [
-            "Features that blend feline majesty with subtle expression, whiskers quivering with intent",
-            "A face that holds both predator's power and gentle wisdom",
-            "Features that shift between fierce pride and quiet contemplation",
-            "A countenance that speaks of both wild nature and careful thought",
-            "A face that combines natural grace with expressive depth"
-        ],
-        "hands": [
-            "Padded hands that conceal deadly grace, each movement precisely controlled",
-            "Paws that combine hunter's strength with artisan's delicacy",
-            "Hands that move with both power and gentle precision",
-            "Fingers that remember both hunt and craft with equal skill",
-            "Paws that hold both deadly claws and gentle touch"
-        ],
-        "arms": [
-            "Limbs that flow like midnight water, power wrapped in velvet motion",
-            "Arms that combine predatory strength with fluid grace",
-            "Limbs built for both swift strike and gentle embrace",
-            "Arms that move with the precision of natural hunters",
-            "Powerful limbs wrapped in silk-soft fur"
-        ],
-        "chest": [
-            "A frame built for silent power, muscles flowing beneath sleek fur",
-            "A form that combines strength with natural grace",
-            "A build that speaks of both power and agility",
-            "A chest that holds both warrior's strength and dancer's grace",
-            "A frame wrapped in fur that flows like shadow"
-        ],
-        "stomach": [
-            "A core that moves like shadow given form, each motion perfectly balanced",
-            "A midsection built for both power and flexibility",
-            "A center that combines strength with fluid grace",
-            "A core wrapped in fur soft as midnight",
-            "A build that speaks of both power and agility"
-        ],
-        "back": [
-            "A spine that curves like a drawn bow, ready to unleash coiled energy",
-            "A back that flows with natural grace and power",
-            "A framework built for both strength and flexibility",
-            "A back that moves with predatory precision",
-            "A spine that combines power with fluid motion"
-        ],
-        "legs": [
-            "Legs that gather and release power like springs of living steel",
-            "Limbs that combine hunter's strength with dancer's grace",
-            "Legs built for both swift pursuit and silent stalking",
-            "Powerful limbs wrapped in velvet-soft fur",
-            "Steps that move with natural precision and grace"
-        ],
-        "feet": [
-            "Paws that dance across any surface, each step placed with deadly precision",
-            "Feet that combine hunter's stealth with natural grace",
-            "Steps that leave no trace of their passing",
-            "Paws that know both swift chase and silent stalk",
-            "Feet that move with predatory confidence"
-        ],
-        "tail": [
-            "A tail that writes stories in the air, every twitch and curl a word in its own language",
-            "A tail that moves with hypnotic grace, balancing every motion",
-            "A graceful tail that speaks volumes in its subtle movements",
-            "A tail that flows like water through shadow",
-            "An expressive tail that dances with every mood and motion"
-        ]
+        "male": {
+            "eyes": [
+                "Eyes like captured moonlight, pupils expanding and contracting with predatory focus",
+                "Gaze that holds both night's mystery and hunter's precision",
+                "Eyes that shift between alert watchfulness and lazy contentment",
+                "Orbs that gleam with both wisdom and wild nature",
+                "Eyes that see through darkness and into souls with equal ease"
+            ],
+            "hair": [
+                "Fur that ripples like silk in shadow, each movement a study in liquid grace",
+                "A coat that catches light like water at midnight",
+                "Fur that speaks of both wild freedom and elegant refinement",
+                "A pelt that shimmers with health and natural beauty",
+                "Coat marked with patterns that tell tales of ancient bloodlines"
+            ],
+            "face": [
+                "Features that blend feline majesty with subtle expression, whiskers quivering with intent",
+                "A face that holds both predator's power and gentle wisdom",
+                "Features that shift between fierce pride and quiet contemplation",
+                "A countenance that speaks of both wild nature and careful thought",
+                "A face that combines natural grace with expressive depth"
+            ],
+            "hands": [
+                "Padded hands that conceal deadly grace, each movement precisely controlled",
+                "Paws that combine hunter's strength with artisan's delicacy",
+                "Hands that move with both power and gentle precision",
+                "Fingers that remember both hunt and craft with equal skill",
+                "Paws that hold both deadly claws and gentle touch"
+            ],
+            "arms": [
+                "Limbs that flow like midnight water, power wrapped in velvet motion",
+                "Arms that combine predatory strength with fluid grace",
+                "Limbs built for both swift strike and gentle embrace",
+                "Arms that move with the precision of natural hunters",
+                "Powerful limbs wrapped in silk-soft fur"
+            ],
+            "chest": [
+                "A frame built for silent power, muscles flowing beneath sleek fur",
+                "A form that combines strength with natural grace",
+                "A build that speaks of both power and agility",
+                "A chest that holds both warrior's strength and dancer's grace",
+                "A frame wrapped in fur that flows like shadow"
+            ],
+            "stomach": [
+                "A core that moves like shadow given form, each motion perfectly balanced",
+                "A midsection built for both power and flexibility",
+                "A center that combines strength with fluid grace",
+                "A core wrapped in fur soft as midnight",
+                "A build that speaks of both power and agility"
+            ],
+            "back": [
+                "A spine that curves like a drawn bow, ready to unleash coiled energy",
+                "A back that flows with natural grace and power",
+                "A framework built for both strength and flexibility",
+                "A back that moves with predatory precision",
+                "A spine that combines power with fluid motion"
+            ],
+            "legs": [
+                "Legs that gather and release power like springs of living steel",
+                "Limbs that combine hunter's strength with dancer's grace",
+                "Legs built for both swift pursuit and silent stalking",
+                "Powerful limbs wrapped in velvet-soft fur",
+                "Steps that move with natural precision and grace"
+            ],
+            "feet": [
+                "Paws that dance across any surface, each step placed with deadly precision",
+                "Feet that combine hunter's stealth with natural grace",
+                "Steps that leave no trace of their passing",
+                "Paws that know both swift chase and silent stalk",
+                "Feet that move with predatory confidence"
+            ],
+            "groin": [
+                "His intimate area is covered in the softest, finest fur imaginable",
+                "A private region that radiates feline power",
+                "His groin area shows the same sleek grace as his movements"
+            ],
+            "bottom": [
+                "A powerful feline posterior that moves with predatory grace",
+                "His tail accentuates a bottom that speaks of natural strength",
+                "A rear end that combines power with natural grace"
+            ],
+            "tail": [
+                "A tail that writes stories in the air, every twitch and curl a word in its own language",
+                "A tail that moves with hypnotic grace, balancing every motion",
+                "A graceful tail that speaks volumes in its subtle movements",
+                "A tail that flows like water through shadow",
+                "An expressive tail that dances with every mood and motion"
+            ]
+        },
+        "female": {
+            "eyes": [
+                "Eyes like liquid gold, holding both mystery and allure",
+                "Gaze that captures hearts with feline grace",
+                "Eyes that shift between playful charm and huntress focus",
+                "Orbs that gleam with feminine wisdom and wild beauty",
+                "Eyes that hold both night's secrets and dawn's promise"
+            ],
+            "hair": [
+                "Fur soft as moonlight, flowing with feminine grace",
+                "A coat that shimmers like silk in starlight",
+                "Fur that combines wild beauty with elegant refinement",
+                "A pelt that catches light like morning mist",
+                "Coat marked with patterns delicate as lace"
+            ],
+            "face": [
+                "Features that blend feline beauty with feminine charm",
+                "A face that holds both predator's grace and gentle allure",
+                "Features that shift between fierce pride and playful charm",
+                "A countenance that speaks of both wild spirit and gentle heart",
+                "A face that combines natural beauty with expressive charm"
+            ],
+            "hands": [
+                "Delicate paws that hide deadly grace beneath velvet touch",
+                "Hands that combine huntress skill with feminine delicacy",
+                "Paws that move with both power and gentle grace",
+                "Fingers that know both hunt and caress",
+                "Hands that hold both strength and tenderness"
+            ],
+            "arms": [
+                "Limbs that flow like liquid grace, each movement precisely controlled",
+                "Arms that combine feline agility with feminine charm",
+                "Limbs built for both swift strike and gentle embrace",
+                "Arms that move with the grace of natural dancers",
+                "Slender limbs wrapped in silk-soft fur"
+            ],
+            "chest": [
+                "A feminine frame wrapped in fur soft as twilight",
+                "A form that combines strength with natural curves",
+                "A build that speaks of both power and grace",
+                "A chest that holds both warrior's heart and dancer's spirit",
+                "A frame adorned with fur fine as mist"
+            ],
+            "stomach": [
+                "A core that moves like moonlight on water",
+                "A midsection that combines strength with feminine grace",
+                "A center built for both power and flexibility",
+                "A core wrapped in fur soft as starlight",
+                "A build that speaks of both power and elegance"
+            ],
+            "back": [
+                "A spine that curves like a crescent moon",
+                "A back that flows with natural feminine grace",
+                "A framework built for both strength and flexibility",
+                "A back that moves with dancer's precision",
+                "A spine that combines power with elegant motion"
+            ],
+            "legs": [
+                "Legs that move with dancer's grace and huntress power",
+                "Limbs that combine predatory strength with feminine charm",
+                "Legs built for both swift pursuit and graceful dance",
+                "Slender limbs wrapped in velvet-soft fur",
+                "Steps that flow with natural precision and grace"
+            ],
+            "feet": [
+                "Paws that move with dancer's grace, each step perfectly placed",
+                "Feet that combine huntress stealth with natural elegance",
+                "Steps that flow like water over stone",
+                "Paws that know both swift chase and gentle step",
+                "Feet that dance with natural confidence"
+            ],
+            "groin": [
+                "Her intimate area is covered in fur soft as silk",
+                "A private region that purrs with feminine grace",
+                "Her groin area shows the same elegant refinement as her movements"
+            ],
+            "bottom": [
+                "A graceful feline posterior that moves with natural elegance",
+                "Her tail accentuates a bottom that flows like liquid grace",
+                "A rear end that combines power with feminine charm"
+            ],
+            "tail": [
+                "A tail that dances like moonlight on water",
+                "A tail that moves with feminine grace and feline power",
+                "A graceful tail that writes poetry in motion",
+                "A tail that flows like silk through shadow",
+                "A tail that speaks of both power and elegance"
+            ]
+        }
     },
     "Ashenkin": {
-        "eyes": [
-            "Eyes that burn like stars fallen to earth, holding lights that never saw mortal skies",
-            "Gaze that pierces through reality's thin veil",
-            "Eyes that hold the fire of other worlds within their depths",
-            "Orbs that glow with inner light from beyond mortal realms",
-            "Eyes that shift between worlds with every blink"
-        ],
-        "hair": [
-            "Strands that capture and release light like threads of fate themselves",
-            "Hair that moves as though touched by winds from other worlds",
-            "Locks that shimmer with colors not found in mortal spectrum",
-            "Tresses that seem to float in unseen currents",
-            "Hair that dances with ethereal energy and otherworldly grace"
-        ],
-        "face": [
-            "Features that seem carved from dreams, each angle defying mundane geometry",
-            "A countenance that shifts between reality and something more",
-            "Features that hold beauty from beyond mortal understanding",
-            "A face that seems to occupy multiple spaces at once",
-            "Features that blur the line between real and surreal"
-        ],
-        "hands": [
-            "Fingers traced with patterns that shift like smoke when not observed",
-            "Hands that weave between worlds with casual grace",
-            "Digits that hold power from beyond mortal realms",
-            "Hands that move as though reality is merely a suggestion",
-            "Fingers that dance between what is and what could be"
-        ],
-        "arms": [
-            "Limbs that move as though gravity is merely a suggestion",
-            "Arms that flow with otherworldly grace and power",
-            "Limbs that seem to exist in multiple places at once",
-            "Arms marked with patterns that shift and change",
-            "Limbs that bend reality with every motion"
-        ],
-        "chest": [
-            "A form that seems to occupy space differently than it should",
-            "A frame that holds power from beyond mortal realms",
-            "A build that defies conventional physics",
-            "A form that shifts between solid and ethereal",
-            "A chest that rises and falls with otherworldly rhythm"
-        ],
-        "stomach": [
-            "A core that bends light like heat waves over desert sand",
-            "A center that seems to pulse with otherworldly energy",
-            "A form that shifts between solid and shadow",
-            "A build that defies mortal understanding",
-            "A core that moves with impossible grace"
-        ],
-        "back": [
-            "A spine that curves with impossible grace, defying mortal limitations",
-            "A back that seems to bend reality around it",
-            "A framework built from dreams and starlight",
-            "A form that shifts between worlds with every motion",
-            "A back marked with patterns that defy description"
-        ],
-        "legs": [
-            "Legs that seem to float rather than step, barely acknowledging earthly bonds",
-            "Limbs that move with impossible grace and precision",
-            "Steps that dance between worlds with casual ease",
-            "Legs that defy conventional physics with every motion",
-            "Limbs that flow like smoke through reality"
-        ],
-        "feet": [
-            "Feet that treat the ground as optional, each step leaving whispers of stardust",
-            "Steps that barely touch the earth, trailing otherworldly energy",
-            "Feet that move between worlds with natural grace",
-            "Steps that leave echoes of other realms in their wake",
-            "Feet that dance on the edge of reality"
-        ],
-        "horns": [
-            "Horns that gleam with inner light, casting shadows that move against the light",
-            "Crown-like horns that pierce through reality's veil",
-            "Horns that seem to exist in multiple dimensions",
-            "Spires that catch and bend light in impossible ways",
-            "Horns that pulse with power from beyond mortal realms"
-        ],
-        "tail": [
-            "A tail that moves like captured starlight, trailing echoes of other worlds",
-            "An appendage that writes reality's secrets in its wake",
-            "A tail that seems to exist in multiple places at once",
-            "A form that dances between solid and ethereal",
-            "A tail that leaves traces of stardust in its path"
-        ]
+        "male": {
+            "eyes": [
+                "Eyes that burn like stars fallen to earth, holding lights that never saw mortal skies",
+                "Gaze that pierces through reality's thin veil",
+                "Eyes that hold the fire of other worlds within their depths",
+                "Orbs that glow with inner light from beyond mortal realms",
+                "Eyes that shift between worlds with every blink"
+            ],
+            "hair": [
+                "Strands that capture and release light like threads of fate themselves",
+                "Hair that moves as though touched by winds from other worlds",
+                "Locks that shimmer with colors not found in mortal spectrum",
+                "Tresses that seem to float in unseen currents",
+                "Hair that dances with ethereal energy and otherworldly grace"
+            ],
+            "face": [
+                "Features that seem carved from dreams, each angle defying mundane geometry",
+                "A countenance that shifts between reality and something more",
+                "Features that hold beauty from beyond mortal understanding",
+                "A face that seems to occupy multiple spaces at once",
+                "Features that blur the line between real and surreal"
+            ],
+            "hands": [
+                "Fingers traced with patterns that shift like smoke when not observed",
+                "Hands that weave between worlds with casual grace",
+                "Digits that hold power from beyond mortal realms",
+                "Hands that move as though reality is merely a suggestion",
+                "Fingers that dance between what is and what could be"
+            ],
+            "arms": [
+                "Limbs that move as though gravity is merely a suggestion",
+                "Arms that flow with otherworldly grace and power",
+                "Limbs that seem to exist in multiple places at once",
+                "Arms marked with patterns that shift and change",
+                "Limbs that bend reality with every motion"
+            ],
+            "chest": [
+                "A form that seems to occupy space differently than it should",
+                "A frame that holds power from beyond mortal realms",
+                "A build that defies conventional physics",
+                "A form that shifts between solid and ethereal",
+                "A chest that rises and falls with otherworldly rhythm"
+            ],
+            "stomach": [
+                "A core that bends light like heat waves over desert sand",
+                "A center that seems to pulse with otherworldly energy",
+                "A form that shifts between solid and shadow",
+                "A build that defies mortal understanding",
+                "A core that moves with impossible grace"
+            ],
+            "back": [
+                "A spine that curves with impossible grace, defying mortal limitations",
+                "A back that seems to bend reality around it",
+                "A framework built from dreams and starlight",
+                "A form that shifts between worlds with every motion",
+                "A back marked with patterns that defy description"
+            ],
+            "legs": [
+                "Legs that seem to float rather than step, barely acknowledging earthly bonds",
+                "Limbs that move with impossible grace and precision",
+                "Steps that dance between worlds with casual ease",
+                "Legs that defy conventional physics with every motion",
+                "Limbs that flow like smoke through reality"
+            ],
+            "feet": [
+                "Feet that treat the ground as optional, each step leaving whispers of stardust",
+                "Steps that barely touch the earth, trailing otherworldly energy",
+                "Feet that move between worlds with natural grace",
+                "Steps that leave echoes of other realms in their wake",
+                "Feet that dance on the edge of reality"
+            ],
+            "groin": [
+                "Arcane symbols dance across his intimate areas like living tattoos",
+                "His private region pulses with barely contained magical energy",
+                "Mystical patterns swirl around his groin like smoke in still air"
+            ],
+            "bottom": [
+                "His posterior bears swirling magical markings that shift and change",
+                "A bottom that seems to defy the normal laws of physics",
+                "His rear end glows faintly with contained magical energy"
+            ],
+            "horns": [
+                "Horns that gleam with inner light, casting shadows that move against the light",
+                "Crown-like horns that pierce through reality's veil",
+                "Horns that seem to exist in multiple dimensions",
+                "Spires that catch and bend light in impossible ways",
+                "Horns that pulse with power from beyond mortal realms"
+            ],
+            "tail": [
+                "A tail that moves like captured starlight, trailing echoes of other worlds",
+                "An appendage that writes reality's secrets in its wake",
+                "A tail that seems to exist in multiple places at once",
+                "A form that dances between solid and ethereal",
+                "A tail that leaves traces of stardust in its path"
+            ]
+        },
+        "female": {
+            "eyes": [
+                "Eyes that shimmer like distant galaxies, holding mysteries beyond mortal ken",
+                "Gaze that dances between dimensions with feminine grace",
+                "Eyes that hold the beauty of infinite possibilities",
+                "Orbs that pulse with otherworldly light and allure",
+                "Eyes that shift like cosmic auroras"
+            ],
+            "hair": [
+                "Strands that flow like liquid starlight, defying gravity with ethereal grace",
+                "Hair that dances with colors from beyond the veil",
+                "Locks that shimmer with the light of distant dimensions",
+                "Tresses that move like cosmic winds",
+                "Hair that weaves between reality and dream"
+            ],
+            "face": [
+                "Features that blend otherworldly beauty with feminine grace",
+                "A countenance that shifts like moonlight through crystal",
+                "Features that hold beauty from beyond the stars",
+                "A face that seems carved from dreams and starlight",
+                "Features that dance between reality and fantasy"
+            ],
+            "hands": [
+                "Fingers that weave spells with feminine grace and otherworldly power",
+                "Hands that dance between dimensions with natural elegance",
+                "Digits that hold both power and delicate precision",
+                "Hands that move like smoke through moonlight",
+                "Fingers that paint reality with ethereal grace"
+            ],
+            "arms": [
+                "Limbs that flow like liquid moonlight, defying mundane physics",
+                "Arms that combine otherworldly power with feminine grace",
+                "Limbs that dance between dimensions with natural elegance",
+                "Arms marked with patterns that shift like starlight",
+                "Limbs that move with impossible grace"
+            ],
+            "chest": [
+                "A feminine form that seems woven from starlight and shadow",
+                "A frame that holds both power and ethereal grace",
+                "A build that combines otherworldly beauty with natural curves",
+                "A form that shifts between solid and ethereal",
+                "A chest that rises and falls with cosmic rhythm"
+            ],
+            "stomach": [
+                "A core that moves like light through crystal",
+                "A center that pulses with feminine grace and otherworldly power",
+                "A form that dances between shadow and starlight",
+                "A build that defies mortal understanding with elegant grace",
+                "A core that flows like cosmic winds"
+            ],
+            "back": [
+                "A spine that curves like a river of stars",
+                "A back that seems to bend reality with feminine grace",
+                "A framework built from dreams and moonlight",
+                "A form that shifts between worlds with elegant precision",
+                "A back marked with patterns that flow like cosmic tides"
+            ],
+            "legs": [
+                "Legs that dance through dimensions with feminine grace",
+                "Limbs that move like liquid starlight",
+                "Steps that weave between worlds with natural elegance",
+                "Legs that defy physics with graceful precision",
+                "Limbs that flow like cosmic rivers"
+            ],
+            "feet": [
+                "Feet that barely touch reality, leaving trails of stardust",
+                "Steps that dance between dimensions with feminine grace",
+                "Feet that move with otherworldly elegance",
+                "Steps that write poetry in starlight",
+                "Feet that float on cosmic winds"
+            ],
+            "groin": [
+                "Her intimate areas shimmer with otherworldly grace",
+                "Mystical patterns dance across her private region",
+                "Her groin area glows with subtle, ethereal light"
+            ],
+            "bottom": [
+                "Her posterior seems to float between dimensions",
+                "A bottom that defies physics with feminine grace",
+                "Her rear end shimmers with otherworldly energy"
+            ],
+            "horns": [
+                "Horns that curve like frozen starlight",
+                "Crown-like horns that shimmer with feminine grace",
+                "Horns that dance between dimensions",
+                "Spires that catch cosmic light like crystal",
+                "Horns that pulse with ethereal beauty"
+            ],
+            "tail": [
+                "A tail that writes poetry in starlight",
+                "An appendage that dances between dimensions with feminine grace",
+                "A tail that flows like liquid moonlight",
+                "A form that moves with impossible elegance",
+                "A tail that leaves trails of cosmic light"
+            ]
+        }
     }
-} 
+}

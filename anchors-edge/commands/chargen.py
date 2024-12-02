@@ -246,29 +246,38 @@ def node_description_select(caller):
     text = """
 |c== Character Creation - Character Description ==|n
 
-Your character has been given default descriptions based on their race. You can:
+Your character has been given default descriptions based on their race and gender. You can:
 - Type |wshow|n to see your character's full appearance
 - Type |wshow <part>|n to see a specific description
 - Type |w<part> <description>|n to change a description
 - Type |whelp|n to see example descriptions for your race
 
-Available parts: eyes, hair, face, hands, arms, chest, stomach, back, legs, feet
+Available parts: eyes, hair, face, hands, arms, chest, stomach, back, legs, feet, groin, bottom
 
 Type |wdone|n when finished.
 """
     
     # Initialize descriptions dict if not exists
     if not hasattr(caller.ndb._menutree, 'descriptions'):
-        # Generate default descriptions based on race
+        # Generate default descriptions based on race and gender
         race = caller.ndb._menutree.race
-        if race in settings.RACE_DESCRIPTIONS:
-            default_descs = settings.RACE_DESCRIPTIONS[race]
+        gender = caller.ndb._menutree.gender.lower()  # Convert to lowercase to match JSON structure
+        
+        # Load descriptions from JSON
+        with open(Path("data/descriptions/body_parts.json"), 'r') as f:
+            race_descriptions = json.load(f)
+            
+        if race in race_descriptions and gender in race_descriptions[race]:
+            default_descs = race_descriptions[race][gender]
             descriptions = {}
             for part, descs in default_descs.items():
                 if isinstance(descs, list) and descs:
                     descriptions[part] = random.choice(descs)
+                else:
+                    descriptions[part] = descs
             caller.ndb._menutree.descriptions = descriptions
         else:
+            # Fallback to empty descriptions if race/gender combo not found
             caller.ndb._menutree.descriptions = {}
 
     def _handle_description(caller, raw_string):
@@ -280,7 +289,7 @@ Type |wdone|n when finished.
         command = args[0]
 
         if command == 'done':
-            return "node_name_select"
+            return "node_text_descriptor"
             
         if command == 'help':
             race = caller.ndb._menutree.race
@@ -293,6 +302,9 @@ Type |wdone|n when finished.
             return None
             
         if command == 'show':
+            # Set a flag to suppress menu redisplay
+            caller.ndb._menutree.suppress_menu = True
+            
             if len(args) > 1:
                 # Show specific part
                 part = args[1]
@@ -302,11 +314,10 @@ Type |wdone|n when finished.
                     caller.msg(f"No description set for {part}.")
             else:
                 # Show all descriptions in structured format
-                caller.msg("|c== Character Description ==|n")
                 # Define the order we want to show parts in
                 part_order = [
                     'eyes', 'hair', 'face', 'hands', 'arms', 'chest', 
-                    'stomach', 'back', 'legs', 'feet'
+                    'stomach', 'back', 'legs', 'feet', 'groin', 'bottom'
                 ]
                 # Add race-specific parts
                 race = caller.ndb._menutree.race
@@ -324,7 +335,7 @@ Type |wdone|n when finished.
         # Handle setting a description
         valid_parts = [
             'eyes', 'hair', 'face', 'hands', 'arms', 'chest', 
-            'stomach', 'back', 'legs', 'feet'
+            'stomach', 'back', 'legs', 'feet', 'groin', 'bottom'
         ]
         
         # Add race-specific parts
@@ -346,16 +357,16 @@ Type |wdone|n when finished.
         caller.ndb._menutree.descriptions[command] = args[1]
         caller.msg(f"\nUpdated description for |w{command}|n:")
         caller.msg(f"{args[1]}")
-        
-        # Show the current description list
-        caller.msg("\n|cCurrent Descriptions:|n")
-        for part in valid_parts:
-            if part in caller.ndb._menutree.descriptions:
-                caller.msg(f"|w{part}:|n {caller.ndb._menutree.descriptions[part]}")
-        
         return None
             
     options = {"key": "_default", "goto": _handle_description}
+    
+    # Check if we should suppress menu display
+    if hasattr(caller.ndb._menutree, 'suppress_menu') and caller.ndb._menutree.suppress_menu:
+        # Clear the flag and return empty text
+        del caller.ndb._menutree.suppress_menu
+        return "", options
+    
     return text, options
 
 def node_name_select(caller):
@@ -424,6 +435,7 @@ def node_create_char(caller):
         subrace = caller.ndb._menutree.subrace if hasattr(caller.ndb._menutree, 'subrace') else None
         gender = caller.ndb._menutree.gender if hasattr(caller.ndb._menutree, 'gender') else None
         background = caller.ndb._menutree.background if hasattr(caller.ndb._menutree, 'background') else None
+        text_description = caller.ndb._menutree.text_description if hasattr(caller.ndb._menutree, 'text_description') else None
 
         # Create character using the imported create.create_object
         char = create.create_object(
@@ -443,6 +455,8 @@ def node_create_char(caller):
             char.db.gender = gender
         if background:
             char.db.background = background
+        if text_description:
+            char.db.text_description = text_description
 
         # Store descriptions
         if hasattr(caller.ndb._menutree, 'descriptions'):
@@ -456,6 +470,9 @@ def node_create_char(caller):
         # Set account reference on character
         char.db.account = caller
         
+        if hasattr(caller.ndb._menutree, 'age'):
+            char.db.age = caller.ndb._menutree.age
+
         text = f"""
 |c== Character Creation Complete! ==|n
 
@@ -488,6 +505,7 @@ def node_final_confirm(caller):
     gender = caller.ndb._menutree.gender if hasattr(caller.ndb._menutree, 'gender') else None
     background = caller.ndb._menutree.background if hasattr(caller.ndb._menutree, 'background') else None
     charname = caller.ndb._menutree.charname if hasattr(caller.ndb._menutree, 'charname') else None
+    text_description = caller.ndb._menutree.text_description if hasattr(caller.ndb._menutree, 'text_description') else None
     
     text = f"""
 |c== Character Creation - Final Confirmation ==|n
@@ -497,9 +515,13 @@ Please review your character details:
 |wName:|n {charname}
 |wRace:|n {race}{f" ({subrace})" if subrace else ""}
 |wGender:|n {gender if gender else "Not specified"}
+|wAge:|n {caller.ndb._menutree.age if hasattr(caller.ndb._menutree, 'age') else "Not specified"}
 |wBackground:|n {background if background else "Not specified"}
 
-|wAppearance:|n
+|wOverall Description:|n
+{text_description if text_description else "No overall description provided."}
+
+|wDetailed Appearance:|n
 """
     
     # Add description details
@@ -507,7 +529,7 @@ Please review your character details:
         # Define the order we want to show parts in
         part_order = [
             'eyes', 'hair', 'face', 'hands', 'arms', 'chest', 
-            'stomach', 'back', 'legs', 'feet'
+            'stomach', 'back', 'legs', 'feet', 'groin', 'bottom'
         ]
         
         # Add race-specific parts
@@ -686,7 +708,7 @@ Is this the height you want?
         """Handle height confirmation."""
         choice = raw_string.strip().lower()
         if choice == "yes":
-            return "node_background_select"
+            return "node_age_select"
         elif choice == "no":
             return "node_height_select"
         else:
@@ -694,6 +716,88 @@ Is this the height you want?
             return None
     
     options = {"key": "_default", "goto": _confirm_height}
+    return wrap_text(text), options
+
+def node_age_select(caller):
+    """Select character age."""
+    race = caller.ndb._menutree.race
+    
+    # Define age ranges for each race
+    age_ranges = {
+        "Human": {"min": 18, "max": 75},
+        "Elf": {"min": 18, "max": 600},  # Elves are long-lived
+        "Dwarf": {"min": 18, "max": 300},  # Dwarves live several centuries
+        "Gnome": {"min": 18, "max": 350},  # Gnomes are also long-lived
+        "Kobold": {"min": 18, "max": 50},  # Shorter lifespan
+        "Feline": {"min": 18, "max": 70},  # Similar to humans
+        "Ashenkin": {"min": 18, "max": 175}  # Magical nature extends life
+    }
+    
+    # Get the age range for the selected race
+    age_range = age_ranges.get(race, age_ranges["Human"])  # Default to human if race not found
+    
+    text = f"""
+|c== Character Creation - Age Selection ==|n
+
+Choose your character's age. Different races have different natural lifespans.
+
+|wAge Range for {race}:|n
+Minimum: {age_range['min']} years
+Maximum: {age_range['max']} years
+
+|wEnter your character's age (in years):|n"""
+
+    def _set_age(caller, raw_string):
+        """Handle age selection."""
+        try:
+            age = int(raw_string.strip())
+            
+            # Validate age range
+            if age < age_range["min"]:
+                caller.msg(f"Age must be at least {age_range['min']} years.")
+                return None
+            elif age > age_range["max"]:
+                caller.msg(f"Age cannot exceed {age_range['max']} years for {race}s.")
+                return None
+                
+            # Store age
+            caller.ndb._menutree.age = age
+            return "node_age_confirm"
+            
+        except ValueError:
+            caller.msg("Please enter a valid number for age.")
+            return None
+    
+    options = {"key": "_default", "goto": _set_age}
+    return wrap_text(text), options
+
+def node_age_confirm(caller):
+    """Confirm age selection."""
+    age = caller.ndb._menutree.age
+    race = caller.ndb._menutree.race
+    
+    text = f"""
+|c== Character Creation - Age Confirmation ==|n
+
+You have selected an age of:
+|w{age} years|n
+
+Is this the age you want for your {race}?
+|wEnter |gyes|w to confirm or |rno|w to choose again:|n
+"""
+    
+    def _confirm_age(caller, raw_string):
+        """Handle age confirmation."""
+        choice = raw_string.strip().lower()
+        if choice == "yes":
+            return "node_background_select"
+        elif choice == "no":
+            return "node_age_select"
+        else:
+            caller.msg("Please enter 'yes' or 'no'.")
+            return None
+    
+    options = {"key": "_default", "goto": _confirm_age}
     return wrap_text(text), options
 
 def node_description_edit(caller):
@@ -711,7 +815,7 @@ Use the following command to view and edit descriptions:
 |wdesc <part>|n          - Show description for specific part
 |wdesc <part> <text>|n   - Set new description for part
 
-Available body parts: eyes, hair, face, hands, arms, chest, stomach, back, legs, feet
+Available body parts: eyes, hair, face, hands, arms, chest, stomach, back, legs, feet, groin, bottom
 """
 
     # Add race-specific parts to the help text
@@ -823,7 +927,7 @@ class DescCommand(Command):
         
         valid_parts = [
             "eyes", "hair", "face", "hands", "arms", "chest", 
-            "stomach", "back", "legs", "feet"
+            "stomach", "back", "legs", "feet", "groin", "bottom"
         ]
         
         # Add race-specific parts if character has them
@@ -872,7 +976,7 @@ class CmdCreateCharacter(Command):
         charcreate
     """
     key = "charcreate"
-    locks = "cmd:all()"  # Allow all accounts to use this command
+    locks = "cmd:all()"
     help_category = "Character"
     
     def func(self):
@@ -882,6 +986,12 @@ class CmdCreateCharacter(Command):
             self.caller.msg("|rYou have reached the maximum number of characters allowed (5).|n")
             self.caller.msg("You must delete a character before creating a new one.")
             return
+
+        # Only show age verification if this is their first character
+        if not self.caller.db._playable_characters and not self.caller.db.age_verified:
+            start_node = "node_age_verification"
+        else:
+            start_node = "node_race_select"
             
         # Ensure we have a default home location
         default_home = ensure_default_home()
@@ -908,21 +1018,139 @@ class CmdCreateCharacter(Command):
         # Start the menu with custom formatting
         EvMenu(self.caller,
                {
-                   "node_race_select": node_race_select,           # 1. Select race
-                   "node_subrace_select": node_subrace_select,     # 2. Select subrace (if applicable)
-                   "node_gender_select": node_gender_select,       # 3. Select gender
-                   "node_height_select": node_height_select,       # 4. Select height
-                   "node_height_confirm": node_height_confirm,     # 5. Confirm height
-                   "node_background_select": node_background_select, # 6. Select background
-                   "node_description_select": node_description_select, # 7. Customize descriptions
-                   "node_name_select": node_name_select,           # 8. Choose name
-                   "node_name_confirm": node_name_confirm,         # 9. Confirm name
-                   "node_final_confirm": node_final_confirm,       # 10. Final review
-                   "node_create_char": node_create_char           # 11. Create character
+                   "node_age_verification": node_age_verification,     # 0. Age verification
+                   "node_race_select": node_race_select,              # 1. Select race
+                   "node_subrace_select": node_subrace_select,        # 2. Select subrace (if applicable)
+                   "node_gender_select": node_gender_select,          # 3. Select gender
+                   "node_height_select": node_height_select,          # 4. Select height
+                   "node_height_confirm": node_height_confirm,        # 5. Confirm height
+                   "node_age_select": node_age_select,               # 6. Select age
+                   "node_age_confirm": node_age_confirm,             # 7. Confirm age
+                   "node_background_select": node_background_select,  # 8. Select background
+                   "node_description_select": node_description_select, # 9. Customize descriptions
+                   "node_text_descriptor": node_text_descriptor,      # 10. Overall text description
+                   "node_name_select": node_name_select,             # 11. Choose name
+                   "node_name_confirm": node_name_confirm,           # 12. Confirm name
+                   "node_final_confirm": node_final_confirm,         # 13. Final review
+                   "node_create_char": node_create_char              # 14. Create character
                },
-               startnode="node_race_select",
+               startnode=start_node,
                cmd_on_exit=None,
                options_formatter=custom_formatter,
                node_formatter=node_formatter,
                options_separator="")
+  
+def node_age_verification(caller):
+    """Initial age verification check."""
+    text = """
+|r== AGE VERIFICATION REQUIRED ==|n
+
+|rWARNING: This is an adult-oriented game with mature themes and content.|n
+
+This game contains:
+- Adult situations and themes
+- Mature content and descriptions
+- Content not suitable for minors
+
+|rBy continuing, you verify that:|n
+- You are at least 18 years of age
+- You are legally able to view adult content in your jurisdiction
+- You understand this is an adult-oriented game
+
+|wEnter |g'yes'|w to confirm you are 18+ and accept these terms.
+Enter |r'no'|w to disconnect.|n
+"""
+
+    def _verify_age(caller, raw_string):
+        """Handle age verification response."""
+        choice = raw_string.strip().lower()
+        if choice == "yes":
+            # Store verification on the account
+            caller.db.age_verified = True
+            return "node_race_select"
+        elif choice == "no":
+            caller.msg("\n|rYou must be 18 or older to play this game. Disconnecting...|n")
+            caller.session_disconnect()
+            return None
+        else:
+            caller.msg("Please enter 'yes' or 'no'.")
+            return None
+
+    options = {"key": "_default", "goto": _verify_age}
+    return wrap_text(text), options
+  
+def node_text_descriptor(caller):
+    """Allow setting an overall character description."""
+    text = """
+|c== Character Creation - Overall Description ==|n
+
+Here you can provide an overall description of your character that goes beyond individual body parts. This is your chance to paint a complete picture of how others see your character.
+
+You can describe:
+- General appearance and presence
+- How they carry themselves
+- Distinctive features or mannerisms
+- Overall impression they make
+- Clothing style or typical attire
+- Notable scars and markings
+
+Do not include tattoos, or accessories as there are game mechanics to handle those.
+
+Current description:
+"""
+    
+    if hasattr(caller.ndb._menutree, 'text_description'):
+        text += f"\n{caller.ndb._menutree.text_description}\n"
+    else:
+        text += "\n|yNo description set yet.|n\n"
+    
+    text += """
+|wCommands:|n
+- Type your description to set it
+- Type |wshow|n to see your current description
+- Type |wclear|n to remove your description
+- Type |wskip|n to continue without a description
+- Type |wdone|n when finished
+
+Your description should be a paragraph or two that brings your character to life."""
+
+    def _handle_text_description(caller, raw_string):
+        """Handle text description input."""
+        command = raw_string.strip().lower()
+        
+        if command == 'done':
+            if not hasattr(caller.ndb._menutree, 'text_description'):
+                caller.msg("You haven't set a description yet. Type |wskip|n if you don't want to set one.")
+                return None
+            return "node_name_select"
+            
+        if command == 'skip':
+            return "node_name_select"
+            
+        if command == 'show':
+            if hasattr(caller.ndb._menutree, 'text_description'):
+                caller.msg("|wCurrent Description:|n")
+                caller.msg(caller.ndb._menutree.text_description)
+            else:
+                caller.msg("|yNo description set yet.|n")
+            return None
+            
+        if command == 'clear':
+            if hasattr(caller.ndb._menutree, 'text_description'):
+                del caller.ndb._menutree.text_description
+                caller.msg("Description cleared.")
+            else:
+                caller.msg("No description to clear.")
+            return None
+            
+        # If not a command, treat as new description
+        if raw_string.strip():
+            caller.ndb._menutree.text_description = raw_string.strip()
+            caller.msg("\n|wDescription set to:|n")
+            caller.msg(raw_string.strip())
+            caller.msg("\nType |wdone|n when satisfied or enter a new description to change it.")
+        return None
+            
+    options = {"key": "_default", "goto": _handle_text_description}
+    return wrap_text(text), options
   

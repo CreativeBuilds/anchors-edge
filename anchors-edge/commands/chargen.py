@@ -12,6 +12,7 @@ import json
 import random
 from pathlib import Path
 from typeclasses.characters import Character
+from utils.text import format_description
 
 def _check_name(caller, name):
     """Check if name is valid and unique."""
@@ -52,8 +53,7 @@ def node_race_select(caller):
     text = """
 |c== Character Creation - Race Selection ==|n
 
-Choose your race carefully, as it will shape your character's natural abilities 
-and how they interact with the world.
+Choose your race carefully, as it will shape your character's natural abilities and how they interact with the world.
 
 |wAvailable Races:|n"""
     
@@ -251,10 +251,9 @@ Your character has been given default descriptions based on their race and gende
 - Type |wshow <part>|n to see a specific description
 - Type |w<part> <description>|n to change a description
 - Type |whelp|n to see example descriptions for your race
+- Type |wdone|n when finished
 
 Available parts: eyes, hair, face, hands, arms, chest, stomach, back, legs, feet, groin, bottom
-
-Type |wdone|n when finished.
 """
     
     # Initialize descriptions dict if not exists
@@ -309,7 +308,7 @@ Type |wdone|n when finished.
                 # Show specific part
                 part = args[1]
                 if part in caller.ndb._menutree.descriptions:
-                    caller.msg(f"|w{part}:|n {caller.ndb._menutree.descriptions[part]}")
+                    caller.msg(f"|w{part}:|n {format_description(caller.ndb._menutree.descriptions[part])}")
                 else:
                     caller.msg(f"No description set for {part}.")
             else:
@@ -329,7 +328,7 @@ Type |wdone|n when finished.
                 # Display descriptions in order
                 for part in part_order:
                     if part in caller.ndb._menutree.descriptions:
-                        caller.msg(f"|w{part}:|n {caller.ndb._menutree.descriptions[part]}")
+                        caller.msg(f"|w{part}:|n {format_description(caller.ndb._menutree.descriptions[part])}")
             return None
 
         # Handle setting a description
@@ -353,10 +352,10 @@ Type |wdone|n when finished.
             caller.msg(f"Please provide a description for {command}.")
             return None
 
-        # Store the description
-        caller.ndb._menutree.descriptions[command] = args[1]
+        # Store the description (formatted)
+        caller.ndb._menutree.descriptions[command] = format_description(args[1])
         caller.msg(f"\nUpdated description for |w{command}|n:")
-        caller.msg(f"{args[1]}")
+        caller.msg(f"{caller.ndb._menutree.descriptions[command]}")
         return None
             
     options = {"key": "_default", "goto": _handle_description}
@@ -1084,7 +1083,8 @@ def node_text_descriptor(caller):
     text = """
 |c== Character Creation - Overall Description ==|n
 
-Here you can provide an overall description of your character that goes beyond individual body parts. This is your chance to paint a complete picture of how others see your character.
+Here you can provide an overall description of your character that goes beyond individual body parts.
+This is your chance to paint a complete picture of how others see your character.
 
 You can describe:
 - General appearance and presence
@@ -1092,15 +1092,13 @@ You can describe:
 - Distinctive features or mannerisms
 - Overall impression they make
 - Clothing style or typical attire
-- Notable scars and markings
-
-Do not include tattoos, or accessories as there are game mechanics to handle those.
+- Notable scars, markings, or accessories
 
 Current description:
 """
     
     if hasattr(caller.ndb._menutree, 'text_description'):
-        text += f"\n{caller.ndb._menutree.text_description}\n"
+        text += f"\n{format_description(caller.ndb._menutree.text_description)}\n"
     else:
         text += "\n|yNo description set yet.|n\n"
     
@@ -1130,7 +1128,7 @@ Your description should be a paragraph or two that brings your character to life
         if command == 'show':
             if hasattr(caller.ndb._menutree, 'text_description'):
                 caller.msg("|wCurrent Description:|n")
-                caller.msg(caller.ndb._menutree.text_description)
+                caller.msg(format_description(caller.ndb._menutree.text_description))
             else:
                 caller.msg("|yNo description set yet.|n")
             return None
@@ -1145,9 +1143,9 @@ Your description should be a paragraph or two that brings your character to life
             
         # If not a command, treat as new description
         if raw_string.strip():
-            caller.ndb._menutree.text_description = raw_string.strip()
+            caller.ndb._menutree.text_description = format_description(raw_string.strip())
             caller.msg("\n|wDescription set to:|n")
-            caller.msg(raw_string.strip())
+            caller.msg(caller.ndb._menutree.text_description)
             caller.msg("\nType |wdone|n when satisfied or enter a new description to change it.")
         return None
             

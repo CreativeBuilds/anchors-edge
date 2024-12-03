@@ -774,3 +774,39 @@ class CmdIdentify(Command):
                 self.caller.msg(f"- {key} (x{count})")
             else:
                 self.caller.msg(f"- {key}")
+
+class CmdWho(Command):
+    """
+    List all connected players.
+    
+    Usage:
+        who
+        
+    Shows the names of all characters currently connected to the game.
+    """
+    key = "who"
+    locks = "cmd:all()"
+    help_category = "General"
+    
+    def func(self):
+        """Execute command."""
+        # Get all connected accounts
+        from evennia.accounts.models import AccountDB
+        
+        # Build list of connected characters
+        connected_chars = []
+        for account in AccountDB.objects.filter(is_connected=True):
+            # Get the character this account is currently playing
+            if account.puppet:
+                connected_chars.append(account.puppet)
+        
+        if not connected_chars:
+            self.caller.msg("No one is connected.")
+            return
+            
+        # Format the output
+        string = "|wConnected Characters:|n\n"
+        for char in connected_chars:
+            string += f"\n  {char.name}"
+            
+        self.caller.msg(string)

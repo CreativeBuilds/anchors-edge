@@ -24,6 +24,7 @@ from commands.admin import (
     CmdCleanupAccounts, CmdResetAccount, CmdDebugCharacter,
     CmdLastWipe, CmdChangelog, CmdResetWorld
 )
+from commands.command import CmdWho
 
 class CharacterCmdSet(DefaultCharacterCmdSet):
     """
@@ -46,6 +47,7 @@ class CharacterCmdSet(DefaultCharacterCmdSet):
         # Add intro commands
         self.add(CmdIntro())
         self.add(CmdLongIntro())
+        self.add(CmdWho())
 
 
 class AccountCmdSet(DefaultAccountCmdSet):

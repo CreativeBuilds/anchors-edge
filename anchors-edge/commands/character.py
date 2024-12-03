@@ -93,6 +93,7 @@ class CmdSignout(Command):
     
     Usage:
         signout
+        quit
     """
     key = "signout"
     aliases = ["quit"]
@@ -101,13 +102,16 @@ class CmdSignout(Command):
     
     def func(self):
         """Execute command."""
-        if not self.caller.character:
+        if hasattr(self.caller, 'account') and self.caller.account:
+            # We're a character object
+            charname = self.caller.name
+            account = self.caller.account
+            account.unpuppet_object(self.session)
+            account.msg(f"\nYou stop being |w{charname}|n.\n")
+        else:
+            # We're already an account or something else
             self.caller.msg("You're not currently playing a character!")
             return
-            
-        charname = self.caller.character.name
-        self.caller.unpuppet_object(self.session)
-        self.caller.msg(f"\nYou stop being |w{charname}|n.\n")
 
 class CmdIC(Command):
     """

@@ -49,3 +49,6 @@ htmlcov/
 # Temporary files
 *.tmp
 *.temp
+
+
+server/conf/last_wipe_timestamp

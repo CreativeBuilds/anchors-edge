@@ -244,8 +244,29 @@ class Character(ObjectParent, DefaultCharacter):
         # Get the character's name and any titles
         name = self.get_display_name(looker)
         
-        # Format the description
-        desc = self.format_description()
+        # Get gender for proper pronouns
+        gender = self.db.gender.lower() if hasattr(self.db, 'gender') else 'their'
+        pronoun = 'Her' if gender == 'female' else 'His' if gender == 'male' else 'Their'
+        
+        # Format descriptions with proper pronouns and line breaks
+        descriptions = []
+        if hasattr(self.db, 'descriptions'):
+            # Define the order of body parts
+            body_parts = [
+                'eyes', 'hair', 'face',
+                'arms', 'chest', 'back',
+                'stomach', 'legs', 'feet',
+                'groin', 'bottom', 'tail',
+                'horns'  # Special feature for certain races
+            ]
+            
+            # Add each body part description if it exists
+            for part in body_parts:
+                if part in self.db.descriptions:
+                    descriptions.append(f"{pronoun} {part} {self.db.descriptions[part]}")
+        
+        # Join descriptions with newlines
+        desc = "\n".join(descriptions) if descriptions else "This character has no description yet."
         
         # Combine into final appearance
         return f"|c{name}|n\n\n{desc}"

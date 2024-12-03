@@ -796,7 +796,7 @@ class CmdWho(Command):
         
         # Build list of connected characters
         connected_chars = []
-        for account in AccountDB.objects.filter(is_connected=True):
+        for account in AccountDB.objects.filter(db_is_connected=True):
             # Get the character this account is currently playing
             if account.puppet:
                 connected_chars.append(account.puppet)

@@ -253,14 +253,15 @@ class SayCommand(default_cmds.MuxCommand):
         action_text_others = self.get_drunk_action_text(intoxication_level, is_self=False)
         action_text_self = self.get_drunk_action_text(intoxication_level, is_self=True)
 
-        # Check if this is a targeted message
-        if self.args.lower().startswith("to "):
-            # Remove the "to " prefix and split into target and message
-            remaining = self.args[3:].strip()
+        # Parse the input for targeted messages
+        args = self.args.strip()
+        if args.lower().startswith("to "):
+            # Split into target and message, preserving message spaces
             try:
-                target_name, message = remaining.split(" ", 1)
+                _, target_and_message = args.split(" ", 1)  # Split off "to "
+                target_name, message = target_and_message.split(" ", 1)  # Split target from message
             except ValueError:
-                caller.msg("What do you want to say to them?")
+                caller.msg("Usage: say to <character> <message>")
                 return
 
             # Look for target in the same location
@@ -285,7 +286,7 @@ class SayCommand(default_cmds.MuxCommand):
 
         else:
             # Regular say command
-            message = self.args
+            message = args
             
             # Modify speech if drunk
             if intoxication_level > 1:

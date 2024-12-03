@@ -203,43 +203,61 @@ This choice will affect your starting location and initial relationships.
     return wrap_text(text), options
 
 def format_full_description(descriptions):
-    """Format all descriptions into a cohesive character appearance."""
+    """Format all descriptions into a cohesive character appearance using natural sentences."""
     parts = []
+    gender = descriptions.get('gender', 'their')  # Default to gender-neutral if not specified
+    pronoun = 'Their' if gender == 'their' else gender == 'male' and 'His' or 'Her'
     
     # Face area (eyes, hair, face)
     face_features = []
-    for part in ['face', 'eyes', 'hair']:
-        if part in descriptions:
-            face_features.append(descriptions[part])
+    if 'eyes' in descriptions:
+        face_features.append(f"{pronoun} eyes {descriptions['eyes']}")
+    if 'hair' in descriptions:
+        face_features.append(f"{pronoun} hair {descriptions['hair']}")
+    if 'face' in descriptions:
+        face_features.append(f"{pronoun} face {descriptions['face']}")
     if face_features:
         parts.append(" ".join(face_features))
     
     # Upper body (arms, chest, back)
     upper_body = []
-    for part in ['arms', 'chest', 'back']:
-        if part in descriptions:
-            upper_body.append(descriptions[part])
+    if 'arms' in descriptions:
+        upper_body.append(f"{pronoun} arms {descriptions['arms']}")
+    if 'chest' in descriptions:
+        upper_body.append(f"{pronoun} chest {descriptions['chest']}")
+    if 'back' in descriptions:
+        upper_body.append(f"{pronoun} back {descriptions['back']}")
     if upper_body:
         parts.append(" ".join(upper_body))
     
     # Lower body (stomach, legs, feet)
     lower_body = []
-    for part in ['stomach', 'legs', 'feet']:
-        if part in descriptions:
-            lower_body.append(descriptions[part])
+    if 'stomach' in descriptions:
+        lower_body.append(f"{pronoun} stomach {descriptions['stomach']}")
+    if 'legs' in descriptions:
+        lower_body.append(f"{pronoun} legs {descriptions['legs']}")
+    if 'feet' in descriptions:
+        lower_body.append(f"{pronoun} feet {descriptions['feet']}")
     if lower_body:
         parts.append(" ".join(lower_body))
     
     # Special features last (horns, tail)
     special = []
-    for part in ['horns', 'tail']:
-        if part in descriptions:
-            special.append(descriptions[part])
+    if 'horns' in descriptions:
+        special.append(f"{pronoun} horns {descriptions['horns']}")
+    if 'tail' in descriptions:
+        special.append(f"{pronoun} tail {descriptions['tail']}")
     if special:
         parts.append(" ".join(special))
     
-    # Join all parts with proper spacing
-    return " ".join(parts)
+    # Join all parts with proper spacing and capitalization
+    description = " ".join(parts)
+    
+    # Ensure the first letter is capitalized
+    if description:
+        description = description[0].upper() + description[1:]
+    
+    return description
 
 def node_description_select(caller):
     """Select character descriptions."""
@@ -253,13 +271,27 @@ Your character has been given default descriptions based on their race and gende
 - Type |whelp|n to see example descriptions for your race
 - Type |wdone|n when finished
 
-Available parts: eyes, hair, face, hands, arms, chest, stomach, back, legs, feet, groin, bottom
-"""
-    
+Remember to write descriptions that will flow naturally in a sentence.
+For example, if your character is female, write descriptions like:
+|wEyes:|n "are a deep emerald green with flecks of gold"
+|wHair:|n "falls in soft auburn waves past her shoulders"
+|wFace:|n "bears a gentle expression, with high cheekbones"
+
+These will be formatted into sentences like:
+"Her eyes are a deep emerald green with flecks of gold. Her hair falls in soft auburn waves past her shoulders."
+
+Available parts: eyes, hair, face, hands, arms, chest, stomach, back, legs, feet, groin, bottom"""
+
+    # Add race-specific parts to the help text
+    race = caller.ndb._menutree.race
+    if race in ["Kobold", "Ashenkin"]:
+        text += ", horns, tail"
+    elif race == "Feline":
+        text += ", tail"
+
     # Initialize descriptions dict if not exists
     if not hasattr(caller.ndb._menutree, 'descriptions'):
         # Generate default descriptions based on race and gender
-        race = caller.ndb._menutree.race
         gender = caller.ndb._menutree.gender.lower()  # Convert to lowercase to match JSON structure
         
         # Load descriptions from JSON
@@ -292,12 +324,15 @@ Available parts: eyes, hair, face, hands, arms, chest, stomach, back, legs, feet
             
         if command == 'help':
             race = caller.ndb._menutree.race
+            gender = caller.ndb._menutree.gender.lower()
+            pronoun = 'Their' if gender == 'their' else gender == 'male' and 'His' or 'Her'
+            
             if race in settings.RACE_DESCRIPTIONS:
                 examples = settings.RACE_DESCRIPTIONS[race]
-                caller.msg("\n|cExample descriptions for your race:|n")
+                caller.msg(f"\n|cExample descriptions for your {race}:|n")
                 for part, descs in examples.items():
                     if isinstance(descs, list) and descs:
-                        caller.msg(f"|w{part}:|n {descs[0]}")
+                        caller.msg(f"|w{part}:|n {pronoun} {part} {descs[0]}")
             return None
             
         if command == 'show':
@@ -308,62 +343,47 @@ Available parts: eyes, hair, face, hands, arms, chest, stomach, back, legs, feet
                 # Show specific part
                 part = args[1]
                 if part in caller.ndb._menutree.descriptions:
-                    caller.msg(f"|w{part}:|n {format_description(caller.ndb._menutree.descriptions[part])}")
+                    gender = caller.ndb._menutree.gender.lower()
+                    pronoun = 'Their' if gender == 'their' else gender == 'male' and 'His' or 'Her'
+                    caller.msg(f"|w{part.title()}:|n {pronoun} {part} {caller.ndb._menutree.descriptions[part]}")
                 else:
                     caller.msg(f"No description set for {part}.")
             else:
-                # Show all descriptions in structured format
-                # Define the order we want to show parts in - from top to bottom
-                part_order = [
-                    'face', 'eyes', 'hair',      # Head area
-                    'chest', 'arms', 'hands',    # Upper body
-                    'back', 'stomach',           # Mid body
-                    'groin', 'bottom',           # Lower body
-                    'legs', 'feet'               # Extremities
-                ]
-                
-                # Add race-specific parts in appropriate positions
-                race = caller.ndb._menutree.race
-                if race in ["Kobold", "Ashenkin"]:
-                    # Insert horns at the start (top of head)
-                    part_order.insert(0, "horns")
-                    # Add tail at the end (below everything)
-                    part_order.append("tail")
-                elif race == "Feline":
-                    # Add tail at the end (below everything)
-                    part_order.append("tail")
-                
-                # Display descriptions in order
-                for part in part_order:
-                    if part in caller.ndb._menutree.descriptions:
-                        caller.msg(f"|w{part}:|n {format_description(caller.ndb._menutree.descriptions[part])}")
+                # Show all descriptions in natural format
+                if hasattr(caller.ndb._menutree, 'descriptions'):
+                    caller.msg("|c== Your Character's Appearance ==|n\n")
+                    caller.msg(format_full_description(caller.ndb._menutree.descriptions))
+                else:
+                    caller.msg("No descriptions set yet.")
             return None
 
         # Handle setting a description
         valid_parts = [
-            'eyes', 'hair', 'face', 'hands', 'arms', 'chest', 
-            'stomach', 'back', 'legs', 'feet', 'groin', 'bottom'
+            "eyes", "hair", "face", "hands", "arms", "chest", 
+            "stomach", "back", "legs", "feet", "groin", "bottom"
         ]
         
         # Add race-specific parts
-        race = caller.ndb._menutree.race
         if race in ["Kobold", "Ashenkin"]:
             valid_parts.extend(["horns", "tail"])
         elif race == "Feline":
             valid_parts.append("tail")
 
         if command not in valid_parts:
-            caller.msg(f"Invalid body part. Valid parts are: {', '.join(valid_parts)}")
+            caller.msg(f"Valid body parts are: {', '.join(valid_parts)}")
             return None
 
         if len(args) < 2:
             caller.msg(f"Please provide a description for {command}.")
             return None
 
-        # Store the description (formatted)
-        caller.ndb._menutree.descriptions[command] = format_description(args[1])
-        caller.msg(f"\nUpdated description for |w{command}|n:")
-        caller.msg(f"{caller.ndb._menutree.descriptions[command]}")
+        # Store the description
+        caller.ndb._menutree.descriptions[command] = args[1]
+        
+        # Show how it looks in a sentence
+        gender = caller.ndb._menutree.gender.lower()
+        pronoun = 'Their' if gender == 'their' else gender == 'male' and 'His' or 'Her'
+        caller.msg(f"\nSet description: {pronoun} {command} {args[1]}")
         return None
             
     options = {"key": "_default", "goto": _handle_description}

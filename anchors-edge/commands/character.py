@@ -89,7 +89,7 @@ class CmdCharSelect(Command):
 
 class CmdSignout(Command):
     """
-    Stop puppeting the current character and go OOC
+    Stop puppeting the current character and go OOC, or disconnect from the game
     
     Usage:
         signout
@@ -109,9 +109,9 @@ class CmdSignout(Command):
             account.unpuppet_object(self.session)
             account.msg(f"\nYou stop being |w{charname}|n.\n")
         else:
-            # We're already an account or something else
-            self.caller.msg("You're not currently playing a character!")
-            return
+            # We're an account or something else, disconnect from the game
+            self.caller.msg("\nGoodbye! Disconnecting...\n")
+            self.caller.disconnect_session_from_account(self.session)
 
 class CmdIC(Command):
     """

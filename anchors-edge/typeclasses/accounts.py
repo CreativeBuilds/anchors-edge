@@ -149,8 +149,6 @@ class Account(DefaultAccount):
         
         # Grant basic permissions to all new accounts
         self.permissions.add("Player")
-        self.permissions.add("Builders")  # Grants access to building commands
-        self.permissions.add("Admin")     # Grants access to admin commands
         
         # Log the permissions granted
         from evennia.utils import logger

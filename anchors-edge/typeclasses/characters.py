@@ -21,6 +21,7 @@ from server.conf.settings import START_LOCATION, DEFAULT_HOME  # Direct import
 from evennia import DefaultCharacter
 from evennia.utils import logger
 from django.conf import settings
+from evennia.utils.utils import ensure_sentence_period  # Add this import if not present
 
 # Load environment variables from .env file
 load_dotenv()
@@ -263,7 +264,10 @@ class Character(ObjectParent, DefaultCharacter):
             # Add each body part description if it exists
             for part in body_parts:
                 if part in self.db.descriptions:
-                    descriptions.append(f"{pronoun} {part} {self.db.descriptions[part]}")
+                    description = self.db.descriptions[part]
+                    # Ensure the description ends with a period
+                    description = ensure_sentence_period(description)
+                    descriptions.append(f"{pronoun} {part} {description}")
         
         # Join descriptions with newlines
         desc = "\n".join(descriptions) if descriptions else "This character has no description yet."

@@ -21,7 +21,6 @@ from server.conf.settings import START_LOCATION, DEFAULT_HOME  # Direct import
 from evennia import DefaultCharacter
 from evennia.utils import logger
 from django.conf import settings
-from evennia.utils.utils import ensure_sentence_period  # Add this import if not present
 
 # Load environment variables from .env file
 load_dotenv()
@@ -35,6 +34,22 @@ INTOX_TIPSY = 15  # 1-15
 INTOX_DRUNK = 30  # 16-30
 INTOX_VERY_DRUNK = 45  # 31-45
 INTOX_PASS_OUT = 50  # 46-50
+
+def ensure_sentence_period(text):
+    """
+    Ensures the text ends with a period if it doesn't end with punctuation.
+    
+    Args:
+        text (str): The text to check
+        
+    Returns:
+        str: Text ending with appropriate punctuation
+    """
+    if not text:
+        return text
+    if not text.rstrip()[-1] in '.!?':
+        return text.rstrip() + '.'
+    return text
 
 def get_intoxication_description(intoxication):
     """Helper function to get description based on intoxication level"""

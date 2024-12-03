@@ -1,235 +1,264 @@
 """
-Character selection and management commands
+Character commands module.
 """
 
 from evennia import Command
-from evennia.utils import search
 from evennia.utils.evmenu import EvMenu
 from evennia.utils.utils import string_similarity
+from typeclasses.relationships import KnowledgeLevel, get_brief_description, get_basic_description, get_full_description
 
 class CmdCharList(Command):
     """
     List available characters
-
+    
     Usage:
         charlist
     """
     key = "charlist"
+    aliases = ["characters"]
     locks = "cmd:all()"
     help_category = "Character"
-
+    
     def func(self):
-        """Show available characters"""
-        caller = self.caller
-        
-        # Initialize _playable_characters if it doesn't exist or is None
-        if not hasattr(caller.db, '_playable_characters') or caller.db._playable_characters is None:
-            caller.db._playable_characters = []
-        
-        # Ensure it's a list
-        if not isinstance(caller.db._playable_characters, list):
-            caller.db._playable_characters = list(caller.db._playable_characters)
-        
-        # Filter for valid character objects
-        valid_characters = []
-        for char in caller.db._playable_characters:
-            if (char and 
-                hasattr(char, 'is_typeclass') and 
-                char.is_typeclass('typeclasses.characters.Character')):
-                valid_characters.append(char)
-        
-        # Update the list to only include valid characters
-        caller.db._playable_characters = valid_characters
-        
-        if not valid_characters:
-            caller.msg("You have no characters. Use |wcharcreate|n to make one!")
+        """Execute command."""
+        characters = self.caller.db._playable_characters
+        if not characters:
+            self.caller.msg("You have no characters. Use |wcharcreate|n to make one!")
             return
             
-        caller.msg("|wYour available characters:|n")
-        for char in valid_characters:
-            race_info = f"[{char.db.race}{f' - {char.db.subrace}' if hasattr(char.db, 'subrace') and char.db.subrace else ''}]"
-            status = "  (Online)" if char.has_account else ""
-            caller.msg(f"- |c{char.key}|n {race_info}{status}")
-        caller.msg("\nUse |wcharselect <name>|n to play as a character.")
+        # Show list of characters
+        string = "\n|wYour available characters:|n\n"
+        for char in characters:
+            string += f"\n - {char.key}"
+        self.caller.msg(string)
 
 class CmdCharSelect(Command):
     """
     Select a character to play
-
+    
     Usage:
-        charselect <character name>
+        charselect <character>
     """
     key = "charselect"
+    aliases = ["select"]
     locks = "cmd:all()"
     help_category = "Character"
-
+    
     def func(self):
-        """Handle character selection"""
-        caller = self.caller
-        
+        """Execute command."""
         if not self.args:
-            caller.msg("Usage: charselect <character name>")
+            self.caller.msg("Usage: charselect <character>")
             return
             
-        # Get input name and convert to lowercase for comparison
-        input_name = self.args.strip()
+        # Find character
+        characters = self.caller.db._playable_characters
+        char_name = self.args.strip()
         
-        # Debug output
-        caller.msg(f"Debug: Looking for character '{input_name}'")
-        caller.msg(f"Debug: Available characters: {[char.key for char in caller.db._playable_characters if char]}")
-        
-        # Find character by exact name first
-        matches = [char for char in caller.db._playable_characters 
-                  if char and char.key == input_name]
-        
-        # If no exact match, try case-insensitive
-        if not matches:
-            matches = [char for char in caller.db._playable_characters 
-                      if char and char.key.lower() == input_name.lower()]
-            
-        # If still no match, try partial match
-        if not matches:
-            matches = [char for char in caller.db._playable_characters 
-                      if char and input_name.lower() in char.key.lower()]
-        
-        if not matches:
-            caller.msg("You don't have a character by that name.")
+        char = None
+        for test_char in characters:
+            if test_char.key.lower() == char_name.lower():
+                char = test_char
+                break
+                
+        if not char:
+            # Try fuzzy matching
+            matches = []
+            for test_char in characters:
+                ratio = string_similarity(char_name, test_char.key)
+                if ratio > 0.7:
+                    matches.append(test_char)
+                    
+            if len(matches) == 1:
+                char = matches[0]
+            elif len(matches) > 1:
+                self.caller.msg("Multiple matches found. Please be more specific:")
+                for match in matches:
+                    self.caller.msg(f" - {match.key}")
+                return
+                    
+        if not char:
+            self.caller.msg(f"No character found named '{char_name}'")
             return
             
-        if len(matches) > 1:
-            # Multiple matches - show options
-            caller.msg("Multiple matches found:")
-            for char in matches:
-                caller.msg(f"- {char.key}")
-            caller.msg("Please be more specific.")
-            return
-            
-        # We have exactly one match
-        char = matches[0]
-        
-        # Debug output
-        caller.msg(f"Debug: Found character: {char.key}")
-        
-        # Check if character is already being played
-        if char.has_account:
-            if char.has_account == caller:
-                caller.msg("You are already playing this character!")
-            else:
-                caller.msg("This character is already being played.")
-            return
-            
-        # Get the account object
-        account = caller
-        if hasattr(caller, 'account'):
-            account = caller.account
-            
-        # Try to puppet the character
+        # Try to puppet/control the character
         try:
-            account.puppet_object(session=self.session, obj=char)
-            # Store this as the last played character
-            account.db.last_puppet = char
-            char.msg("|gYou become |c%s|n." % char.name)
-            
-            # If successful, move character to their proper location
-            if not char.location:
-                char.location = char.home
-            
-            # Show the room to the character
-            char.execute_cmd('look')
-            
+            self.caller.puppet_object(self.session, char)
+            self.caller.msg(f"\nYou become |w{char.name}|n.\n")
         except RuntimeError as err:
-            caller.msg("|rError assuming character:|n %s" % err)
+            self.caller.msg("|rError assuming character:|n %s" % err)
 
 class CmdSignout(Command):
     """
-    Stop playing your current character and return to character selection.
+    Stop puppeting the current character and go OOC
     
     Usage:
-        logout
         signout
     """
-    key = "logout"
-    aliases = ["signout"]
-    locks = "cmd:puppeting"
+    key = "signout"
+    aliases = ["quit"]
+    locks = "cmd:all()"
     help_category = "Character"
     
     def func(self):
-        """Handle the signout"""
-        caller = self.caller
-        
-        if hasattr(caller, 'account') and caller.account:
-            account = caller.account
-            session = self.session
-        else:
-            self.msg("You're not currently playing a character.")
+        """Execute command."""
+        if not self.caller.character:
+            self.caller.msg("You're not currently playing a character!")
             return
             
-        # Store the last puppet before unpuppeting
-        account.db.last_puppet = caller
-        
-        # Unpuppet the character
-        account.unpuppet_object(session)
-        
-        # Show the character selection screen
-        selection_room = search_object('Character Selection', typeclass='typeclasses.rooms.character_select.CharacterSelectRoom')
-        if selection_room:
-            selection_room = selection_room[0]
-            session.msg("\n" * 20)  # Clear screen
-            session.msg(selection_room.return_appearance(account))  # Changed from session to account
-            
-            # Show character list
-            characters = account.db._playable_characters
-            if characters:
-                session.msg("\n|wYour available characters:|n")
-                for char in characters:
-                    if char:  # Make sure character exists
-                        status = "  (Online)" if char.has_account else ""
-                        session.msg(f"- |c{char.key}|n [{char.db.race}{f' - {char.db.subrace}' if hasattr(char.db, 'subrace') and char.db.subrace else ''}]{status}")
-                session.msg("\nUse |wcharselect <name>|n to play as a character or |wcharcreate|n to make a new one.")
+        charname = self.caller.character.name
+        self.caller.unpuppet_object(self.session)
+        self.caller.msg(f"\nYou stop being |w{charname}|n.\n")
 
 class CmdIC(Command):
     """
-    Enter the game as your last played character.
-    If no last character exists, shows your available characters.
+    Control a character
     
     Usage:
-        ic
+        ic <character>
     """
     key = "ic"
     locks = "cmd:all()"
     help_category = "Character"
     
     def func(self):
-        """Handle the IC command"""
-        caller = self.caller
-        
-        # Get the last played character
-        last_char = caller.db.last_puppet
-        
-        if not last_char:
-            # No last character, show character list
-            caller.msg("No recent character found. Please select one:")
-            caller.execute_cmd("charlist")
+        """Execute command."""
+        if not self.args:
+            self.caller.msg("Usage: ic <character>")
             return
             
-        # Check if character still exists and is valid
-        if not (last_char and hasattr(last_char, 'is_typeclass') and 
-                last_char.is_typeclass('typeclasses.characters.Character')):
-            caller.msg("Your last character is no longer available.")
-            caller.execute_cmd("charlist")
+        # Find character
+        characters = self.caller.db._playable_characters
+        char_name = self.args.strip()
+        
+        char = None
+        for test_char in characters:
+            if test_char.key.lower() == char_name.lower():
+                char = test_char
+                break
+                
+        if not char:
+            self.caller.msg(f"No character found named '{char_name}'")
             return
             
-        # Try to puppet the character
+        # Try to puppet/control the character
         try:
-            caller.puppet_object(session=self.session, obj=last_char)
-            last_char.msg("|gYou become |c%s|n." % last_char.name)
-            
-            # If successful, move character to their proper location
-            if not last_char.location:
-                last_char.location = last_char.home
-            
-            # Show the room to the character
-            last_char.execute_cmd('look')
-            
+            self.caller.puppet_object(self.session, char)
+            self.caller.msg(f"\nYou become |w{char.name}|n.\n")
         except RuntimeError as err:
-            caller.msg("|rError assuming character:|n %s" % err)
+            self.caller.msg("|rError assuming character:|n %s" % err)
+
+class CmdIntro(Command):
+    """
+    Introduce yourself to another character.
+    
+    Usage:
+        intro <character>
+        
+    This will reveal your name to the character and allow them
+    to see more details about your appearance. For full mutual
+    introduction, both characters need to introduce themselves.
+    """
+    
+    key = "intro"
+    locks = "cmd:puppeted()"
+    help_category = "Social"
+    
+    def func(self):
+        if not self.args:
+            self.caller.msg("Usage: intro <character>")
+            return
+            
+        target = self.caller.search(self.args)
+        if not target:
+            return
+            
+        # Check if target is a character
+        if not hasattr(target, 'is_character') or not target.is_character:
+            self.caller.msg("You can only introduce yourself to other characters.")
+            return
+            
+        # Initialize relationships dicts if they don't exist
+        if not self.caller.db.known_by:
+            self.caller.db.known_by = {}
+        if not target.db.known_by:
+            target.db.known_by = {}
+            
+        # Set knowledge level to ACQUAINTANCE
+        self.caller.db.known_by[target.id] = KnowledgeLevel.ACQUAINTANCE
+        
+        # Check if this is a mutual introduction
+        is_mutual = (target.id in self.caller.db.known_by and 
+                    self.caller.id in target.db.known_by)
+        
+        # Notify both parties
+        self.caller.msg(f"You introduce yourself to {target.name}.")
+        target.msg(f"{self.caller.name} introduces themselves to you.")
+        
+        if is_mutual:
+            self.caller.msg(f"You and {target.name} are now mutually introduced.")
+            target.msg(f"You and {self.caller.name} are now mutually introduced.")
+
+class CmdLongIntro(Command):
+    """
+    Formally introduce yourself to another character.
+    
+    Usage:
+        longintro <character>
+        
+    This establishes a deeper connection with the character,
+    allowing you to see their full description and message
+    them from anywhere. Both characters must be mutually
+    introduced first, and both must use longintro for the
+    full connection to be established.
+    """
+    
+    key = "longintro"
+    locks = "cmd:puppeted()"
+    help_category = "Social"
+    
+    def func(self):
+        if not self.args:
+            self.caller.msg("Usage: longintro <character>")
+            return
+            
+        target = self.caller.search(self.args)
+        if not target:
+            return
+            
+        # Check if target is a character
+        if not hasattr(target, 'is_character') or not target.is_character:
+            self.caller.msg("You can only introduce yourself to other characters.")
+            return
+            
+        # Initialize relationships dicts if they don't exist
+        if not self.caller.db.known_by:
+            self.caller.db.known_by = {}
+        if not target.db.known_by:
+            target.db.known_by = {}
+            
+        # Check if they're mutually introduced
+        if not (target.id in self.caller.db.known_by and self.caller.id in target.db.known_by):
+            self.caller.msg(f"You need to be mutually introduced with {target.name} first.")
+            return
+            
+        # Check if they're already friends
+        if (target.id in self.caller.db.known_by and 
+            self.caller.db.known_by[target.id] == KnowledgeLevel.FRIEND):
+            self.caller.msg(f"You've already formally introduced yourself to {target.name}.")
+            return
+            
+        # Set knowledge level to FRIEND for caller's side
+        self.caller.db.known_by[target.id] = KnowledgeLevel.FRIEND
+        
+        # Check if this completes a mutual formal introduction
+        is_mutual_formal = (target.id in self.caller.db.known_by and 
+                          self.caller.id in target.db.known_by and
+                          target.db.known_by[self.caller.id] == KnowledgeLevel.FRIEND)
+        
+        # Notify both parties
+        self.caller.msg(f"You formally introduce yourself to {target.name}.")
+        target.msg(f"{self.caller.name} formally introduces themselves to you.")
+        
+        if is_mutual_formal:
+            self.caller.msg(f"|gYou and {target.name} are now formally introduced and can message each other from anywhere.|n")
+            target.msg(f"|gYou and {self.caller.name} are now formally introduced and can message each other from anywhere.|n")

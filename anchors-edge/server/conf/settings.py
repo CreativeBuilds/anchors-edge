@@ -300,3 +300,9 @@ from pathlib import Path
 # Load race descriptions
 with open(Path("data/descriptions/body_parts.json"), 'r') as f:
     RACE_DESCRIPTIONS = json.load(f)
+
+# Command set configuration
+CMDSET_CHARACTER = "commands.default_cmdsets.CharacterCmdSet"
+CMDSET_ACCOUNT = "commands.default_cmdsets.AccountCmdSet"
+CMDSET_SESSION = "commands.default_cmdsets.SessionCmdSet"
+CMDSET_UNLOGGEDIN = "commands.default_cmdsets.UnloggedinCmdSet"

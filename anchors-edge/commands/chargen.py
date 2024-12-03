@@ -313,16 +313,24 @@ Available parts: eyes, hair, face, hands, arms, chest, stomach, back, legs, feet
                     caller.msg(f"No description set for {part}.")
             else:
                 # Show all descriptions in structured format
-                # Define the order we want to show parts in
+                # Define the order we want to show parts in - from top to bottom
                 part_order = [
-                    'eyes', 'hair', 'face', 'hands', 'arms', 'chest', 
-                    'stomach', 'back', 'legs', 'feet', 'groin', 'bottom'
+                    'face', 'eyes', 'hair',      # Head area
+                    'chest', 'arms', 'hands',    # Upper body
+                    'back', 'stomach',           # Mid body
+                    'groin', 'bottom',           # Lower body
+                    'legs', 'feet'               # Extremities
                 ]
-                # Add race-specific parts
+                
+                # Add race-specific parts in appropriate positions
                 race = caller.ndb._menutree.race
                 if race in ["Kobold", "Ashenkin"]:
-                    part_order.extend(["horns", "tail"])
+                    # Insert horns at the start (top of head)
+                    part_order.insert(0, "horns")
+                    # Add tail at the end (below everything)
+                    part_order.append("tail")
                 elif race == "Feline":
+                    # Add tail at the end (below everything)
                     part_order.append("tail")
                 
                 # Display descriptions in order

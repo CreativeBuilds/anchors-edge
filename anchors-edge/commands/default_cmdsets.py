@@ -7,16 +7,25 @@ and merged onto entities at runtime.
 
 To create new commands to populate the cmdset, see
 `commands/command.py`.
-
 """
 
-from evennia import default_cmds
-from commands.build_world import CmdBuildWorld
-from commands.character import CmdCharList, CmdCharSelect, CmdSignout, CmdIC
-from commands.chargen import CmdCreateCharacter
-from commands.admin import CmdCleanupAccounts, CmdResetAccount, CmdDebugCharacter, CmdLastWipe, CmdChangelog, CmdResetWorld
+from evennia.commands.default.cmdset_character import CharacterCmdSet as DefaultCharacterCmdSet
+from evennia.commands.default.cmdset_account import AccountCmdSet as DefaultAccountCmdSet
+from evennia.commands.default.cmdset_session import SessionCmdSet as DefaultSessionCmdSet
+from evennia.commands.default.cmdset_unloggedin import UnloggedinCmdSet as DefaultUnloggedinCmdSet
 
-class CharacterCmdSet(default_cmds.CharacterCmdSet):
+from commands.build_world import CmdBuildWorld
+from commands.character import (
+    CmdCharList, CmdCharSelect, CmdSignout, CmdIC,
+    CmdIntro, CmdLongIntro
+)
+from commands.chargen import CmdCreateCharacter
+from commands.admin import (
+    CmdCleanupAccounts, CmdResetAccount, CmdDebugCharacter,
+    CmdLastWipe, CmdChangelog, CmdResetWorld
+)
+
+class CharacterCmdSet(DefaultCharacterCmdSet):
     """
     The `CharacterCmdSet` contains general in-game commands like `look`,
     `get`, etc available on in-game Character objects. It is merged with
@@ -34,11 +43,12 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         # any commands you add below will overload the default ones.
         #
         self.add(CmdBuildWorld())
-        # Remove ic command
-        self.remove(default_cmds.CmdIC)
+        # Add intro commands
+        self.add(CmdIntro())
+        self.add(CmdLongIntro())
 
 
-class AccountCmdSet(default_cmds.AccountCmdSet):
+class AccountCmdSet(DefaultAccountCmdSet):
     """
     This is the cmdset available to the Account at all times. It is
     combined with the `CharacterCmdSet` when the Account puppets a
@@ -53,9 +63,6 @@ class AccountCmdSet(default_cmds.AccountCmdSet):
         Populates the cmdset
         """
         super().at_cmdset_creation()
-        
-        # Remove ic command
-        self.remove(default_cmds.CmdIC)
         
         # Character selection commands
         self.add(CmdCharList())
@@ -73,7 +80,7 @@ class AccountCmdSet(default_cmds.AccountCmdSet):
         self.add(CmdResetWorld())
 
 
-class UnloggedinCmdSet(default_cmds.UnloggedinCmdSet):
+class UnloggedinCmdSet(DefaultUnloggedinCmdSet):
     """
     Command set available to the Session before being logged in.  This
     holds commands like creating a new account, logging in, etc.
@@ -86,11 +93,9 @@ class UnloggedinCmdSet(default_cmds.UnloggedinCmdSet):
         Populates the cmdset
         """
         super().at_cmdset_creation()
-        # Remove ic command
-        self.remove(default_cmds.CmdIC)
 
 
-class SessionCmdSet(default_cmds.SessionCmdSet):
+class SessionCmdSet(DefaultSessionCmdSet):
     """
     This cmdset is made available on Session level once logged in. It
     is empty by default.
@@ -104,5 +109,3 @@ class SessionCmdSet(default_cmds.SessionCmdSet):
         its creation. It should populate the set with command instances.
         """
         super().at_cmdset_creation()
-        # Remove ic command
-        self.remove(default_cmds.CmdIC)

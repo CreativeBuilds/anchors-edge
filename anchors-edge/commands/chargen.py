@@ -204,58 +204,53 @@ This choice will affect your starting location and initial relationships.
 
 def format_full_description(descriptions):
     """Format all descriptions into a cohesive character appearance using natural sentences."""
-    parts = []
+    formatted_lines = []
     gender = descriptions.get('gender', 'their')  # Default to gender-neutral if not specified
     pronoun = 'Their' if gender == 'their' else gender == 'male' and 'His' or 'Her'
     
     # Face area (eyes, hair, face)
-    face_features = []
     if 'eyes' in descriptions:
-        face_features.append(f"{pronoun} eyes {descriptions['eyes']}")
+        formatted_lines.append(f"{pronoun} eyes {descriptions['eyes']}")
     if 'hair' in descriptions:
-        face_features.append(f"{pronoun} hair {descriptions['hair']}")
+        formatted_lines.append(f"{pronoun} hair {descriptions['hair']}")
     if 'face' in descriptions:
-        face_features.append(f"{pronoun} face {descriptions['face']}")
-    if face_features:
-        parts.append(" ".join(face_features))
+        formatted_lines.append(f"{pronoun} face {descriptions['face']}")
     
     # Upper body (arms, chest, back)
-    upper_body = []
     if 'arms' in descriptions:
-        upper_body.append(f"{pronoun} arms {descriptions['arms']}")
+        formatted_lines.append(f"{pronoun} arms {descriptions['arms']}")
     if 'chest' in descriptions:
-        upper_body.append(f"{pronoun} chest {descriptions['chest']}")
+        formatted_lines.append(f"{pronoun} chest {descriptions['chest']}")
     if 'back' in descriptions:
-        upper_body.append(f"{pronoun} back {descriptions['back']}")
-    if upper_body:
-        parts.append(" ".join(upper_body))
+        formatted_lines.append(f"{pronoun} back {descriptions['back']}")
     
     # Lower body (stomach, legs, feet)
-    lower_body = []
     if 'stomach' in descriptions:
-        lower_body.append(f"{pronoun} stomach {descriptions['stomach']}")
+        formatted_lines.append(f"{pronoun} stomach {descriptions['stomach']}")
     if 'legs' in descriptions:
-        lower_body.append(f"{pronoun} legs {descriptions['legs']}")
+        formatted_lines.append(f"{pronoun} legs {descriptions['legs']}")
     if 'feet' in descriptions:
-        lower_body.append(f"{pronoun} feet {descriptions['feet']}")
-    if lower_body:
-        parts.append(" ".join(lower_body))
+        formatted_lines.append(f"{pronoun} feet {descriptions['feet']}")
     
     # Special features last (horns, tail)
-    special = []
     if 'horns' in descriptions:
-        special.append(f"{pronoun} horns {descriptions['horns']}")
+        formatted_lines.append(f"{pronoun} horns {descriptions['horns']}")
     if 'tail' in descriptions:
-        special.append(f"{pronoun} tail {descriptions['tail']}")
-    if special:
-        parts.append(" ".join(special))
+        formatted_lines.append(f"{pronoun} tail {descriptions['tail']}")
     
-    # Join all parts with proper spacing and capitalization
-    description = " ".join(parts)
+    # Join all parts with newlines and wrap each line
+    wrapped_lines = []
+    wrapper = TextWrapper(width=78, expand_tabs=True, 
+                         replace_whitespace=False,
+                         break_long_words=False,
+                         break_on_hyphens=False)
     
-    # Ensure the first letter is capitalized
-    if description:
-        description = description[0].upper() + description[1:]
+    for line in formatted_lines:
+        wrapped = wrapper.fill(line)
+        wrapped_lines.append(wrapped)
+    
+    # Join with newlines and ensure first letter of each line is capitalized
+    description = "\n".join(wrapped_lines)
     
     return description
 

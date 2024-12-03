@@ -6,12 +6,24 @@ points during its startup, reload and shutdown sequence.
 """
 
 from evennia.utils import logger, create
+import os
+from pathlib import Path
 
 def at_server_start():
     """
     This is called every time the server starts up.
     """
     try:
+        # Create last_wipe.py if it doesn't exist
+        last_wipe_path = Path("server/conf/last_wipe.py")
+        if not last_wipe_path.exists():
+            from datetime import datetime
+            timestamp = int(datetime.now().timestamp() * 1000)
+            with open(last_wipe_path, 'w') as f:
+                f.write(f"LAST_WIPE = {timestamp}  # Timestamp in milliseconds\n")
+            logger.log_info("Created new last_wipe.py file.")
+            
+        # Initialize global settings script
         from evennia.utils import search
         from typeclasses.scripts import GlobalSettingsScript, IslandWeatherScript
         

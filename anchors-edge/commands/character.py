@@ -34,13 +34,16 @@ class CmdCharList(Command):
 
 class CmdCharSelect(Command):
     """
-    Select a character to play
+    select a character to play
     
     Usage:
-        charselect <character>
+      charselect <character>
+      ic <character>
+      
+    Switch to play the given character, if you have created it.
     """
     key = "charselect"
-    aliases = ["select"]
+    aliases = ["charselect", "ic"]
     locks = "cmd:all()"
     help_category = "Character"
     
@@ -113,72 +116,55 @@ class CmdSignout(Command):
             self.caller.msg("\nGoodbye! Disconnecting...\n")
             self.caller.disconnect_session_from_account(self.session)
 
-class CmdIC(Command):
-    """
-    Control a character
-    
-    Usage:
-        ic <character>
-    """
-    key = "ic"
-    locks = "cmd:all()"
-    help_category = "Character"
-    
-    def func(self):
-        """Execute command."""
-        if not self.args:
-            self.caller.msg("Usage: ic <character>")
-            return
-            
-        # Find character
-        characters = self.caller.db._playable_characters
-        char_name = self.args.strip()
-        
-        char = None
-        for test_char in characters:
-            if test_char.key.lower() == char_name.lower():
-                char = test_char
-                break
-                
-        if not char:
-            self.caller.msg(f"No character found named '{char_name}'")
-            return
-            
-        # Try to puppet/control the character
-        try:
-            self.caller.puppet_object(self.session, char)
-            self.caller.msg(f"\nYou become |w{char.name}|n.\n")
-        except RuntimeError as err:
-            self.caller.msg("|rError assuming character:|n %s" % err)
-
 class CmdIntro(Command):
     """
     Introduce yourself to another character.
     
     Usage:
-        intro <character>
+        intro <character description>
         
     This will reveal your name to the character and allow them
-    to see more details about your appearance. For full mutual
-    introduction, both characters need to introduce themselves.
+    to see more details about your appearance. You can use partial
+    descriptions to find characters, like "ta fe fel" for "tall female feline".
+    If multiple characters match, you'll need to be more specific.
     """
     
     key = "intro"
+    aliases = ["introduce"]
     locks = "cmd:puppeted()"
     help_category = "Social"
     
     def func(self):
+        # Check if the caller is a character
+        if not self.caller.has_account:
+            self.caller.msg("You must be controlling a character to use this command.")
+            return
+            
         if not self.args:
-            self.caller.msg("Usage: intro <character>")
+            self.caller.msg("Usage: intro <character description>")
             return
             
-        target = self.caller.search(self.args)
-        if not target:
+        # Try to find the character based on description
+        target = self.caller.find_character_by_desc(self.args)
+        
+        if target is None:
+            self.caller.msg(f"Could not find '{self.args}'.")
             return
             
-        # Check if target is a character
-        if not hasattr(target, 'is_character') or not target.is_character:
-            self.caller.msg("You can only introduce yourself to other characters.")
+        if target == "ambiguous":
+            self.caller.msg("Multiple characters match that description. Please be more specific.")
+            # Show numbered descriptions if they exist
+            chars = [obj for obj in self.caller.location.contents 
+                    if hasattr(obj, 'get_display_name') and obj != self.caller]
+            numbered_descs = [getattr(char, 'temp_numbered_desc', char.get_display_name(self.caller)) 
+                            for char in chars if hasattr(char, 'temp_numbered_desc')]
+            if numbered_descs:
+                self.caller.msg("Matching characters: " + ", ".join(numbered_descs))
+            return
+            
+        # Can't introduce to yourself
+        if target == self.caller:
+            self.caller.msg("You already know yourself!")
             return
             
         # Initialize relationships dicts if they don't exist
@@ -187,20 +173,29 @@ class CmdIntro(Command):
         if not target.db.known_by:
             target.db.known_by = {}
             
-        # Set knowledge level to ACQUAINTANCE
-        self.caller.db.known_by[target.id] = KnowledgeLevel.ACQUAINTANCE
+        # Perform the introduction
+        self.caller.introduce_to(target)
         
         # Check if this is a mutual introduction
-        is_mutual = (target.id in self.caller.db.known_by and 
-                    self.caller.id in target.db.known_by)
+        is_mutual = target.knows_character(self.caller)
+        
+        # Get the appropriate display name based on mutual status
+        target_display = target.name if is_mutual else target.get_display_name(self.caller)
         
         # Notify both parties
-        self.caller.msg(f"You introduce yourself to {target.name}.")
-        target.msg(f"{self.caller.name} introduces themselves to you.")
+        self.caller.msg(f"You introduce yourself to {target.get_display_name(self.caller)}.")
+        target.msg(f"{self.caller.get_display_name(target)} introduces themselves to you.")
         
+        # Notify the room
+        self.caller.location.msg_contents(
+            f"{self.caller.get_display_name(target)} introduces themselves to {target.get_display_name(self.caller)}.",
+            exclude=[self.caller, target]
+        )
+        
+        # If mutual introduction, notify both parties
         if is_mutual:
-            self.caller.msg(f"You and {target.name} are now mutually introduced.")
-            target.msg(f"You and {self.caller.name} are now mutually introduced.")
+            self.caller.msg(f"As they have already introduced themselves to you, you now know them as {target.name}.")
+            target.msg(f"Having already introduced yourself to them, they now know you as {target.name}.")
 
 class CmdLongIntro(Command):
     """
@@ -266,3 +261,29 @@ class CmdLongIntro(Command):
         if is_mutual_formal:
             self.caller.msg(f"|gYou and {target.name} are now formally introduced and can message each other from anywhere.|n")
             target.msg(f"|gYou and {self.caller.name} are now formally introduced and can message each other from anywhere.|n")
+
+class CmdQuit(Command):
+    """
+    quit from the game
+    
+    Usage:
+        quit
+        ooc
+        
+    This will disconnect you from the game. Reconnect to select a different character.
+    """
+    key = "quit"
+    aliases = ["q", "ooc", "@ooc"]
+    locks = "cmd:all()"
+
+    def func(self):
+        """Hook function"""
+        account = self.account
+        session = self.session
+        
+        # Send a goodbye message
+        self.msg("\nDisconnecting from the game. Goodbye!")
+        
+        # Disconnect all sessions for this account
+        for session in account.sessions.all():
+            session.sessionhandler.disconnect(session)

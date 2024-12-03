@@ -783,11 +783,14 @@ class CmdWho(Command):
     Usage:
         who
         
-    Shows the names of all characters currently connected to the game.
+    Shows the names of all characters currently connected to the game,
+    excluding accounts that haven't selected a character yet.
     """
     key = "who"
+    aliases = ["doing"]
     locks = "cmd:all()"
     help_category = "General"
+    account_caller = True
     
     def func(self):
         """Execute command."""
@@ -797,12 +800,20 @@ class CmdWho(Command):
         # Build list of connected characters
         connected_chars = []
         for account in AccountDB.objects.filter(db_is_connected=True):
-            # Get the character this account is currently playing
-            if account.puppet:
-                connected_chars.append(account.puppet)
+            # Get all sessions for this account
+            sessions = account.sessions.all()
+            for session in sessions:
+                # Get the character this account is currently puppeting in this session
+                puppet = session.puppet
+                if puppet and puppet.key != account.key:
+                    # Only include if:
+                    # 1. Account is puppeting a character
+                    # 2. Character name is different from account name
+                    if puppet not in connected_chars:  # Avoid duplicates
+                        connected_chars.append(puppet)
         
         if not connected_chars:
-            self.caller.msg("No one is connected.")
+            self.msg("No one is connected.")
             return
             
         # Format the output
@@ -810,4 +821,4 @@ class CmdWho(Command):
         for char in connected_chars:
             string += f"\n  {char.name}"
             
-        self.caller.msg(string)
+        self.msg(string)

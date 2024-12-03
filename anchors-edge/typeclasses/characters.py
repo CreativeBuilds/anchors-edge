@@ -35,22 +35,6 @@ INTOX_DRUNK = 30  # 16-30
 INTOX_VERY_DRUNK = 45  # 31-45
 INTOX_PASS_OUT = 50  # 46-50
 
-def ensure_sentence_period(text):
-    """
-    Ensures the text ends with a period if it doesn't end with punctuation.
-    
-    Args:
-        text (str): The text to check
-        
-    Returns:
-        str: Text ending with appropriate punctuation
-    """
-    if not text:
-        return text
-    if not text.rstrip()[-1] in '.!?':
-        return text.rstrip() + '.'
-    return text
-
 def get_intoxication_description(intoxication):
     """Helper function to get description based on intoxication level"""
     if not intoxication or intoxication <= INTOX_SOBER:
@@ -64,6 +48,40 @@ def get_intoxication_description(intoxication):
     else:
         return "|/|RThey are completely intoxicated and can barely stand.|n"
 
+def ensure_sentence_period(text):
+    """
+    Ensures the text ends with a period if it doesn't end with ., !, or ?
+    Args:
+        text (str): The text to check
+    Returns:
+        str: The text ending with proper punctuation
+    """
+    if not text:
+        return text
+    text = text.strip()
+    if not text.endswith(('.', '!', '?')):
+        text = text + '.'
+    return text
+
+def format_sentence(text, capitalize=True):
+    """
+    Formats text as a proper sentence with capitalization and period.
+    Args:
+        text (str): The text to format
+        capitalize (bool): Whether to capitalize the first letter
+    Returns:
+        str: The formatted text
+    """
+    if not text:
+        return text
+    text = text.strip()
+    # Add period if needed
+    text = ensure_sentence_period(text)
+    # Capitalize first letter if requested
+    if capitalize and text:
+        text = text[0].upper() + text[1:] if len(text) > 1 else text.upper()
+    return text
+
 class Character(ObjectParent, DefaultCharacter):
     """Base character class"""
     def at_object_creation(self):
@@ -76,6 +94,14 @@ class Character(ObjectParent, DefaultCharacter):
             "silver": 5,   # Starting amount
             "copper": 10   # Starting amount
         }
+        
+        # Initialize basic description attributes
+        self.db.height = None      # Height in inches (e.g., 74 for 6'2")
+        self.db.build = None       # muscular, slim, stocky, etc.
+        self.db.basic_desc = None  # Generated basic description
+        
+        # Initialize introduction tracking
+        self.db.introduced_to = set()  # Set of character IDs this character has been introduced to
         
         # Initialize intoxication system
         self.db.intoxication = 0    # Current intoxication level
@@ -257,16 +283,33 @@ class Character(ObjectParent, DefaultCharacter):
         if not looker:
             return ""
             
-        # Get the character's name and any titles
-        name = self.get_display_name(looker)
+        # Check if the looker knows this character
+        knows_character = looker.knows_character(self) if hasattr(looker, 'knows_character') else False
+        
+        # Get the character's name or basic description
+        if knows_character:
+            name_display = f"|c{self.get_display_name(looker)}|n"
+        else:
+            # For unknown characters, use their basic description instead of name
+            name_display = f"|c{self.generate_basic_description()}|n"
         
         # Get gender for proper pronouns
         gender = self.db.gender.lower() if hasattr(self.db, 'gender') else 'their'
         pronoun = 'Her' if gender == 'female' else 'His' if gender == 'male' else 'Their'
         
+        # Start with the basic description
+        description_parts = []
+        
+        # Add the text description if it exists and character is known
+        if self.db.text_description and knows_character:
+            description_parts.append(format_sentence(self.db.text_description))
+        
+        # Add the detailed description if it exists and character is known
+        if self.db.desc and knows_character:
+            description_parts.append(format_sentence(self.db.desc))
+
         # Format descriptions with proper pronouns and line breaks
-        descriptions = []
-        if hasattr(self.db, 'descriptions'):
+        if hasattr(self.db, 'descriptions') and knows_character:
             # Define the order of body parts
             body_parts = [
                 'eyes', 'hair', 'face',
@@ -277,18 +320,29 @@ class Character(ObjectParent, DefaultCharacter):
             ]
             
             # Add each body part description if it exists
+            body_descriptions = []
             for part in body_parts:
                 if part in self.db.descriptions:
                     description = self.db.descriptions[part]
-                    # Ensure the description ends with a period
-                    description = ensure_sentence_period(description)
-                    descriptions.append(f"{pronoun} {part} {description}")
+                    if description:
+                        # Format the description but don't capitalize (since it starts with a pronoun)
+                        description = format_sentence(description, capitalize=False)
+                        body_descriptions.append(f"{pronoun} {part} {description}")
+            
+            if body_descriptions:
+                description_parts.append("\n".join(body_descriptions))
         
-        # Join descriptions with newlines
-        desc = "\n".join(descriptions) if descriptions else "This character has no description yet."
+        # Get intoxication description if any
+        if hasattr(self.db, 'intoxication') and self.db.intoxication > 0:
+            intox_desc = get_intoxication_description(self.db.intoxication)
+            if intox_desc:
+                description_parts.append(format_sentence(intox_desc))
+        
+        # Join all description parts with newlines
+        desc = "\n\n".join(description_parts) if description_parts else "This character has no description yet."
         
         # Combine into final appearance
-        return f"|c{name}|n\n\n{desc}"
+        return f"{name_display}\n\n{desc}"
 
     def can_show_consume_message(self):
         """Check if enough time has passed to show another consume message"""
@@ -364,6 +418,251 @@ class Character(ObjectParent, DefaultCharacter):
         """
         stats = self.calculate_stats()
         return stats.get(stat, 10)  # Default to 10 if stat not found
+
+    def format_height(self):
+        """
+        Formats the height from inches to a readable format (e.g., 6'2")
+        Returns None if no height is set
+        """
+        if self.db.height is None:
+            return None
+            
+        feet = self.db.height // 12
+        inches = self.db.height % 12
+        
+        if inches == 0:
+            return f"{feet}'"
+        return f"{feet}'{inches}\""
+
+    def generate_basic_description(self):
+        """
+        Generates a basic description based on character's attributes.
+        Returns a string like 'A 6'2" female wood elf' or 'A stocky male dwarf'
+        """
+        if not all([self.db.gender, self.db.race]):
+            return "An unknown person."
+            
+        parts = ["A"]
+        
+        # Add height if set
+        height_str = self.format_height()
+        if height_str:
+            parts.append(height_str)
+            
+        # Add build if set
+        if self.db.build:
+            parts.append(self.db.build)
+            
+        # Add gender and race
+        gender = self.db.gender.lower()
+        race = self.db.race
+        
+        if gender in ['male', 'female']:
+            parts.append(gender)
+            
+        # Add subrace if it exists
+        if self.db.subrace:
+            parts.append(self.db.subrace.lower())
+            
+        parts.append(race.lower())
+        
+        # Join parts and ensure proper sentence formatting
+        return format_sentence(" ".join(parts))
+
+    def at_post_create(self):
+        """Called after character is created."""
+        super().at_post_create()
+        
+        # Set height from menu data if available
+        if hasattr(self.db.account, 'ndb') and hasattr(self.db.account.ndb, '_menutree'):
+            menu = self.db.account.ndb._menutree
+            if hasattr(menu, 'height'):
+                self.db.height = menu.height
+
+    def knows_character(self, character):
+        """
+        Check if this character knows another character.
+        Args:
+            character: The character to check if known
+        Returns:
+            bool: True if the character is known, False otherwise
+        """
+        # Always know yourself
+        if character == self:
+            return True
+        
+        # NPCs are generally known by their role/title
+        if hasattr(character.db, 'is_npc') and character.db.is_npc:
+            return True
+        
+        # Initialize introduced_to as a list if it doesn't exist
+        if not self.db.introduced_to:
+            self.db.introduced_to = []
+        
+        # Check if they've introduced themselves to us
+        return character.id in self.db.introduced_to
+
+    def get_display_name(self, looker=None, **kwargs):
+        """
+        Get the display name of this character based on whether the looker knows them.
+        Args:
+            looker: The character looking at this character
+        Returns:
+            str: The name to display
+        """
+        # Always show your own name to yourself
+        if looker == self:
+            return self.name
+        
+        # For others, only show name if they know you
+        if looker and hasattr(looker, 'knows_character'):
+            if looker.knows_character(self):
+                return self.name
+            
+        # Return basic description for unknown characters
+        return self.generate_basic_description()
+
+    def announce_move_from(self, destination, msg=None, mapping=None):
+        """
+        Called when the object moves away from its location.
+        Args:
+            destination (Object): Where we're going.
+            msg (str, optional): A replacement message.
+            mapping (dict, optional): Additional mapping for the message.
+        """
+        if not self.location:
+            return
+        
+        if msg:
+            string = msg
+        else:
+            string = "{object} leaves {exit} for {destination}."
+        
+        # Get the exit name or direction
+        exit_name = None
+        if mapping and "exit" in mapping:
+            exit_name = mapping["exit"]
+        else:
+            # Try to find the exit that leads to the destination
+            exits = [o for o in self.location.contents if o.destination == destination]
+            if exits:
+                exit_name = exits[0].name
+        
+        # Create the mapping
+        mapping = mapping or {}
+        mapping.update({
+            "object": self.get_display_name(None),  # Use basic description for unknown characters
+            "exit": exit_name or "somewhere",
+            "destination": destination.get_display_name(self.location)
+        })
+        
+        # Send the message
+        self.location.msg_contents(string, exclude=[self], mapping=mapping)
+
+    def announce_move_to(self, source_location, msg=None, mapping=None):
+        """
+        Called when the object arrives at its new location.
+        Args:
+            source_location (Object): Where we came from.
+            msg (str, optional): A replacement message.
+            mapping (dict, optional): Additional mapping for the message.
+        """
+        if not self.location:
+            return
+            
+        if msg:
+            string = msg
+        else:
+            string = "{object} arrives from {source}."
+        
+        # Create the mapping
+        mapping = mapping or {}
+        mapping.update({
+            "object": self.get_display_name(None),  # Use basic description for unknown characters
+            "source": source_location.get_display_name(self.location) if source_location else "nowhere"
+        })
+        
+        # Send the message
+        self.location.msg_contents(string, exclude=[self], mapping=mapping)
+
+    def introduce_to(self, character):
+        """
+        Introduce this character to another character.
+        Args:
+            character: The character to introduce to
+        """
+        # Initialize introduced_to as a list if it doesn't exist
+        if not self.db.introduced_to:
+            self.db.introduced_to = []
+        if not character.db.introduced_to:
+            character.db.introduced_to = []
+        
+        # Add only this character's introduction to the other character
+        if character.id not in self.db.introduced_to:
+            self.db.introduced_to.append(character.id)
+
+    def find_character_by_desc(self, search_text):
+        """
+        Find a character in the same location based on their description or name.
+        
+        Args:
+            search_text (str): Text to search for in descriptions/names
+            
+        Returns:
+            Character or None: Matching character if found, None if not found or ambiguous
+        """
+        if not self.location:
+            return None
+        
+        # Get all characters in the room except self
+        chars = [obj for obj in self.location.contents 
+                if hasattr(obj, 'get_display_name') and obj != self]
+        
+        if not chars:
+            return None
+        
+        # Normalize search text
+        search_text = search_text.lower().strip()
+        
+        # First try exact matches
+        matches = []
+        for char in chars:
+            desc = char.get_display_name(self).lower()
+            # Remove "a" or "an" from the start for matching
+            desc = ' '.join(desc.split()[1:]) if desc.split()[0] in ['a', 'an'] else desc
+            if search_text == desc:
+                matches.append(char)
+            
+        # If no exact match, try partial matches
+        if not matches:
+            for char in chars:
+                desc = char.get_display_name(self).lower()
+                # Remove "a" or "an" from the start for matching
+                desc = ' '.join(desc.split()[1:]) if desc.split()[0] in ['a', 'an'] else desc
+                # Split description into words for partial matching
+                desc_words = desc.split()
+                search_words = search_text.split()
+                
+                # Check if all search words appear in description in order
+                if all(any(sw in dw for dw in desc_words) for sw in search_words):
+                    matches.append(char)
+        
+        # Handle results
+        if len(matches) == 0:
+            return None
+        elif len(matches) == 1:
+            return matches[0]
+        else:
+            # If multiple matches, check if they're the same race/type
+            descriptions = [m.get_display_name(self) for m in matches]
+            base_desc = descriptions[0].split()[1:]  # Remove the "A/An" prefix
+            
+            # Number the similar characters (e.g., "feline-1", "feline-2")
+            for i, match in enumerate(matches, 1):
+                if match.get_display_name(self).split()[1:] == base_desc:
+                    match.temp_numbered_desc = f"{' '.join(base_desc)}-{i}"
+            
+            return "ambiguous"
 
 class NPC(Character):
     """Base NPC class with conversation memory"""

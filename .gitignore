@@ -51,4 +51,4 @@ htmlcov/
 *.temp
 
 
-server/conf/last_wipe_timestamp
+last_wipe_timestamp

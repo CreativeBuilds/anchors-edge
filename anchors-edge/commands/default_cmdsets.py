@@ -16,8 +16,8 @@ from evennia.commands.default.cmdset_unloggedin import UnloggedinCmdSet as Defau
 
 from commands.build_world import CmdBuildWorld
 from commands.character import (
-    CmdCharList, CmdCharSelect, CmdSignout, CmdIC,
-    CmdIntro, CmdLongIntro
+    CmdCharList, CmdCharSelect, CmdSignout,
+    CmdIntro, CmdLongIntro, CmdQuit
 )
 from commands.chargen import CmdCreateCharacter
 from commands.admin import (
@@ -47,6 +47,7 @@ class CharacterCmdSet(DefaultCharacterCmdSet):
         # Add intro commands
         self.add(CmdIntro())
         self.add(CmdLongIntro())
+        self.add(CmdQuit())
         self.add(CmdWho())
 
 
@@ -71,8 +72,10 @@ class AccountCmdSet(DefaultAccountCmdSet):
         self.add(CmdCharSelect())
         self.add(CmdCreateCharacter())
         self.add(CmdSignout())
-        self.add(CmdIC())
         self.add(CmdChangelog())
+        self.add(CmdQuit())
+        self.add(CmdWho())
+        
         
         # Admin commands
         self.add(CmdCleanupAccounts())

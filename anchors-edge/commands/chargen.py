@@ -202,10 +202,24 @@ This choice will affect your starting location and initial relationships.
     options = {"key": "_default", "goto": _set_background}
     return wrap_text(text), options
 
-def format_full_description(descriptions):
-    """Format all descriptions into a cohesive character appearance using natural sentences."""
+def format_full_description(descriptions, gender=None):
+    """
+    Format all descriptions into a cohesive character appearance using natural sentences.
+    
+    Args:
+        descriptions (dict): Dictionary of body part descriptions
+        gender (str, optional): Gender to use for pronouns. Defaults to descriptions.get('gender')
+    """
     formatted_lines = []
-    gender = descriptions.get('gender', 'their')  # Default to gender-neutral if not specified
+    wrapper = TextWrapper(width=78, expand_tabs=True, 
+                         replace_whitespace=False,
+                         break_long_words=False,
+                         break_on_hyphens=False)
+    
+    # Use provided gender or get from descriptions, fallback to 'their'
+    if gender is None:
+        gender = descriptions.get('gender', 'their')
+        
     pronoun = 'Her' if gender == 'female' else 'His' if gender == 'male' else 'Their'
     
     # Define the order of body parts
@@ -220,23 +234,29 @@ def format_full_description(descriptions):
     # Add each body part description if it exists
     for part in body_parts:
         if part in descriptions:
-            formatted_lines.append(f"{pronoun} {part} {descriptions[part]}")
+            desc = descriptions[part]
+            # Ensure description ends with a period
+            if not desc.endswith('.'):
+                desc += '.'
+            
+            # Create the full line and wrap it
+            line = f"{pronoun} {part} {desc}"
+            wrapped_lines = wrapper.wrap(line)
+            
+            # Add the wrapped lines
+            formatted_lines.extend(wrapped_lines)
+            # Add a blank line after descriptions that needed wrapping
+            if len(wrapped_lines) > 1:
+                formatted_lines.append('')
+            # Add a blank line after each description
+            formatted_lines.append('')
     
-    # Join all parts with newlines and wrap each line
-    wrapped_lines = []
-    wrapper = TextWrapper(width=78, expand_tabs=True, 
-                         replace_whitespace=False,
-                         break_long_words=False,
-                         break_on_hyphens=False)
-    
-    for line in formatted_lines:
-        wrapped = wrapper.fill(line)
-        wrapped_lines.append(wrapped)
+    # Remove any trailing empty lines
+    while formatted_lines and not formatted_lines[-1]:
+        formatted_lines.pop()
     
     # Join with newlines
-    description = "\n".join(wrapped_lines)
-    
-    return description
+    return "\n".join(formatted_lines)
 
 def node_description_select(caller):
     """Select character descriptions."""
@@ -251,13 +271,11 @@ Your character has been given default descriptions based on their race and gende
 - Type |wdone|n when finished
 
 Remember to write descriptions that will flow naturally in a sentence.
-For example, if your character is female, write descriptions like:
+For example, if your character is female, write descriptions for eyes like:
 |wEyes:|n "are a deep emerald green with flecks of gold"
-|wHair:|n "falls in soft auburn waves past her shoulders"
-|wFace:|n "bears a gentle expression, with high cheekbones"
 
-These will be formatted into sentences like:
-"Her eyes are a deep emerald green with flecks of gold. Her hair falls in soft auburn waves past her shoulders."
+This will be formatted into a sentence like:
+"Her eyes are a deep emerald green with flecks of gold."
 
 Available parts: eyes, hair, face, hands, arms, chest, stomach, back, legs, feet, groin, bottom"""
 
@@ -323,7 +341,7 @@ Available parts: eyes, hair, face, hands, arms, chest, stomach, back, legs, feet
                 part = args[1]
                 if part in caller.ndb._menutree.descriptions:
                     gender = caller.ndb._menutree.gender.lower()
-                    pronoun = 'Their' if gender == 'their' else gender == 'male' and 'His' or 'Her'
+                    pronoun = 'His' if gender == 'male' else 'Her' if gender == 'female' else 'Their'
                     caller.msg(f"|w{part.title()}:|n {pronoun} {part} {caller.ndb._menutree.descriptions[part]}")
                 else:
                     caller.msg(f"No description set for {part}.")
@@ -331,7 +349,9 @@ Available parts: eyes, hair, face, hands, arms, chest, stomach, back, legs, feet
                 # Show all descriptions in natural format
                 if hasattr(caller.ndb._menutree, 'descriptions'):
                     caller.msg("|c== Your Character's Appearance ==|n\n")
-                    caller.msg(format_full_description(caller.ndb._menutree.descriptions))
+                    descriptions = caller.ndb._menutree.descriptions.copy()
+                    gender = caller.ndb._menutree.gender.lower()
+                    caller.msg(format_full_description(descriptions, gender))
                 else:
                     caller.msg("No descriptions set yet.")
             return None
@@ -488,8 +508,36 @@ Race: |y{race}{f" ({subrace})" if subrace else ""}|n
 Gender: |y{gender if gender else "Not specified"}|n
 Background: |y{background if background else "Not specified"}|n
 
-|wAppearance:|n
-{char.format_description()}
+|wAppearance:|n"""
+
+        # Format descriptions as complete sentences
+        if hasattr(caller.ndb._menutree, 'descriptions'):
+            # Get gender for proper pronouns
+            gender_str = gender.lower() if gender else 'their'
+            pronoun = 'Her' if gender_str == 'female' else 'His' if gender_str == 'male' else 'Their'
+            
+            # Define the order we want to show parts in
+            part_order = [
+                'eyes', 'hair', 'face', 'hands', 'arms', 'chest', 
+                'stomach', 'back', 'legs', 'feet', 'groin', 'bottom'
+            ]
+            
+            # Add race-specific parts
+            if race in ["Kobold", "Ashenkin"]:
+                part_order.extend(["horns", "tail"])
+            elif race == "Feline":
+                part_order.append("tail")
+                
+            # Display descriptions in order as complete sentences
+            for part in part_order:
+                if part in caller.ndb._menutree.descriptions:
+                    desc = caller.ndb._menutree.descriptions[part]
+                    # Ensure the description starts with lowercase (since it's part of a sentence)
+                    if desc:
+                        desc = desc[0].lower() + desc[1:] if len(desc) > 1 else desc.lower()
+                    text += f"\n{pronoun} {part} {desc}"
+
+        text += f"""
 
 Your character has been created and is ready to enter the world.
 Use |wcharselect {charname}|n to begin your adventure!
@@ -527,11 +575,14 @@ Please review your character details:
 |wOverall Description:|n
 {text_description if text_description else "No overall description provided."}
 
-|wDetailed Appearance:|n
-"""
+|wDetailed Appearance:|n"""
     
     # Add description details
     if hasattr(caller.ndb._menutree, 'descriptions'):
+        # Get gender for proper pronouns
+        gender_str = gender.lower() if gender else 'their'
+        pronoun = 'Her' if gender_str == 'female' else 'His' if gender_str == 'male' else 'Their'
+        
         # Define the order we want to show parts in
         part_order = [
             'eyes', 'hair', 'face', 'hands', 'arms', 'chest', 
@@ -544,10 +595,14 @@ Please review your character details:
         elif race == "Feline":
             part_order.append("tail")
             
-        # Display descriptions in order
+        # Display descriptions in order as complete sentences
         for part in part_order:
             if part in caller.ndb._menutree.descriptions:
-                text += f"\n|w{part}:|n {caller.ndb._menutree.descriptions[part]}"
+                desc = caller.ndb._menutree.descriptions[part]
+                # Ensure the description starts with lowercase (since it's part of a sentence)
+                if desc:
+                    desc = desc[0].lower() + desc[1:] if len(desc) > 1 else desc.lower()
+                text += f"\n{pronoun} {part} {desc}"
     
     text += "\n\n|wIs this correct? Enter |gyes|w to create your character or |rno|w to start over:|n"
 

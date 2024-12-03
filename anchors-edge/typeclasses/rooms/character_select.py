@@ -2,52 +2,68 @@
 Character Selection Room
 """
 from evennia import DefaultRoom
+from evennia.utils import evtable
 
 class CharacterSelectRoom(DefaultRoom):
     """
-    This room represents the out-of-character character selection space.
-    Players will be placed here when they log in until they select a character.
+    This room represents the character selection screen.
     """
     
     def at_object_creation(self):
         """Called when room is first created"""
         super().at_object_creation()
-        self.db.desc = """
-|c== Character Selection ==|n
-
-You are in a formless void between realities. This is where you must choose 
-your vessel in the world - your character through which you will experience 
-the game.
-
-|wAvailable Commands:|n
-  |ycharlist|n  - List your available characters
-  |ycharcreate|n - Create a new character
-  |ycharselect|n - Select a character to play
-
-You must either select an existing character or create a new one to enter 
-the game world.
-"""
-        
-        # Lock down most commands in this room with proper lock syntax
-        self.locks.add("call:false();puppet:perm(Admin)")
-        
+        # Lock down most commands in this room
+        self.locks.add("call:false();puppet:false()")
+    
     def return_appearance(self, looker, **kwargs):
         """
-        This is called when someone looks at this room.
+        This is called when someone looks at the room.
         """
-        # For sessions without a puppet (accounts in character selection)
+        # Ensure we're working with the account
         if hasattr(looker, 'account') and looker.account:
-            # Let the account's at_look handle the display
-            return ""
-            
-        # For normal characters (shouldn't be here anyway)
-        return "|rYou shouldn't be here.|n"
+            account = looker.account
+        else:
+            account = looker
+
+        text = "|c== Character Selection ==|n\n"
         
+        if not account.db._playable_characters:
+            text += "\nYou have no characters yet. Use |wcharcreate|n to make one."
+            return text
+            
+        # Create table of characters
+        table = evtable.EvTable(
+            "|wName|n",
+            "|wRace|n", 
+            "|wGender|n",
+            "|wBackground|n",
+            border="header"
+        )
+        
+        for char in account.db._playable_characters:
+            table.add_row(
+                char.key,
+                char.db.race + (f" ({char.db.subrace})" if char.db.subrace else ""),
+                char.db.gender or "Unknown",
+                char.db.background or "Unknown"
+            )
+            
+        text += "\n" + str(table)
+        text += "\n\nAvailable commands:"
+        text += "\n  |wcharselect <name>|n - Play as a character"
+        text += "\n  |wcharcreate|n - Create a new character"
+        text += "\n  |wchardelete <name>|n - Delete a character"
+        
+        return text
+
     def at_object_receive(self, moved_obj, source_location, **kwargs):
-        """
-        Called when an object enters this room.
-        """
-        # Prevent characters from entering this room
-        if hasattr(moved_obj, 'account') and moved_obj.account:
-            if moved_obj.location:
-                moved_obj.location = moved_obj.home or '#2'
+        """When an object enters the room"""
+        if moved_obj.has_account:
+            # Get the account
+            account = moved_obj.account
+            
+            # Make sure we're in OOC mode
+            account.execute_cmd('@ooc')
+            
+            # Show the character selection screen
+            account.execute_cmd("look")

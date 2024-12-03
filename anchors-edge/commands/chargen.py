@@ -206,37 +206,21 @@ def format_full_description(descriptions):
     """Format all descriptions into a cohesive character appearance using natural sentences."""
     formatted_lines = []
     gender = descriptions.get('gender', 'their')  # Default to gender-neutral if not specified
-    pronoun = 'Their' if gender == 'their' else gender == 'male' and 'His' or 'Her'
+    pronoun = 'Her' if gender == 'female' else 'His' if gender == 'male' else 'Their'
     
-    # Face area (eyes, hair, face)
-    if 'eyes' in descriptions:
-        formatted_lines.append(f"{pronoun} eyes {descriptions['eyes']}")
-    if 'hair' in descriptions:
-        formatted_lines.append(f"{pronoun} hair {descriptions['hair']}")
-    if 'face' in descriptions:
-        formatted_lines.append(f"{pronoun} face {descriptions['face']}")
+    # Define the order of body parts
+    body_parts = [
+        'eyes', 'hair', 'face',
+        'arms', 'chest', 'back',
+        'stomach', 'legs', 'feet',
+        'groin', 'bottom', 'tail',
+        'horns'  # Special feature for certain races
+    ]
     
-    # Upper body (arms, chest, back)
-    if 'arms' in descriptions:
-        formatted_lines.append(f"{pronoun} arms {descriptions['arms']}")
-    if 'chest' in descriptions:
-        formatted_lines.append(f"{pronoun} chest {descriptions['chest']}")
-    if 'back' in descriptions:
-        formatted_lines.append(f"{pronoun} back {descriptions['back']}")
-    
-    # Lower body (stomach, legs, feet)
-    if 'stomach' in descriptions:
-        formatted_lines.append(f"{pronoun} stomach {descriptions['stomach']}")
-    if 'legs' in descriptions:
-        formatted_lines.append(f"{pronoun} legs {descriptions['legs']}")
-    if 'feet' in descriptions:
-        formatted_lines.append(f"{pronoun} feet {descriptions['feet']}")
-    
-    # Special features last (horns, tail)
-    if 'horns' in descriptions:
-        formatted_lines.append(f"{pronoun} horns {descriptions['horns']}")
-    if 'tail' in descriptions:
-        formatted_lines.append(f"{pronoun} tail {descriptions['tail']}")
+    # Add each body part description if it exists
+    for part in body_parts:
+        if part in descriptions:
+            formatted_lines.append(f"{pronoun} {part} {descriptions[part]}")
     
     # Join all parts with newlines and wrap each line
     wrapped_lines = []
@@ -249,7 +233,7 @@ def format_full_description(descriptions):
         wrapped = wrapper.fill(line)
         wrapped_lines.append(wrapped)
     
-    # Join with newlines and ensure first letter of each line is capitalized
+    # Join with newlines
     description = "\n".join(wrapped_lines)
     
     return description

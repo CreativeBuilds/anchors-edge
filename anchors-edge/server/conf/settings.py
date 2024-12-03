@@ -306,3 +306,12 @@ CMDSET_CHARACTER = "commands.default_cmdsets.CharacterCmdSet"
 CMDSET_ACCOUNT = "commands.default_cmdsets.AccountCmdSet"
 CMDSET_SESSION = "commands.default_cmdsets.SessionCmdSet"
 CMDSET_UNLOGGEDIN = "commands.default_cmdsets.UnloggedinCmdSet"
+
+# Permission settings
+PERMISSION_ACCOUNT_DEFAULT = ["Player"]  # Default permissions for new accounts
+PERMISSION_PLAYER_DEFAULT = ["Player"]   # Default permissions for players
+PERMISSION_ADMIN_DEFAULT = ["Admin", "Builder", "Player"]  # Default permissions for admin accounts
+
+# Lock settings
+PERM_ACCOUNT = "Player"  # Default permission for accounts
+PERM_ADMIN = "Admin"     # Permission for admin commands

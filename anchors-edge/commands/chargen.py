@@ -450,8 +450,8 @@ def node_create_char(caller):
             key=charname,
             home=settings.START_LOCATION,
             location=settings.START_LOCATION,
-            permissions=["Player", "Characters"],  # Only basic player permissions
-            locks=f"puppet:id({caller.id}) or pid({caller.id});delete:perm(Admin);examine:perm(Admin);edit:perm(Admin)"  # More restrictive locks
+            permissions=["Player"],  # Only basic player permissions
+            locks=f"puppet:id({caller.id}) or pid({caller.id});examine:id({caller.id}) or perm(Admin);edit:perm(Admin);delete:perm(Admin);get:false()"  # More restrictive locks
         )
 
         # Set character attributes

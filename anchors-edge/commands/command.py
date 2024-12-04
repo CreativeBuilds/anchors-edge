@@ -822,3 +822,33 @@ class CmdWho(Command):
             string += f"\n  {char.name}"
             
         self.msg(string)
+
+class CmdLook(default_cmds.CmdLook):
+    """
+    look at location or object
+
+    Usage:
+      look
+      look <obj>
+      look *<account>
+      l
+    """
+    def func(self):
+        """
+        Handle the looking - if we are OOC, show the character selection.
+        """
+        caller = self.caller
+        
+        # If we're an account (OOC) or in a character selection room, show character selection
+        if not caller.is_typeclass("typeclasses.characters.Character") or \
+           (caller.location and caller.location.is_typeclass("typeclasses.rooms.character_select.CharacterSelectRoom")):
+            if hasattr(caller, 'account'):
+                account = caller.account
+            else:
+                account = caller
+            # Show the character selection screen
+            self.msg(account.at_look(target=None, session=None))
+            return
+            
+        # Otherwise, proceed with normal look command
+        super().func()

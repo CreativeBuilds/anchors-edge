@@ -24,7 +24,7 @@ from commands.admin import (
     CmdCleanupAccounts, CmdResetAccount, CmdDebugCharacter,
     CmdLastWipe, CmdChangelog, CmdResetWorld
 )
-from commands.command import CmdWho
+from commands.command import CmdWho, CmdLook
 
 class CharacterCmdSet(DefaultCharacterCmdSet):
     """
@@ -75,6 +75,7 @@ class AccountCmdSet(DefaultAccountCmdSet):
         self.add(CmdChangelog())
         self.add(CmdQuit())
         self.add(CmdWho())
+        self.add(CmdLook())
         
         
         # Admin commands

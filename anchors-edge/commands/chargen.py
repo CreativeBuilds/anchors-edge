@@ -1035,8 +1035,10 @@ class CmdCreateCharacter(Command):
     
     Usage:
         charcreate
+        cc
     """
     key = "charcreate"
+    aliases = ["cc"]
     locks = "cmd:all()"
     help_category = "Character"
     

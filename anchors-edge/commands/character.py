@@ -4,8 +4,12 @@ Character commands module.
 
 from evennia import Command
 from evennia.utils.evmenu import EvMenu
-from evennia.utils.utils import string_similarity
 from typeclasses.relationships import KnowledgeLevel, get_brief_description, get_basic_description, get_full_description
+from difflib import SequenceMatcher
+
+def string_similarity(a, b):
+    """Calculate similarity ratio between two strings"""
+    return SequenceMatcher(None, a.lower(), b.lower()).ratio()
 
 class CmdCharList(Command):
     """
@@ -13,9 +17,10 @@ class CmdCharList(Command):
     
     Usage:
         charlist
+        cl
     """
     key = "charlist"
-    aliases = ["characters"]
+    aliases = ["characters", "cl"]
     locks = "cmd:all()"
     help_category = "Character"
     
@@ -39,11 +44,13 @@ class CmdCharSelect(Command):
     Usage:
       charselect <character>
       ic <character>
+      cs <character>
       
     Switch to play the given character, if you have created it.
+    You can use partial names - the system will try to match the closest character.
     """
     key = "charselect"
-    aliases = ["charselect", "ic"]
+    aliases = ["charselect", "ic", "cs"]
     locks = "cmd:all()"
     help_category = "Character"
     
@@ -68,16 +75,20 @@ class CmdCharSelect(Command):
             matches = []
             for test_char in characters:
                 ratio = string_similarity(char_name, test_char.key)
-                if ratio > 0.7:
-                    matches.append(test_char)
+                if ratio > 0.2:  # Even lower threshold for more lenient matching
+                    matches.append((test_char, ratio))
                     
-            if len(matches) == 1:
-                char = matches[0]
-            elif len(matches) > 1:
-                self.caller.msg("Multiple matches found. Please be more specific:")
-                for match in matches:
-                    self.caller.msg(f" - {match.key}")
-                return
+            # Sort matches by ratio, highest first
+            matches.sort(key=lambda x: x[1], reverse=True)
+            
+            if matches:
+                if len(matches) == 1 or matches[0][1] > 0.5:  # Lower confidence threshold
+                    char = matches[0][0]
+                else:
+                    self.caller.msg("Multiple matches found. Please be more specific:")
+                    for match, ratio in matches:
+                        self.caller.msg(f" - {match.key}")
+                    return
                     
         if not char:
             self.caller.msg(f"No character found named '{char_name}'")

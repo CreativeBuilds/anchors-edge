@@ -146,7 +146,27 @@ class HarborRoom(WeatherAwareRoom):
             ("clear", "cloudy"): "Clouds gather over the harbor, their shadows dancing across the water's surface.",
             ("cloudy", "clear"): "The clouds break apart, allowing sunlight to sparkle across the harbor waters.",
             ("clear", "windy"): "The wind picks up, creating white-capped waves across the harbor.",
-            ("windy", "clear"): "The wind dies down, allowing the harbor waters to settle into gentle ripples."
+            ("windy", "clear"): "The wind dies down, allowing the harbor waters to settle into gentle ripples.",
+            ("cloudy", "rain"): "The clouds thicken and darken until rain begins to fall, dimpling the harbor waters.",
+            ("cloudy", "storm"): "The clouds grow ominously dark as a storm system approaches from the sea.",
+            ("cloudy", "windy"): "A strong wind picks up, pushing the clouds across the sky and stirring the harbor waters.",
+            ("windy", "rain"): "The strong winds bring rain clouds, and soon rain begins to fall across the harbor.",
+            ("windy", "storm"): "The winds intensify as a storm moves in, waves growing larger and more chaotic.",
+            ("windy", "cloudy"): "The wind pushes clouds in from the sea, casting shifting shadows on the water.",
+            ("rain", "cloudy"): "The rain tapers off, leaving a blanket of clouds over the harbor.",
+            ("rain", "windy"): "The rain subsides as strong winds sweep across the harbor, whipping up the waves.",
+            ("storm", "cloudy"): "The storm passes, though clouds still linger over the darkened waters.",
+            ("storm", "windy"): "The storm moves on but leaves behind strong gusts that churn the harbor waters.",
+            ("clear", "fog"): "A thick fog bank rolls in from the sea, slowly enveloping the harbor.",
+            ("fog", "clear"): "The fog gradually lifts, revealing the harbor sparkling in the sunlight.",
+            ("cloudy", "fog"): "The clouds seem to descend as fog rolls in across the water.",
+            ("fog", "cloudy"): "The fog lifts into low clouds that hang over the harbor.",
+            ("rain", "fog"): "The rain gives way to a thick fog that shrouds the harbor.",
+            ("fog", "rain"): "The fog thickens until it releases its moisture as rain.",
+            ("storm", "fog"): "As the storm passes, a thick fog moves in to blanket the harbor.",
+            ("fog", "storm"): "The fog is torn away as a storm sweeps in from the sea.",
+            ("windy", "fog"): "The wind dies down as fog creeps across the harbor waters.",
+            ("fog", "windy"): "A strong wind begins to disperse the fog, revealing the harbor beneath."
         }
         return transitions.get((old_weather, new_weather), super().get_weather_transition(old_weather, new_weather))
         

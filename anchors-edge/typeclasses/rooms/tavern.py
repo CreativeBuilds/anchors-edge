@@ -58,7 +58,29 @@ class TavernRoom(WeatherAwareRoom):
             ("storm", "clear"): "The storm passes, leaving the tavern in comfortable silence.",
             ("storm", "rain"): "The storm's fury diminishes to a gentle rainfall.",
             ("clear", "cloudy"): "Clouds gather outside, dimming the light through the windows.",
-            ("cloudy", "clear"): "The clouds part, allowing bright light to stream through the windows."
+            ("cloudy", "clear"): "The clouds part, allowing bright light to stream through the windows.",
+            ("cloudy", "rain"): "The clouds darken until rain begins to tap against the roof.",
+            ("cloudy", "storm"): "The clouds grow ominous as thunder begins to rumble overhead.",
+            ("cloudy", "windy"): "Wind begins to whistle around the tavern's eaves.",
+            ("windy", "rain"): "The whistling wind brings rain that drums against the windows.",
+            ("windy", "storm"): "The wind intensifies as a storm moves in, rattling the shutters.",
+            ("windy", "cloudy"): "The wind pushes clouds overhead, softening the light inside.",
+            ("rain", "cloudy"): "The rain eases, leaving gray light filtering through the windows.",
+            ("rain", "windy"): "The rain subsides as wind begins to whistle through the eaves.",
+            ("storm", "cloudy"): "The storm passes, though clouds still darken the windows.",
+            ("storm", "windy"): "The storm moves on, leaving strong winds that shake the shutters.",
+            ("clear", "fog"): "A thick fog descends outside, making the windows milky and opaque.",
+            ("fog", "clear"): "The fog dissipates, allowing clear light to stream through the windows.",
+            ("cloudy", "fog"): "The clouds lower into fog that obscures the windows.",
+            ("fog", "cloudy"): "The fog lifts into clouds that dim the light outside.",
+            ("rain", "fog"): "The rain gives way to fog that clings to the windowpanes.",
+            ("fog", "rain"): "The fog thickens until rain begins to fall.",
+            ("storm", "fog"): "The storm passes, leaving a thick fog pressed against the windows.",
+            ("fog", "storm"): "The fog is driven away as a storm approaches.",
+            ("windy", "fog"): "The wind dies down as fog creeps up to the windows.",
+            ("fog", "windy"): "Wind begins to tear at the fog outside.",
+            ("clear", "windy"): "Wind begins to whistle around the tavern walls.",
+            ("windy", "clear"): "The wind dies down, leaving peaceful quiet."
         }
         return transitions.get((old_weather, new_weather), super().get_weather_transition(old_weather, new_weather))
         
@@ -72,7 +94,15 @@ class TavernRoom(WeatherAwareRoom):
             ("early_evening", "evening"): "Lanterns are lit as natural light gives way to evening's glow.",
             ("evening", "late_night"): "The tavern settles into its late-night atmosphere.",
             ("late_night", "witching_hour"): "The deepest part of night arrives, bringing a hushed quiet.",
-            ("witching_hour", "dawn"): "The first hints of dawn begin to lighten the eastern windows."
+            ("witching_hour", "dawn"): "The first hints of dawn begin to lighten the eastern windows.",
+            ("dawn", "afternoon"): "The morning passes swiftly as the sun climbs to afternoon height.",
+            ("morning", "early_evening"): "The day passes quickly as shadows lengthen toward evening.",
+            ("noon", "evening"): "The afternoon slips away as daylight fades to evening.",
+            ("afternoon", "late_night"): "Evening comes and goes as night settles over the tavern.",
+            ("early_evening", "witching_hour"): "The night deepens as the tavern grows quieter.",
+            ("evening", "dawn"): "The night passes until dawn's light begins to show.",
+            ("late_night", "morning"): "The night gives way to bright morning light.",
+            ("witching_hour", "noon"): "Morning arrives and passes as the sun climbs to its peak."
         }
         return transitions.get((old_period, new_period), super().get_time_transition(old_period, new_period))
 

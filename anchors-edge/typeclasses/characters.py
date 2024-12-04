@@ -522,68 +522,61 @@ class Character(ObjectParent, DefaultCharacter):
         # Return basic description for unknown characters
         return self.generate_basic_description()
 
-    def announce_move_from(self, destination, msg=None, mapping=None):
+    def announce_move_from(self, destination, msg=None, mapping=None, **kwargs):
         """
-        Called when the object moves away from its location.
+        Called when the object moves away from its current location.
         Args:
             destination (Object): Where we're going.
-            msg (str, optional): A replacement message.
-            mapping (dict, optional): Additional mapping for the message.
+            msg (str, optional): Custom message.
+            mapping (dict, optional): Additional mapping for msg.
+            **kwargs: Additional parameters for future expansion.
         """
         if not self.location:
             return
         
-        if msg:
-            string = msg
-        else:
-            string = "{object} leaves {exit} for {destination}."
+        if msg is None:
+            msg = "{object} leaves {exit}."
         
-        # Get the exit name or direction
-        exit_name = None
-        if mapping and "exit" in mapping:
-            exit_name = mapping["exit"]
-        else:
-            # Try to find the exit that leads to the destination
-            exits = [o for o in self.location.contents if o.destination == destination]
-            if exits:
-                exit_name = exits[0].name
+        location = self.location
+        exits = [o for o in location.contents if o.destination == destination]
+        if not mapping:
+            mapping = {}
         
-        # Create the mapping
-        mapping = mapping or {}
         mapping.update({
-            "object": self.get_display_name(None),  # Use basic description for unknown characters
-            "exit": exit_name or "somewhere",
-            "destination": destination.get_display_name(self.location)
+            "object": self,
+            "exit": exits[0] if exits else "somewhere",
+            "location": location
         })
         
-        # Send the message
-        self.location.msg_contents(string, exclude=[self], mapping=mapping)
+        location.msg_contents(msg, exclude=(self,), mapping=mapping)
 
-    def announce_move_to(self, source_location, msg=None, mapping=None):
+    def announce_move_to(self, source_location, msg=None, mapping=None, **kwargs):
         """
         Called when the object arrives at its new location.
         Args:
             source_location (Object): Where we came from.
-            msg (str, optional): A replacement message.
-            mapping (dict, optional): Additional mapping for the message.
+            msg (str, optional): Custom message.
+            mapping (dict, optional): Additional mapping for msg.
+            **kwargs: Additional parameters for future expansion.
         """
         if not self.location:
             return
-            
-        if msg:
-            string = msg
-        else:
-            string = "{object} arrives from {source}."
         
-        # Create the mapping
-        mapping = mapping or {}
+        if msg is None:
+            msg = "{object} arrives from {exit}."
+        
+        location = self.location
+        exits = [o for o in location.contents if o.destination == source_location]
+        if not mapping:
+            mapping = {}
+        
         mapping.update({
-            "object": self.get_display_name(None),  # Use basic description for unknown characters
-            "source": source_location.get_display_name(self.location) if source_location else "nowhere"
+            "object": self,
+            "exit": exits[0] if exits else "somewhere",
+            "location": location
         })
         
-        # Send the message
-        self.location.msg_contents(string, exclude=[self], mapping=mapping)
+        location.msg_contents(msg, exclude=(self,), mapping=mapping)
 
     def introduce_to(self, character):
         """

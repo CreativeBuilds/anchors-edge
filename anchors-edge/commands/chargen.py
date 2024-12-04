@@ -236,19 +236,16 @@ def format_full_description(descriptions, gender=None):
         if part in descriptions:
             desc = descriptions[part]
             # Ensure description ends with a period
-            if not desc.endswith('.'):
+            if desc and not desc.rstrip().endswith(('.', '!', '?')):
                 desc += '.'
             
             # Create the full line and wrap it
             line = f"{pronoun} {part} {desc}"
             wrapped_lines = wrapper.wrap(line)
             
-            # Add the wrapped lines
             formatted_lines.extend(wrapped_lines)
-            # Add a single blank line after each description
-            formatted_lines.append('')
+            formatted_lines.append('')  # Add blank line after each description
     
-    # Join all lines with newlines and return
     return '\n'.join(formatted_lines).strip()
 
 def node_description_select(caller):
@@ -613,13 +610,15 @@ def node_final_confirm(caller):
             if part in caller.ndb._menutree.descriptions:
                 desc = caller.ndb._menutree.descriptions[part]
                 if desc:
-                    # Ensure description starts with lowercase (since it's part of a sentence)
+                    # Ensure description starts with lowercase and ends with period
                     desc = desc[0].lower() + desc[1:] if len(desc) > 1 else desc.lower()
+                    if not desc.rstrip().endswith(('.', '!', '?')):
+                        desc += '.'
                     line = f"{pronoun} {part} {desc}"
                     # Wrap this line
                     wrapped_desc = wrapper.wrap(line)
                     description_lines.extend(wrapped_desc)
-                    description_lines.append('')  # Add single blank line between descriptions
+                    description_lines.append('')
 
         if description_lines:
             # Remove the last empty line

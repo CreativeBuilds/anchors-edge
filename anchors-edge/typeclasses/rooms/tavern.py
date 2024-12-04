@@ -47,6 +47,34 @@ class TavernRoom(WeatherAwareRoom):
         """
         width = getattr(settings, 'ROOM_DESCRIPTION_WIDTH', 78)
         return fill(text, width=width, expand_tabs=True, replace_whitespace=False)
+    
+    def get_weather_transition(self, old_weather, new_weather):
+        """Get tavern-specific weather transition message."""
+        transitions = {
+            ("clear", "rain"): "The sound of rainfall begins to patter against the tavern's roof.",
+            ("clear", "storm"): "Thunder rumbles overhead as a storm moves in.",
+            ("rain", "clear"): "The rainfall gradually subsides, leaving a peaceful quiet.",
+            ("rain", "storm"): "The gentle rain transforms into a proper storm, thunder shaking the tavern's windows.",
+            ("storm", "clear"): "The storm passes, leaving the tavern in comfortable silence.",
+            ("storm", "rain"): "The storm's fury diminishes to a gentle rainfall.",
+            ("clear", "cloudy"): "Clouds gather outside, dimming the light through the windows.",
+            ("cloudy", "clear"): "The clouds part, allowing bright light to stream through the windows."
+        }
+        return transitions.get((old_weather, new_weather), super().get_weather_transition(old_weather, new_weather))
+        
+    def get_time_transition(self, old_period, new_period):
+        """Get tavern-specific time transition message."""
+        transitions = {
+            ("dawn", "morning"): "Morning light now fills the tavern as the day begins in earnest.",
+            ("morning", "noon"): "The sun reaches its peak, casting shorter shadows through the windows.",
+            ("noon", "afternoon"): "The direct sunlight softens as afternoon arrives.",
+            ("afternoon", "early_evening"): "The light begins to fade as evening approaches.",
+            ("early_evening", "evening"): "Lanterns are lit as natural light gives way to evening's glow.",
+            ("evening", "late_night"): "The tavern settles into its late-night atmosphere.",
+            ("late_night", "witching_hour"): "The deepest part of night arrives, bringing a hushed quiet.",
+            ("witching_hour", "dawn"): "The first hints of dawn begin to lighten the eastern windows."
+        }
+        return transitions.get((old_period, new_period), super().get_time_transition(old_period, new_period))
 
 class MainTavernRoom(TavernRoom):
     """The main tavern room with hearth and dynamic descriptions."""

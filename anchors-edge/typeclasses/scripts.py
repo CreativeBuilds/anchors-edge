@@ -85,11 +85,19 @@ class IslandWeatherScript(DefaultScript):
         # Update time period
         new_time_period = self.get_current_time_period()
         if new_time_period != self.db.current_time_period:
+            self.notify_time_changes(self.db.current_time_period, new_time_period)
             self.db.current_time_period = new_time_period
             logger.log_info(f"Time period changed to: {new_time_period} (Austin time)")
         
+        # Store old weather before update
+        old_weather = self.db.current_weather
+        
         # Update weather
         self.update_weather()
+        
+        # Check if weather changed
+        if old_weather != self.db.current_weather:
+            self.notify_weather_changes(old_weather, self.db.current_weather)
         
     def update_weather(self):
         """Update weather for all islands."""
@@ -167,6 +175,32 @@ class IslandWeatherScript(DefaultScript):
     def at_server_shutdown(self):
         """Clean up before shutdown."""
         pass
+    
+    def notify_weather_changes(self, old_weather, new_weather):
+        """Notify all weather-aware rooms about weather changes."""
+        from evennia import search_tag
+        from evennia import GLOBAL_SCRIPTS
+        
+        # Get all weather-aware rooms
+        weather_aware_rooms = [obj for obj in search_tag("weather_aware", category="room")]
+        
+        # Update each room
+        for room in weather_aware_rooms:
+            if hasattr(room, 'notify_weather_change'):
+                room.notify_weather_change(old_weather, new_weather)
+                
+    def notify_time_changes(self, old_period, new_period):
+        """Notify all weather-aware rooms about time period changes."""
+        from evennia import search_tag
+        from evennia import GLOBAL_SCRIPTS
+        
+        # Get all weather-aware rooms
+        weather_aware_rooms = [obj for obj in search_tag("weather_aware", category="room")]
+        
+        # Update each room
+        for room in weather_aware_rooms:
+            if hasattr(room, 'notify_time_change'):
+                room.notify_time_change(old_period, new_period)
 
 class GlobalSettingsScript(DefaultScript):
     """

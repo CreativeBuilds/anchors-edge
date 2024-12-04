@@ -176,3 +176,53 @@ class IslandRoom(WeatherAwareRoom):
         base_desc += " The Harbor District lies to the south."
         
         return base_desc
+        
+    def get_weather_transition(self, old_weather, new_weather):
+        """Get island-specific weather transition messages."""
+        transitions = {
+            ("clear", "rain"): "|w[Weather: Rain]|n A tropical shower moves in, bringing warm rain that patters against palm fronds.",
+            ("clear", "storm"): "|w[Weather: Storm]|n The sky darkens rapidly as a tropical storm approaches, wind beginning to whip through the palms.",
+            ("rain", "clear"): "|w[Weather: Clear]|n The rain shower passes, leaving everything fresh and glistening in renewed sunshine.",
+            ("rain", "storm"): "|w[Weather: Storm]|n The gentle rain transforms into a proper tropical storm, palm trees swaying in strengthening winds.",
+            ("storm", "clear"): "|w[Weather: Clear]|n The storm moves off across the sea, leaving behind clear skies and dripping foliage.",
+            ("storm", "rain"): "|w[Weather: Rain]|n The storm's intensity eases to a gentle tropical shower.",
+            ("clear", "cloudy"): "|w[Weather: Cloudy]|n Clouds drift in from the sea, providing occasional shade from the tropical sun.",
+            ("cloudy", "clear"): "|w[Weather: Clear]|n The clouds dissipate, allowing the bright island sun to shine through.",
+            ("clear", "windy"): "|w[Weather: Windy]|n A strong sea breeze picks up, setting the palm fronds to dancing.",
+            ("windy", "clear"): "|w[Weather: Clear]|n The wind settles down, leaving the palms gently swaying in the tropical air.",
+            ("cloudy", "rain"): "|w[Weather: Rain]|n The clouds darken and thicken until rain begins falling from the tropical sky.",
+            ("cloudy", "storm"): "|w[Weather: Storm]|n The clouds grow ominously dark as a tropical storm system moves in from the sea.",
+            ("cloudy", "windy"): "|w[Weather: Windy]|n A strong wind picks up, pushing the cloud cover across the sky.",
+            ("windy", "rain"): "|w[Weather: Rain]|n The strong winds bring rain clouds, and soon warm tropical rain begins to fall.",
+            ("windy", "storm"): "|w[Weather: Storm]|n The winds intensify as a tropical storm system moves in, palm trees thrashing in the strengthening gusts.",
+            ("windy", "cloudy"): "|w[Weather: Cloudy]|n The wind pushes clouds in from the sea, providing intermittent shade.",
+            ("rain", "cloudy"): "|w[Weather: Cloudy]|n The rain tapers off, leaving behind a blanket of clouds overhead.",
+            ("rain", "windy"): "|w[Weather: Windy]|n The rain subsides as strong winds sweep in from the ocean.",
+            ("storm", "cloudy"): "|w[Weather: Cloudy]|n The storm passes, though clouds still linger in its wake.",
+            ("storm", "windy"): "|w[Weather: Windy]|n The storm moves on but leaves behind strong gusts that whip through the palm trees.",
+            ("clear", "fog"): "|w[Weather: Fog]|n A thick tropical fog rolls in from the sea, wreathing the palm trees in mist.",
+            ("fog", "clear"): "|w[Weather: Clear]|n The fog burns away under the tropical sun, revealing clear skies.",
+            ("cloudy", "fog"): "|w[Weather: Fog]|n The clouds descend as fog rolls in from the ocean.",
+            ("fog", "cloudy"): "|w[Weather: Cloudy]|n The fog lifts into low clouds that hang over the island.",
+            ("rain", "fog"): "|w[Weather: Fog]|n The rain tapers off as thick fog moves in from the sea.",
+            ("fog", "rain"): "|w[Weather: Rain]|n The fog thickens until it releases its moisture as tropical rain.",
+            ("storm", "fog"): "|w[Weather: Fog]|n The storm passes, leaving behind a thick blanket of fog.",
+            ("fog", "storm"): "|w[Weather: Storm]|n The fog is driven away as a tropical storm moves in.",
+            ("windy", "fog"): "|w[Weather: Fog]|n The wind dies down as fog creeps in from the ocean.",
+            ("fog", "windy"): "|w[Weather: Windy]|n A strong wind picks up, beginning to disperse the fog."            
+        }
+        return transitions.get((old_weather, new_weather), super().get_weather_transition(old_weather, new_weather))
+        
+    def get_time_transition(self, old_period, new_period):
+        """Get island-specific time transition messages."""
+        transitions = {
+            ("dawn", "morning"): "|w[Time: Morning]|n The island awakens to birdsong as the sun rises over the eastern horizon.",
+            ("morning", "noon"): "|w[Time: Noon]|n The sun climbs to its zenith, bringing the full heat of the tropical day.",
+            ("noon", "afternoon"): "|w[Time: Afternoon]|n The intense midday sun begins its westward journey, though the heat lingers.",
+            ("afternoon", "early_evening"): "|w[Time: Evening]|n The heat of the day begins to soften as the sun moves toward the horizon.",
+            ("early_evening", "evening"): "|w[Time: Evening]|n The sun sets in a spectacular display of colors over the western sea.",
+            ("evening", "late_night"): "|w[Time: Night]|n Night settles over the island as stars begin to twinkle in the tropical sky.",
+            ("late_night", "witching_hour"): "|w[Time: Night]|n A peaceful quiet descends on the island, broken only by the sound of waves.",
+            ("witching_hour", "dawn"): "|w[Time: Dawn]|n The first hint of dawn brightens the eastern horizon as early birds begin to stir."
+        }
+        return transitions.get((old_period, new_period), super().get_time_transition(old_period, new_period))

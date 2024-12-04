@@ -133,3 +133,33 @@ class HarborRoom(WeatherAwareRoom):
         if self.key == "Harbor District":
             return self._get_harbor_description(looker)
         return super().get_display_desc(looker, **kwargs) 
+
+    def get_weather_transition(self, old_weather, new_weather):
+        """Get harbor-specific weather transition messages."""
+        transitions = {
+            ("clear", "rain"): "Raindrops begin to ripple across the harbor waters, creating concentric circles that spread outward.",
+            ("clear", "storm"): "Dark clouds roll in from the sea as waves grow choppier, heralding an approaching storm.",
+            ("rain", "clear"): "The rain tapers off, leaving the harbor waters calm and glistening.",
+            ("rain", "storm"): "The steady rain intensifies as thunder echoes across the water, waves growing more aggressive.",
+            ("storm", "clear"): "The storm passes out to sea, leaving the harbor waters to gradually settle.",
+            ("storm", "rain"): "The storm's fury subsides to a steady rain, though the waters remain somewhat choppy.",
+            ("clear", "cloudy"): "Clouds gather over the harbor, their shadows dancing across the water's surface.",
+            ("cloudy", "clear"): "The clouds break apart, allowing sunlight to sparkle across the harbor waters.",
+            ("clear", "windy"): "The wind picks up, creating white-capped waves across the harbor.",
+            ("windy", "clear"): "The wind dies down, allowing the harbor waters to settle into gentle ripples."
+        }
+        return transitions.get((old_weather, new_weather), super().get_weather_transition(old_weather, new_weather))
+        
+    def get_time_transition(self, old_period, new_period):
+        """Get harbor-specific time transition messages."""
+        transitions = {
+            ("dawn", "morning"): "The harbor comes alive as the sun rises, early fishing boats heading out to sea.",
+            ("morning", "noon"): "The sun climbs high overhead, casting shorter shadows across the busy docks.",
+            ("noon", "afternoon"): "The afternoon sun bathes the harbor in golden light as activity continues steadily.",
+            ("afternoon", "early_evening"): "The light grows amber as the sun descends, fishing boats beginning to return.",
+            ("early_evening", "evening"): "Harbor lanterns spring to life one by one as daylight fades.",
+            ("evening", "late_night"): "Night settles over the harbor as activity winds down to the quiet watch hours.",
+            ("late_night", "witching_hour"): "A deep quiet falls over the harbor, broken only by gentle waves and creaking ropes.",
+            ("witching_hour", "dawn"): "Pre-dawn light slowly illuminates the harbor as early crews begin to stir."
+        }
+        return transitions.get((old_period, new_period), super().get_time_transition(old_period, new_period))

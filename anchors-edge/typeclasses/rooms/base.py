@@ -21,6 +21,8 @@ class WeatherAwareRoom(DefaultRoom):
             "indoor": False,
             "magical": False
         }
+        # Tag the room as weather-aware for efficient searching
+        self.tags.add("weather_aware", category="room")
         
     def get_current_hour(self):
         """Get the current hour (0-23) in Austin timezone."""
@@ -126,6 +128,46 @@ class WeatherAwareRoom(DefaultRoom):
             full_text += f"|/{char_text}"
         
         return full_text
+        
+    def notify_weather_change(self, old_weather, new_weather):
+        """Notify all characters in the room about weather changes."""
+        if old_weather == new_weather:
+            return
+            
+        # Get all characters in the room
+        characters = [obj for obj in self.contents 
+                     if obj.is_typeclass('typeclasses.characters.Character')]
+                     
+        # Generate transition message
+        message = self.get_weather_transition(old_weather, new_weather)
+        
+        # Send to all characters
+        for char in characters:
+            char.msg(f"|w{message}|n")
+            
+    def notify_time_change(self, old_period, new_period):
+        """Notify all characters in the room about time period changes."""
+        if old_period == new_period:
+            return
+            
+        # Get all characters in the room
+        characters = [obj for obj in self.contents 
+                     if obj.is_typeclass('typeclasses.characters.Character')]
+                     
+        # Generate transition message
+        message = self.get_time_transition(old_period, new_period)
+        
+        # Send to all characters
+        for char in characters:
+            char.msg(f"|w{message}|n")
+            
+    def get_weather_transition(self, old_weather, new_weather):
+        """Get weather transition message. Override in subclasses."""
+        return f"The weather changes from {old_weather} to {new_weather}."
+        
+    def get_time_transition(self, old_period, new_period):
+        """Get time transition message. Override in subclasses."""
+        return f"Time shifts from {old_period} to {new_period}."
 
 RESPAWN_MESSAGE = """
 The crushing darkness of death gives way to a gentle, phosphorescent glow. Your consciousness drifts through familiar waters - the same waters that lap at the shores of Anchors Edge. Ancient mariners spoke of the Tide Mother's mercy, how she claims no soul that still has purpose in her realm.

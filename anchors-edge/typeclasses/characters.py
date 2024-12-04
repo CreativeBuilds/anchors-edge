@@ -21,6 +21,8 @@ from server.conf.settings import START_LOCATION, DEFAULT_HOME  # Direct import
 from evennia import DefaultCharacter
 from evennia.utils import logger
 from django.conf import settings
+import json
+from pathlib import Path
 
 # Load environment variables from .env file
 load_dotenv()
@@ -99,6 +101,7 @@ class Character(ObjectParent, DefaultCharacter):
         self.db.height = None      # Height in inches (e.g., 74 for 6'2")
         self.db.build = None       # muscular, slim, stocky, etc.
         self.db.basic_desc = None  # Generated basic description
+        self.db.descriptions = {}  # Initialize empty descriptions dict
         
         # Initialize introduction tracking
         self.db.introduced_to = set()  # Set of character IDs this character has been introduced to
@@ -123,6 +126,27 @@ class Character(ObjectParent, DefaultCharacter):
         for stat, value in settings.BASE_CHARACTER_STATS.items():
             setattr(self.db, stat.lower(), value)
             
+    def initialize_descriptions(self):
+        """Initialize character descriptions based on race and gender."""
+        if not self.db.race or not self.db.gender:
+            return
+        
+        # Load descriptions from JSON
+        with open(Path("data/descriptions/body_parts.json"), 'r') as f:
+            race_descriptions = json.load(f)
+        
+        # Get descriptions for race and gender
+        if self.db.race in race_descriptions:
+            gender = self.db.gender.lower()
+            if gender in race_descriptions[self.db.race]:
+                descriptions = {}
+                for part, descs in race_descriptions[self.db.race][gender].items():
+                    if isinstance(descs, list) and descs:
+                        descriptions[part] = random.choice(descs)
+                    else:
+                        descriptions[part] = descs
+                self.db.descriptions = descriptions
+
     def normalize_currency(self):
         """Convert currency to its most efficient form"""
         currency = self.get_currency()
@@ -282,9 +306,10 @@ class Character(ObjectParent, DefaultCharacter):
         """
         if not looker:
             return ""
-            
-        # Check if the looker knows this character
-        knows_character = looker.knows_character(self) if hasattr(looker, 'knows_character') else False
+        
+        # Check if the looker knows this character or is looking at themselves
+        is_self = (looker == self)
+        knows_character = is_self or (looker.knows_character(self) if hasattr(looker, 'knows_character') else False)
         
         # Get the character's name or basic description
         if knows_character:
@@ -299,17 +324,38 @@ class Character(ObjectParent, DefaultCharacter):
         
         # Start with the basic description
         description_parts = []
+
+        # Always add the basic description line
+        basic_desc = []
+        basic_desc.append("A")
+        
+        # Add height if it exists
+        height_str = self.format_height()
+        if height_str:
+            basic_desc.append(f"{height_str} tall")
+        
+        # Add gender and race
+        if hasattr(self.db, 'gender') and self.db.gender:
+            basic_desc.append(self.db.gender.lower())
+        if hasattr(self.db, 'race') and self.db.race:
+            if hasattr(self.db, 'subrace') and self.db.subrace and self.db.subrace.lower() != "normal":
+                basic_desc.append(f"{self.db.subrace.lower()} {self.db.race.lower()}")
+            else:
+                basic_desc.append(self.db.race.lower())
+        
+        # Add the basic description line
+        description_parts.append(format_sentence(" ".join(basic_desc)))
         
         # Add the text description if it exists and character is known
-        if self.db.text_description and knows_character:
+        if self.db.text_description and (is_self or knows_character):
             description_parts.append(format_sentence(self.db.text_description))
         
         # Add the detailed description if it exists and character is known
-        if self.db.desc and knows_character:
+        if self.db.desc and (is_self or knows_character):
             description_parts.append(format_sentence(self.db.desc))
 
         # Format descriptions with proper pronouns and line breaks
-        if hasattr(self.db, 'descriptions') and knows_character:
+        if hasattr(self.db, 'descriptions') and (is_self or knows_character):
             # Define the order of body parts
             body_parts = [
                 'eyes', 'hair', 'face',
@@ -432,7 +478,7 @@ class Character(ObjectParent, DefaultCharacter):
         
         if inches == 0:
             return f"{feet}'"
-        return f"{feet}'{inches}\""
+        return f"{feet}'{inches}"
 
     def generate_basic_description(self):
         """
@@ -460,8 +506,8 @@ class Character(ObjectParent, DefaultCharacter):
         if gender in ['male', 'female']:
             parts.append(gender)
             
-        # Add subrace if it exists
-        if self.db.subrace:
+        # Add subrace if it exists and isn't "normal"
+        if self.db.subrace and self.db.subrace.lower() != "normal":
             parts.append(self.db.subrace.lower())
             
         parts.append(race.lower())
@@ -478,6 +524,9 @@ class Character(ObjectParent, DefaultCharacter):
             menu = self.db.account.ndb._menutree
             if hasattr(menu, 'height'):
                 self.db.height = menu.height
+        
+        # Initialize descriptions
+        self.initialize_descriptions()
 
     def knows_character(self, character):
         """
@@ -534,21 +583,30 @@ class Character(ObjectParent, DefaultCharacter):
         if not self.location:
             return
         
-        if msg is None:
-            msg = "{object} leaves {exit}."
-        
         location = self.location
         exits = [o for o in location.contents if o.destination == destination]
         if not mapping:
             mapping = {}
+
+        # Get all characters in the room
+        characters = [o for o in location.contents if hasattr(o, 'has_account') or (hasattr(o.db, 'is_npc') and o.db.is_npc)]
         
-        mapping.update({
-            "object": self,
-            "exit": exits[0] if exits else "somewhere",
-            "location": location
-        })
-        
-        location.msg_contents(msg, exclude=(self,), mapping=mapping)
+        # Send personalized messages to each character
+        for char in characters:
+            if char == self:  # Skip the moving character
+                continue
+            
+            # Check if this character knows the one leaving
+            knows_char = char.knows_character(self) if hasattr(char, 'knows_character') else False
+            
+            # Create the message text
+            if knows_char:
+                message = f"{self.name} leaves {exits[0].name if exits else 'somewhere'}."
+            else:
+                message = f"{self.generate_basic_description().rstrip('.')} leaves {exits[0].name if exits else 'somewhere'}."
+            
+            # Send the message
+            char.msg(text=(message, {"type": "room"}))
 
     def announce_move_to(self, source_location, msg=None, mapping=None, **kwargs):
         """
@@ -562,21 +620,30 @@ class Character(ObjectParent, DefaultCharacter):
         if not self.location:
             return
         
-        if msg is None:
-            msg = "{object} arrives from {exit}."
-        
         location = self.location
         exits = [o for o in location.contents if o.destination == source_location]
         if not mapping:
             mapping = {}
+
+        # Get all characters in the room
+        characters = [o for o in location.contents if hasattr(o, 'has_account') or (hasattr(o.db, 'is_npc') and o.db.is_npc)]
         
-        mapping.update({
-            "object": self,
-            "exit": exits[0] if exits else "somewhere",
-            "location": location
-        })
-        
-        location.msg_contents(msg, exclude=(self,), mapping=mapping)
+        # Send personalized messages to each character
+        for char in characters:
+            if char == self:  # Skip the moving character
+                continue
+            
+            # Check if this character knows the one arriving
+            knows_char = char.knows_character(self) if hasattr(char, 'knows_character') else False
+            
+            # Create the message text
+            if knows_char:
+                message = f"{self.name} arrives from {exits[0].name if exits else 'somewhere'}."
+            else:
+                message = f"{self.generate_basic_description().rstrip('.')} arrives from {exits[0].name if exits else 'somewhere'}."
+            
+            # Send the message
+            char.msg(text=(message, {"type": "room"}))
 
     def introduce_to(self, character):
         """

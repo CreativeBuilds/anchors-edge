@@ -197,7 +197,15 @@ This choice will affect your starting location and initial relationships.
             
         # Store background on the menu
         caller.ndb._menutree.background = background
-        return "node_description_select"
+
+        # Generate and store random descriptions
+        generator = CharacterGenerator()
+        race = caller.ndb._menutree.race
+        gender = caller.ndb._menutree.gender.lower() if hasattr(caller.ndb._menutree, 'gender') else 'their'
+        descriptions = generator.generate_default_descriptions(race)
+        caller.ndb._menutree.descriptions = descriptions
+
+        return "node_text_descriptor"
     
     options = {"key": "_default", "goto": _set_background}
     return wrap_text(text), options
@@ -463,6 +471,7 @@ def node_create_char(caller):
         gender = caller.ndb._menutree.gender if hasattr(caller.ndb._menutree, 'gender') else None
         background = caller.ndb._menutree.background if hasattr(caller.ndb._menutree, 'background') else None
         text_description = caller.ndb._menutree.text_description if hasattr(caller.ndb._menutree, 'text_description') else None
+        height = caller.ndb._menutree.height if hasattr(caller.ndb._menutree, 'height') else None
 
         # Create character using the imported create.create_object
         char = create.create_object(
@@ -484,6 +493,8 @@ def node_create_char(caller):
             char.db.background = background
         if text_description:
             char.db.text_description = text_description
+        if height is not None:
+            char.db.height = height
 
         # Store descriptions
         if hasattr(caller.ndb._menutree, 'descriptions'):
@@ -507,6 +518,7 @@ def node_create_char(caller):
 Name: |y{charname}|n
 Race: |y{race}{f" ({subrace})" if subrace else ""}|n
 Gender: |y{gender if gender else "Not specified"}|n
+Height: |y{char.format_height() if char.format_height() else "Not specified"}|n
 Background: |y{background if background else "Not specified"}|n
 
 |wAppearance:|n"""
@@ -577,7 +589,6 @@ def node_final_confirm(caller):
         f"|wAge:|n {caller.ndb._menutree.age if hasattr(caller.ndb._menutree, 'age') else 'Not specified'}\n"
         f"|wBackground:|n {background if background else 'Not specified'}",
         f"|wOverall Description:|n\n{text_description if text_description else 'No overall description provided.'}",
-        "|wDetailed Appearance:|n"
     ]
 
     # Wrap each section

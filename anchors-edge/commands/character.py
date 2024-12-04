@@ -162,8 +162,16 @@ class CmdIntro(Command):
     
     key = "intro"
     aliases = ["introduce"]
-    locks = "cmd:puppeted()"
+    locks = "cmd:puppet()"
     help_category = "Social"
+    
+    def match_description(self, desc, obj):
+        """Check if description matches object"""
+        if not hasattr(obj, 'get_display_name'):
+            return False
+        display = obj.get_display_name(self.caller).lower()
+        desc_parts = desc.lower().split()
+        return all(part in display for part in desc_parts)
     
     def func(self):
         # Check if the caller is a character
@@ -175,24 +183,27 @@ class CmdIntro(Command):
             self.caller.msg("Usage: intro <character description>")
             return
             
-        # Try to find the character based on description
-        target = self.caller.find_character_by_desc(self.args)
+        # Find all characters in the room that match the description
+        matches = []
+        for obj in self.caller.location.contents:
+            if obj != self.caller and hasattr(obj, 'has_account') and obj.has_account:
+                if self.match_description(self.args, obj):
+                    matches.append(obj)
         
-        if target is None:
-            self.caller.msg(f"Could not find '{self.args}'.")
+        if not matches:
+            self.caller.msg(f"Could not find anyone matching '{self.args}'.")
             return
             
-        if target == "ambiguous":
-            self.caller.msg("Multiple characters match that description. Please be more specific.")
-            # Show numbered descriptions if they exist
-            chars = [obj for obj in self.caller.location.contents 
-                    if hasattr(obj, 'get_display_name') and obj != self.caller]
-            numbered_descs = [getattr(char, 'temp_numbered_desc', char.get_display_name(self.caller)) 
-                            for char in chars if hasattr(char, 'temp_numbered_desc')]
-            if numbered_descs:
-                self.caller.msg("Matching characters: " + ", ".join(numbered_descs))
+        if len(matches) > 1:
+            self.caller.msg("Multiple characters match that description. Please be more specific:")
+            for char in matches:
+                display = char.get_display_name(self.caller)
+                display = display[0].lower() + display[1:].rstrip('.')
+                self.caller.msg(f" - {display}")
             return
             
+        target = matches[0]
+        
         # Can't introduce to yourself
         if target == self.caller:
             self.caller.msg("You already know yourself!")
@@ -208,18 +219,23 @@ class CmdIntro(Command):
         self.caller.introduce_to(target)
         
         # Check if this is a mutual introduction
-        is_mutual = target.knows_character(self.caller)
+        is_mutual = self.caller.knows_character(target) and target.knows_character(self.caller)
         
         # Get the appropriate display name based on mutual status
-        target_display = target.name if is_mutual else target.get_display_name(self.caller)
+        target_display = target.name if is_mutual else target.generate_basic_description()
+        target_display = target_display[0].lower() + target_display[1:].rstrip('.')
+        caller_display = self.caller.generate_basic_description().rstrip('.')
+        target_basic = target.generate_basic_description().rstrip('.')
         
         # Notify both parties
-        self.caller.msg(f"You introduce yourself to {target.get_display_name(self.caller)}.")
-        target.msg(f"{self.caller.get_display_name(target)} introduces themselves to you.")
+        self.caller.msg(f"You introduce yourself to {target_display}.")
+        target.msg(f"{caller_display} introduces themselves to you as {self.caller.name}.")
+        
+        
         
         # Notify the room
         self.caller.location.msg_contents(
-            f"{self.caller.get_display_name(target)} introduces themselves to {target.get_display_name(self.caller)}.",
+            f"{caller_display} introduces themselves to {target_basic}.",
             exclude=[self.caller, target]
         )
         
@@ -243,20 +259,28 @@ class CmdLongIntro(Command):
     """
     
     key = "longintro"
-    locks = "cmd:puppeted()"
+    locks = "cmd:all()"
     help_category = "Social"
     
     def func(self):
+        # If we're a character, get our account
+        account = self.caller.account if hasattr(self.caller, 'account') else self.caller
+        
+        # Check if we're a character without an account
+        if not hasattr(self.caller, 'account') or not self.caller.account:
+            self.caller.msg("You need to select a character first!")
+            return
+            
         if not self.args:
             self.caller.msg("Usage: longintro <character>")
             return
-            
+        
         target = self.caller.search(self.args)
         if not target:
             return
-            
+        
         # Check if target is a character
-        if not hasattr(target, 'is_character') or not target.is_character:
+        if not target.is_typeclass('typeclasses.characters.Character'):
             self.caller.msg("You can only introduce yourself to other characters.")
             return
             
@@ -266,24 +290,30 @@ class CmdLongIntro(Command):
         if not target.db.known_by:
             target.db.known_by = {}
             
-        # Check if they're mutually introduced
-        if not (target.id in self.caller.db.known_by and self.caller.id in target.db.known_by):
-            self.caller.msg(f"You need to be mutually introduced with {target.name} first.")
+        target_basic = target.generate_basic_description().rstrip('.')
+            
+        # Check if they have at least acquaintance status with each other
+        if not (target.id in self.caller.db.known_by and 
+                self.caller.db.known_by[target.id] >= KnowledgeLevel.ACQUAINTANCE and
+                self.caller.id in target.db.known_by and 
+                target.db.known_by[self.caller.id] >= KnowledgeLevel.ACQUAINTANCE):
+            self.caller.msg(f"You need to be at least acquainted with the {target_basic} first.")
             return
             
-        # Check if they're already friends
-        if (target.id in self.caller.db.known_by and 
-            self.caller.db.known_by[target.id] == KnowledgeLevel.FRIEND):
+        # Check if target is already friends with caller
+        if (self.caller.id in target.db.known_by and 
+            target.db.known_by[self.caller.id] == KnowledgeLevel.FRIEND):
             self.caller.msg(f"You've already formally introduced yourself to {target.name}.")
             return
             
-        # Set knowledge level to FRIEND for caller's side
-        self.caller.db.known_by[target.id] = KnowledgeLevel.FRIEND
+        # Set knowledge level to FRIEND for target's side
+        target.db.known_by[self.caller.id] = KnowledgeLevel.FRIEND
         
         # Check if this completes a mutual formal introduction
         is_mutual_formal = (target.id in self.caller.db.known_by and 
                           self.caller.id in target.db.known_by and
-                          target.db.known_by[self.caller.id] == KnowledgeLevel.FRIEND)
+                          target.db.known_by[self.caller.id] == KnowledgeLevel.FRIEND and
+                          self.caller.db.known_by[target.id] == KnowledgeLevel.FRIEND)
         
         # Notify both parties
         self.caller.msg(f"You formally introduce yourself to {target.name}.")

@@ -20,6 +20,19 @@ lock functions from evennia.locks.lockfuncs.
 
 """
 
+def puppet(accessing_obj, accessed_obj, *args, **kwargs):
+    """
+    Check if the accessing object is currently puppeting a character.
+    
+    Args:
+        accessing_obj (Object): The object trying to access
+        accessed_obj (Object): The object being accessed
+        
+    Returns:
+        bool: True if accessing_obj is puppeting a character, False otherwise
+    """
+    return bool(accessing_obj and hasattr(accessing_obj, 'sessions') and accessing_obj.sessions.all())
+
 # def myfalse(accessing_obj, accessed_obj, *args, **kwargs):
 #    """
 #    called in lockstring with myfalse().

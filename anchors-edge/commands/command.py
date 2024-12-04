@@ -833,6 +833,41 @@ class CmdLook(default_cmds.CmdLook):
       look *<account>
       l
     """
+    def fuzzy_match(self, target_name, objects):
+        """
+        Find objects that match the target name using fuzzy matching.
+        Returns a list of tuples (object, score) sorted by match score.
+        """
+        from difflib import SequenceMatcher
+        
+        matches = []
+        target_name = target_name.lower()
+        
+        for obj in objects:
+            # Get object name and any aliases
+            obj_name = obj.key.lower()
+            aliases = [alias.lower() for alias in obj.aliases.all()] if hasattr(obj, 'aliases') else []
+            
+            # Check exact matches first
+            if obj_name == target_name or target_name in aliases:
+                return [(obj, 1.0)]
+            
+            # Calculate fuzzy match score for name
+            name_score = SequenceMatcher(None, target_name, obj_name).ratio()
+            
+            # Calculate scores for aliases
+            alias_scores = [SequenceMatcher(None, target_name, alias).ratio() for alias in aliases]
+            
+            # Use the highest score from name or aliases
+            best_score = max([name_score] + alias_scores)
+            
+            # Only include matches above a certain threshold
+            if best_score > 0.6:  # Adjust threshold as needed
+                matches.append((obj, best_score))
+        
+        # Sort by score in descending order
+        return sorted(matches, key=lambda x: x[1], reverse=True)
+
     def func(self):
         """
         Handle the looking - if we are OOC, show the character selection.
@@ -850,5 +885,33 @@ class CmdLook(default_cmds.CmdLook):
             self.msg(account.at_look(target=None, session=None))
             return
             
-        # Otherwise, proceed with normal look command
-        super().func()
+        if not self.args:
+            # No arguments - look at the current location
+            super().func()
+            return
+            
+        # Get all visible objects in the room
+        visible_objects = [obj for obj in caller.location.contents if obj != caller]
+        
+        # Try fuzzy matching if exact match fails
+        target = caller.search(self.args, quiet=True)
+        if not target:
+            matches = self.fuzzy_match(self.args, visible_objects)
+            
+            if matches:
+                if len(matches) == 1 or matches[0][1] > 0.8:  # If single match or very high confidence
+                    target = matches[0][0]
+                    # Look at the matched object
+                    self.msg(target.at_look(caller))
+                else:
+                    # Multiple potential matches
+                    self.msg("Did you mean one of these?")
+                    for obj, score in matches[:3]:  # Show top 3 matches
+                        self.msg(f"- {obj.name}")
+                    return
+            else:
+                self.msg("You don't see that here.")
+                return
+        else:
+            # Exact match found - use normal look behavior
+            super().func()

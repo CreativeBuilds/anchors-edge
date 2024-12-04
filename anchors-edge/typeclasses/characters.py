@@ -23,6 +23,7 @@ from evennia.utils import logger
 from django.conf import settings
 import json
 from pathlib import Path
+from typeclasses.relationships import KnowledgeLevel, get_brief_description, get_basic_description, get_full_description
 
 # Load environment variables from .env file
 load_dotenv()
@@ -544,12 +545,12 @@ class Character(ObjectParent, DefaultCharacter):
         if hasattr(character.db, 'is_npc') and character.db.is_npc:
             return True
         
-        # Initialize introduced_to as a list if it doesn't exist
-        if not self.db.introduced_to:
-            self.db.introduced_to = []
+        # Initialize known_by if it doesn't exist or is None
+        if not hasattr(self.db, 'known_by') or self.db.known_by is None:
+            self.db.known_by = {}
         
         # Check if they've introduced themselves to us
-        return character.id in self.db.introduced_to
+        return character.id in self.db.known_by and self.db.known_by[character.id] >= KnowledgeLevel.ACQUAINTANCE
 
     def get_display_name(self, looker=None, **kwargs):
         """
@@ -651,15 +652,15 @@ class Character(ObjectParent, DefaultCharacter):
         Args:
             character: The character to introduce to
         """
-        # Initialize introduced_to as a list if it doesn't exist
-        if not self.db.introduced_to:
-            self.db.introduced_to = []
-        if not character.db.introduced_to:
-            character.db.introduced_to = []
+        # Initialize known_by as a dict if it doesn't exist or is None
+        if not hasattr(self.db, 'known_by') or self.db.known_by is None:
+            self.db.known_by = {}
+        if not hasattr(character.db, 'known_by') or character.db.known_by is None:
+            character.db.known_by = {}
         
-        # Add only this character's introduction to the other character
-        if character.id not in self.db.introduced_to:
-            self.db.introduced_to.append(character.id)
+        # Set knowledge level to ACQUAINTANCE for the target character
+        # This means the target character now knows this character
+        character.db.known_by[self.id] = KnowledgeLevel.ACQUAINTANCE
 
     def find_character_by_desc(self, search_text):
         """

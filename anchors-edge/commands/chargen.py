@@ -245,39 +245,43 @@ def format_full_description(descriptions, gender=None):
             
             # Add the wrapped lines
             formatted_lines.extend(wrapped_lines)
-            # Add a blank line after descriptions that needed wrapping
-            if len(wrapped_lines) > 1:
-                formatted_lines.append('')
-            # Add a blank line after each description
+            # Add a single blank line after each description
             formatted_lines.append('')
     
-    # Remove any trailing empty lines
-    while formatted_lines and not formatted_lines[-1]:
-        formatted_lines.pop()
-    
-    # Join with newlines
-    return "\n".join(formatted_lines)
+    # Join all lines with newlines and return
+    return '\n'.join(formatted_lines).strip()
 
 def node_description_select(caller):
     """Select character descriptions."""
-    text = """
-|c== Character Creation - Character Description ==|n
+    wrapper = TextWrapper(width=78, expand_tabs=True, 
+                         replace_whitespace=False,
+                         break_long_words=False,
+                         break_on_hyphens=False)
 
-Your character has been given default descriptions based on their race and gender. You can:
-- Type |wshow|n to see your character's full appearance
-- Type |wshow <part>|n to see a specific description
-- Type |w<part> <description>|n to change a description
-- Type |whelp|n to see example descriptions for your race
-- Type |wdone|n when finished
+    # Split text into sections to preserve formatting
+    sections = [
+        "|c== Character Creation - Character Description ==|n",
+        "Your character has been given default descriptions based on their race and gender. You can:",
+        "- Type |wshow|n to see your character's full appearance\n"
+        "- Type |wshow <part>|n to see a specific description\n"
+        "- Type |w<part> <description>|n to change a description\n"
+        "- Type |whelp|n to see example descriptions for your race\n"
+        "- Type |wdone|n when finished",
+        "Remember to write descriptions that will flow naturally in a sentence.\n"
+        "For example, if your character is female, write descriptions for eyes like:\n"
+        "|wEyes:|n \"are a deep emerald green with flecks of gold\"",
+        "This will be formatted into a sentence like:\n"
+        "\"Her eyes are a deep emerald green with flecks of gold.\"",
+        "Available parts: eyes, hair, face, hands, arms, chest, stomach, back, legs, feet, groin, bottom"
+    ]
 
-Remember to write descriptions that will flow naturally in a sentence.
-For example, if your character is female, write descriptions for eyes like:
-|wEyes:|n "are a deep emerald green with flecks of gold"
+    # Wrap each section and join with double newlines
+    wrapped_sections = []
+    for section in sections:
+        wrapped_lines = wrapper.wrap(section)
+        wrapped_sections.append('\n'.join(wrapped_lines))
 
-This will be formatted into a sentence like:
-"Her eyes are a deep emerald green with flecks of gold."
-
-Available parts: eyes, hair, face, hands, arms, chest, stomach, back, legs, feet, groin, bottom"""
+    text = '\n\n'.join(wrapped_sections)
 
     # Add race-specific parts to the help text
     race = caller.ndb._menutree.race
@@ -561,23 +565,31 @@ def node_final_confirm(caller):
     charname = caller.ndb._menutree.charname if hasattr(caller.ndb._menutree, 'charname') else None
     text_description = caller.ndb._menutree.text_description if hasattr(caller.ndb._menutree, 'text_description') else None
     
-    text = f"""
-|c== Character Creation - Final Confirmation ==|n
+    wrapper = TextWrapper(width=78, expand_tabs=True, 
+                         replace_whitespace=False,
+                         break_long_words=False,
+                         break_on_hyphens=False)
 
-Please review your character details:
+    # Split text into sections to preserve formatting
+    sections = [
+        "|c== Character Creation - Final Confirmation ==|n",
+        "Please review your character details:",
+        f"|wName:|n {charname}\n"
+        f"|wRace:|n {race}{f' ({subrace})' if subrace else ''}\n"
+        f"|wGender:|n {gender if gender else 'Not specified'}\n"
+        f"|wAge:|n {caller.ndb._menutree.age if hasattr(caller.ndb._menutree, 'age') else 'Not specified'}\n"
+        f"|wBackground:|n {background if background else 'Not specified'}",
+        f"|wOverall Description:|n\n{text_description if text_description else 'No overall description provided.'}",
+        "|wDetailed Appearance:|n"
+    ]
 
-|wName:|n {charname}
-|wRace:|n {race}{f" ({subrace})" if subrace else ""}
-|wGender:|n {gender if gender else "Not specified"}
-|wAge:|n {caller.ndb._menutree.age if hasattr(caller.ndb._menutree, 'age') else "Not specified"}
-|wBackground:|n {background if background else "Not specified"}
+    # Wrap each section
+    wrapped_sections = []
+    for section in sections:
+        wrapped_lines = wrapper.wrap(section)
+        wrapped_sections.append('\n'.join(wrapped_lines))
 
-|wOverall Description:|n
-{text_description if text_description else "No overall description provided."}
-
-|wDetailed Appearance:|n"""
-    
-    # Add description details
+    # Add descriptions with proper formatting
     if hasattr(caller.ndb._menutree, 'descriptions'):
         # Get gender for proper pronouns
         gender_str = gender.lower() if gender else 'their'
@@ -595,42 +607,44 @@ Please review your character details:
         elif race == "Feline":
             part_order.append("tail")
             
-        # Display descriptions in order as complete sentences
+        # Format and wrap descriptions
+        description_lines = []
         for part in part_order:
             if part in caller.ndb._menutree.descriptions:
                 desc = caller.ndb._menutree.descriptions[part]
-                # Ensure the description starts with lowercase (since it's part of a sentence)
                 if desc:
+                    # Ensure description starts with lowercase (since it's part of a sentence)
                     desc = desc[0].lower() + desc[1:] if len(desc) > 1 else desc.lower()
-                text += f"\n{pronoun} {part} {desc}"
-    
-    text += "\n\n|wIs this correct? Enter |gyes|w to create your character or |rno|w to start over:|n"
+                    line = f"{pronoun} {part} {desc}"
+                    # Wrap this line
+                    wrapped_desc = wrapper.wrap(line)
+                    description_lines.extend(wrapped_desc)
+                    description_lines.append('')  # Add single blank line between descriptions
 
-    def _final_confirm(caller, raw_string):
-        """Handle final confirmation input."""
-        choice = raw_string.strip().lower()
-        if choice == "yes":
+        if description_lines:
+            # Remove the last empty line
+            if description_lines[-1] == '':
+                description_lines.pop()
+            wrapped_sections.append('\n'.join(description_lines))
+
+    # Add final prompt
+    wrapped_sections.append("\nIs this correct? Enter |wyes|n to create your character or |wno|n to start over:")
+
+    # Join all sections with double newlines
+    text = '\n\n'.join(wrapped_sections)
+    
+    def _finish_char(caller, raw_string):
+        """Handle final confirmation"""
+        if raw_string.strip().lower() == "yes":
             return "node_create_char"
-        elif choice == "no":
-            # Clear all stored data
-            if hasattr(caller.ndb._menutree, 'race'):
-                del caller.ndb._menutree.race
-            if hasattr(caller.ndb._menutree, 'subrace'):
-                del caller.ndb._menutree.subrace
-            if hasattr(caller.ndb._menutree, 'gender'):
-                del caller.ndb._menutree.gender
-            if hasattr(caller.ndb._menutree, 'background'):
-                del caller.ndb._menutree.background
-            if hasattr(caller.ndb._menutree, 'charname'):
-                del caller.ndb._menutree.charname
-            if hasattr(caller.ndb._menutree, 'descriptions'):
-                del caller.ndb._menutree.descriptions
+        elif raw_string.strip().lower() == "no":
+            caller.msg("Starting over...")
             return "node_race_select"
         else:
             caller.msg("Please enter 'yes' or 'no'.")
             return None
-
-    options = {"key": "_default", "goto": _final_confirm}
+            
+    options = {"key": "_default", "goto": _finish_char}
     return text, options
 
 def node_gender_select(caller):

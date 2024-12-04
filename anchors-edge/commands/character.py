@@ -6,6 +6,7 @@ from evennia import Command
 from evennia.utils.evmenu import EvMenu
 from typeclasses.relationships import KnowledgeLevel, get_brief_description, get_basic_description, get_full_description
 from difflib import SequenceMatcher
+from django.conf import settings
 
 def string_similarity(a, b):
     """Calculate similarity ratio between two strings"""
@@ -33,8 +34,27 @@ class CmdCharList(Command):
             
         # Show list of characters
         string = "\n|wYour available characters:|n\n"
+        
+        # Get current time for idle calculation
+        from time import time
+        current_time = time()
+        
+        # Get idle timeout from settings (default to 600 if not set)
+        idle_timeout = getattr(settings, 'CHARACTER_IDLE_TIMEOUT', 600)
+        
         for char in characters:
-            string += f"\n - {char.key}"
+            # Get last command time from the character's session
+            if char.sessions.all():
+                session = char.sessions.all()[0]
+                idle_time = current_time - session.cmd_last_visible
+                # Show (idle) if more than idle_timeout with no activity
+                if idle_time > idle_timeout:
+                    string += f"\n - {char.key} |w(idle)|n"
+                else:
+                    string += f"\n - {char.key}"
+            else:
+                string += f"\n - {char.key}"
+                
         self.caller.msg(string)
 
 class CmdCharSelect(Command):

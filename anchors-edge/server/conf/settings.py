@@ -315,3 +315,6 @@ PERMISSION_ADMIN_DEFAULT = ["Admin", "Builder", "Player"]  # Default permissions
 # Lock settings
 PERM_ACCOUNT = "Player"  # Default permission for accounts
 PERM_ADMIN = "Admin"     # Permission for admin commands
+
+# Character idle timeout in seconds (default: 10 minutes)
+CHARACTER_IDLE_TIMEOUT = 600

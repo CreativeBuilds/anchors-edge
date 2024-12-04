@@ -105,6 +105,42 @@ class TavernRoom(WeatherAwareRoom):
             ("witching_hour", "noon"): "Morning arrives and passes as the sun climbs to its peak."
         }
         return transitions.get((old_period, new_period), super().get_time_transition(old_period, new_period))
+    
+    def get_temperature_transition(self, old_temp, new_temp):
+        """Get tavern-specific temperature transition message."""
+        temp_diff = new_temp - old_temp
+        
+        if abs(temp_diff) < 3:  # Small change
+            return "The temperature shifts subtly within the tavern's sheltered walls."
+            
+        if temp_diff > 0:  # Getting warmer
+            if temp_diff > 10:
+                return "Despite the tavern's shelter, the heat becomes notably more intense. Some patrons fan themselves with whatever's handy."
+            else:
+                return "A gentle warmth seeps through the tavern walls, making the room slightly cozier."
+        else:  # Getting cooler
+            if temp_diff < -10:
+                return "A noticeable chill creeps into the tavern, causing patrons to draw closer to the hearth."
+            else:
+                return "The air in the tavern grows slightly cooler, though the thick walls keep it comfortable."
+                
+    def get_wind_transition(self, old_wind, new_wind):
+        """Get tavern-specific wind transition message."""
+        wind_diff = new_wind - old_wind
+        
+        if abs(wind_diff) < 5:  # Small change
+            return "A subtle change in the wind's whisper can be heard around the tavern's eaves."
+            
+        if wind_diff > 0:  # Wind increasing
+            if wind_diff > 15:
+                return "The wind's fury increases dramatically outside, though only a gentle draft disturbs the tavern's interior."
+            else:
+                return "The strengthening wind can be heard whistling softly through the tavern's weathered frame."
+        else:  # Wind decreasing
+            if wind_diff < -15:
+                return "The howling wind outside dies down significantly, leaving the tavern in relative peace."
+            else:
+                return "The wind's voice grows softer around the tavern's walls."
 
 class MainTavernRoom(TavernRoom):
     """The main tavern room with hearth and dynamic descriptions."""

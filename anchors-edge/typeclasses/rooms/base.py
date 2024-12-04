@@ -145,9 +145,9 @@ class WeatherAwareRoom(DefaultRoom):
         for char in characters:
             char.msg(f"|w{message}|n")
             
-    def notify_time_change(self, old_period, new_period):
-        """Notify all characters in the room about time period changes."""
-        if old_period == new_period:
+    def notify_temperature_change(self, old_temp, new_temp):
+        """Notify all characters in the room about temperature changes."""
+        if old_temp == new_temp:
             return
             
         # Get all characters in the room
@@ -155,12 +155,42 @@ class WeatherAwareRoom(DefaultRoom):
                      if obj.is_typeclass('typeclasses.characters.Character')]
                      
         # Generate transition message
-        message = self.get_time_transition(old_period, new_period)
+        message = self.get_temperature_transition(old_temp, new_temp)
         
         # Send to all characters
         for char in characters:
             char.msg(f"|w{message}|n")
             
+    def notify_wind_change(self, old_wind, new_wind):
+        """Notify all characters in the room about wind speed changes."""
+        if old_wind == new_wind:
+            return
+            
+        # Get all characters in the room
+        characters = [obj for obj in self.contents 
+                     if obj.is_typeclass('typeclasses.characters.Character')]
+                     
+        # Generate transition message
+        message = self.get_wind_transition(old_wind, new_wind)
+        
+        # Send to all characters
+        for char in characters:
+            char.msg(f"|w{message}|n")
+
+    def get_temperature_transition(self, old_temp, new_temp):
+        """Get temperature transition message. Override in subclasses."""
+        if new_temp > old_temp:
+            return f"The temperature rises noticeably, becoming warmer."
+        else:
+            return f"The temperature drops noticeably, becoming cooler."
+            
+    def get_wind_transition(self, old_wind, new_wind):
+        """Get wind speed transition message. Override in subclasses."""
+        if new_wind > old_wind:
+            return f"The wind picks up strength, blowing with increased intensity."
+        else:
+            return f"The wind dies down, becoming more gentle."
+
     def get_weather_transition(self, old_weather, new_weather):
         """Get weather transition message. Override in subclasses."""
         return f"The weather changes from {old_weather} to {new_weather}."

@@ -7,10 +7,98 @@ from evennia.utils.evmenu import EvMenu
 from typeclasses.relationships import KnowledgeLevel, get_brief_description, get_basic_description, get_full_description
 from difflib import SequenceMatcher
 from django.conf import settings
+import re
+from unicodedata import normalize
 
 def string_similarity(a, b):
     """Calculate similarity ratio between two strings"""
     return SequenceMatcher(None, a.lower(), b.lower()).ratio()
+
+def sanitize_input(text):
+    """
+    Sanitize input text by:
+    - Normalizing Unicode characters
+    - Removing control characters
+    - Removing invalid characters
+    
+    Args:
+        text (str): Input text to sanitize
+    
+    Returns:
+        str: Sanitized text
+        bool: Whether text was valid
+    """
+    if not text:
+        return "", False
+        
+    try:
+        # Normalize Unicode characters
+        normalized = normalize('NFKC', text)
+        
+        # Remove control characters except newlines
+        cleaned = ''.join(char for char in normalized 
+                         if char == '\n' or (ord(char) >= 32 and ord(char) != 127))
+                         
+        # Check for invalid characters
+        invalid_pattern = r'[^\w\s\-\'"]'
+        if re.search(invalid_pattern, cleaned):
+            return "", False
+            
+        return cleaned.strip(), True
+        
+    except UnicodeError:
+        return "", False
+
+def validate_name(name):
+    """
+    Validate a character name.
+    
+    Args:
+        name (str): Name to validate
+    
+    Returns:
+        tuple: (cleaned_name, error_message)
+    """
+    # Sanitize input
+    cleaned, valid = sanitize_input(name)
+    if not valid:
+        return "", "Name contains invalid characters. Please use only letters, numbers, and basic punctuation."
+        
+    # Check length
+    if len(cleaned) < 2 or len(cleaned) > 20:
+        return "", "Name must be between 2 and 20 characters long."
+        
+    # Check for single word
+    if len(cleaned.split()) > 1:
+        return "", "Name must be a single word."
+        
+    # Additional name validation rules can be added here
+        
+    return cleaned, None
+
+def validate_description(desc):
+    """
+    Validate a character description.
+    
+    Args:
+        desc (str): Description to validate
+    
+    Returns:
+        tuple: (cleaned_desc, error_message)
+    """
+    # Sanitize input
+    cleaned, valid = sanitize_input(desc)
+    if not valid:
+        return "", "Description contains invalid characters. Please use only letters, numbers, and basic punctuation."
+        
+    # Check length
+    if len(cleaned) < 10:
+        return "", "Description must be at least 10 characters long."
+        
+    if len(cleaned) > 1000:
+        return "", "Description must be less than 1000 characters."
+        
+    return cleaned, None
 
 class CmdCharList(Command):
     """

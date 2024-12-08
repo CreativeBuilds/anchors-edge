@@ -3,40 +3,61 @@
 Connection screen
 
 This is the text shown to the player when they first connect to the game.
+Implements a dynamic connection screen that updates periodically.
 """
 
 from django.conf import settings
 from datetime import datetime
+from evennia.utils import logger
+from evennia.utils.utils import time_format
+from functools import wraps
+import os
 
-def get_time_since_wipe():
-    """Get time since last server wipe in human-readable format"""
+def get_last_reset():
+    """Get the time since last server reset"""
     try:
-        from server.conf.last_wipe import LAST_WIPE
-        now = int(datetime.now().timestamp() * 1000)
-        diff = now - LAST_WIPE
+        # Try to get the last reset time from settings
+        reset_file = os.path.join(settings.GAME_DIR, "server", "last_wipe_timestamp")
+        current_time = datetime.now()
         
-        # Convert to seconds
-        seconds = int(diff / 1000)
-        
-        if seconds < 60:
-            return f"{seconds} seconds"
-        elif seconds < 3600:
-            minutes = seconds // 60
-            return f"{minutes} minute{'s' if minutes != 1 else ''}"
-        elif seconds < 86400:
-            hours = seconds // 3600
-            return f"{hours} hour{'s' if hours != 1 else ''}"
-        elif seconds < 604800:
-            days = seconds // 86400
-            return f"{days} day{'s' if days != 1 else ''}"
+        if os.path.exists(reset_file):
+            with open(reset_file, 'r') as f:
+                timestamp = float(f.read().strip())
+                reset_time = datetime.fromtimestamp(timestamp)
+                # Calculate time difference
+                time_diff = current_time - reset_time
+                # Convert to seconds for time_format
+                return time_format(time_diff.total_seconds(), 2)
         else:
-            weeks = seconds // 604800
-            return f"{weeks} week{'s' if weeks != 1 else ''}"
-    except:
-        return "unknown time"
+            # Create file if it doesn't exist
+            with open(reset_file, 'w') as f:
+                f.write(str(current_time.timestamp()))
+            return "Just now"
+    except Exception as e:
+        logger.log_err(f"Error reading last reset time: {e}")
+        return "Unknown"
 
-# Define the connection screen as a string
-CONNECTION_SCREEN = """
+def get_server_stats():
+    """Get current server statistics"""
+    try:
+        last_reset = get_last_reset()
+        return {
+            'last_reset': last_reset
+        }
+    except Exception as e:
+        logger.log_err(f"Error getting server stats: {e}")
+        return {
+            'last_reset': "Unknown"
+        }
+
+def get_connection_screen():
+    """
+    Generate the connection screen with dynamic content.
+    """
+    stats = get_server_stats()
+    
+    # Build the screen with dynamic content
+    screen = f"""
 |=============================================================|
 |                                                             |
 |                  Welcome to Anchors Edge                    |
@@ -44,8 +65,8 @@ CONNECTION_SCREEN = """
 |=============================================================|
 
 |yServer Status:|n
-Last Reset: %s ago
-Server Status: Early Alpha Testing
+Last Reset: {stats.get('last_reset', 'unknown')} ago
+Status: Early Alpha Testing
 
 |r== EARLY ALPHA WARNING ==|n
 This game is in early alpha development. Server resets occur frequently
@@ -61,4 +82,8 @@ and without warning. All characters and progress may be wiped at any time.
     help
 
 |=============================================================|
-""" % get_time_since_wipe()
+"""
+    return screen
+
+# The callable connection screen
+CONNECTION_SCREEN = get_connection_screen

@@ -6,6 +6,28 @@ from evennia import Command
 from evennia.utils import search
 from evennia.objects.models import ObjectDB
 from evennia.accounts.models import AccountDB
+from django.conf import settings
+from datetime import datetime
+import os
+
+def get_last_wipe_time():
+    """Get the timestamp of the last server wipe"""
+    try:
+        # Try to get from server settings first
+        if hasattr(settings, 'LAST_WIPE_TIME'):
+            return settings.LAST_WIPE_TIME
+        return None
+    except Exception:
+        return None
+
+def record_reset_time():
+    """Record the current time as the last reset time"""
+    try:
+        reset_file = os.path.join(settings.GAME_DIR, "server", "last_wipe_timestamp")
+        with open(reset_file, 'w') as f:
+            f.write(str(datetime.now().timestamp()))
+    except Exception as e:
+        logger.log_err(f"Error recording reset time: {e}")
 
 class CmdRespawn(Command):
     """
@@ -286,6 +308,9 @@ class CmdResetWorld(Command):
             return
             
         try:
+            # Record the reset time
+            record_reset_time()
+            
             # First, ensure Limbo exists
             limbo = search.objects('Limbo')
             if not limbo:
@@ -335,8 +360,8 @@ class CmdResetWorld(Command):
             except Exception as e:
                 caller.msg(f"|rError running world build commands: {e}|n")
                 return
-            
-            caller.msg("|gWorld reset complete!|n")
+                
+            caller.msg("|gWorld reset complete.|n")
             
         except Exception as e:
-            caller.msg(f"|rError resetting world: {e}|n") 
+            caller.msg(f"|rError during world reset: {e}|n") 

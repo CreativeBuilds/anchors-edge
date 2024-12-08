@@ -665,6 +665,7 @@ class Character(ObjectParent, DefaultCharacter):
     def find_character_by_desc(self, search_text):
         """
         Find a character in the same location based on their description or name.
+        Uses fuzzy string matching to find the best match.
         
         Args:
             search_text (str): Text to search for in descriptions/names
@@ -682,49 +683,36 @@ class Character(ObjectParent, DefaultCharacter):
         if not chars:
             return None
         
+        from difflib import SequenceMatcher
+        
         # Normalize search text
         search_text = search_text.lower().strip()
         
-        # First try exact matches
+        # Find matches using fuzzy string matching
         matches = []
         for char in chars:
             # Use basic description for unknown characters
             desc = char.generate_basic_description().lower()
             # Remove "a" or "an" from the start for matching
             desc = ' '.join(desc.split()[1:]) if desc.split()[0] in ['a', 'an'] else desc
-            if search_text == desc:
-                matches.append(char)
             
-        # If no exact match, try partial matches
-        if not matches:
-            for char in chars:
-                # Use basic description for unknown characters
-                desc = char.generate_basic_description().lower()
-                # Remove "a" or "an" from the start for matching
-                desc = ' '.join(desc.split()[1:]) if desc.split()[0] in ['a', 'an'] else desc
-                # Split description into words for partial matching
-                desc_words = desc.split()
-                search_words = search_text.split()
-                
-                # Check if all search words appear in description in order
-                if all(any(sw in dw for dw in desc_words) for sw in search_words):
-                    matches.append(char)
+            # Calculate fuzzy match ratio
+            ratio = SequenceMatcher(None, search_text, desc).ratio()
+            
+            # If good enough match, add to matches
+            if ratio > 0.4:  # Lower threshold for more lenient matching
+                matches.append((char, ratio))
+        
+        # Sort matches by ratio, highest first
+        matches.sort(key=lambda x: x[1], reverse=True)
         
         # Handle results
-        if len(matches) == 0:
+        if not matches:
             return None
-        elif len(matches) == 1:
-            return matches[0]
+        elif len(matches) == 1 or (matches[0][1] > 0.8):  # Single match or very high confidence
+            return matches[0][0]
         else:
-            # If multiple matches, check if they're the same race/type
-            descriptions = [m.generate_basic_description() for m in matches]
-            base_desc = descriptions[0].split()[1:]  # Remove the "A/An" prefix
-            
-            # Number the similar characters (e.g., "feline-1", "feline-2")
-            for i, match in enumerate(matches, 1):
-                if match.generate_basic_description().split()[1:] == base_desc:
-                    match.temp_numbered_desc = f"{' '.join(base_desc)}-{i}"
-            
+            # Multiple matches with similar scores
             return "ambiguous"
 
 class NPC(Character):

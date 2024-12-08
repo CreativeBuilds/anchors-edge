@@ -25,6 +25,7 @@ from commands.admin import (
     CmdLastWipe, CmdChangelog, CmdResetWorld
 )
 from commands.command import CmdWho, CmdLook
+from commands.unloggedin import CmdUnloggedinLook
 
 class CharacterCmdSet(DefaultCharacterCmdSet):
     """
@@ -99,6 +100,8 @@ class UnloggedinCmdSet(DefaultUnloggedinCmdSet):
         Populates the cmdset
         """
         super().at_cmdset_creation()
+        # Add our custom unloggedin look command
+        self.add(CmdUnloggedinLook())
 
 
 class SessionCmdSet(DefaultSessionCmdSet):

@@ -50,6 +50,7 @@ class CharacterCmdSet(DefaultCharacterCmdSet):
         self.add(CmdLongIntro())
         self.add(CmdQuit())
         self.add(CmdWho())
+        self.add(CmdLook())
 
 
 class AccountCmdSet(DefaultAccountCmdSet):
@@ -76,7 +77,6 @@ class AccountCmdSet(DefaultAccountCmdSet):
         self.add(CmdChangelog())
         self.add(CmdQuit())
         self.add(CmdWho())
-        self.add(CmdLook())
         
         
         # Admin commands

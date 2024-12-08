@@ -15,6 +15,9 @@ import random
 import os
 import requests
 from time import time
+import logging
+from difflib import SequenceMatcher
+from evennia.utils import logger
 
 class CmdDescribeSelf(MuxCommand):
     """
@@ -794,6 +797,7 @@ class CmdWho(Command):
     
     def func(self):
         """Execute command."""
+        logger.log_info("Who command executed")
         # Get all connected accounts
         from evennia.accounts.models import AccountDB
         
@@ -834,41 +838,81 @@ class CmdLook(default_cmds.CmdLook):
       l
     """
     def func(self):
-        """
-        Handle the looking - if we are OOC, show the character selection.
-        """
+        """Handle the looking."""
         caller = self.caller
         
-        # If we're an account (OOC) or in a character selection room, show character selection
-        if not caller.is_typeclass("typeclasses.characters.Character") or \
-           (caller.location and caller.location.is_typeclass("typeclasses.rooms.character_select.CharacterSelectRoom")):
-            if hasattr(caller, 'account'):
-                account = caller.account
-            else:
-                account = caller
-            # Show the character selection screen
-            self.msg(account.at_look(target=None, session=None))
-            return
-            
+        logger.log_info(f"Look command executed by {caller.name}")
+        
+        # Handle basic cases
         if not self.args:
-            # No arguments - look at the current location
             super().func()
             return
             
-        # First try to find by basic description
-        target = caller.find_character_by_desc(self.args)
-        if target == "ambiguous":
-            self.msg("There are multiple characters matching that description. Please be more specific.")
-            return
-        elif target:
-            self.msg(target.at_look(caller))
+        search_term = self.args.lower().strip()
+        
+        # Handle special terms first
+        if search_term in ['here', 'room']:
+            super().func()
             return
             
-        # If no match by description, try normal search
-        target = caller.search(self.args, quiet=True)
-        if not target:
-            self.msg("You don't see that here.")
+        if search_term in ['self', 'me']:
+            self.msg(caller.at_look(caller))
             return
-        else:
-            # Exact match found - use normal look behavior
+        
+        # Handle looking at exits
+        if search_term in ['exits', 'exit', 'out']:
+            exits = [obj for obj in caller.location.contents if obj.destination]
+            if not exits:
+                self.msg("You don't see any obvious exits.")
+                return
+                
+            # Display exits
+            self.msg("Available exits:")
+            for exit in exits:
+                self.msg(f"- {exit.name} leads to {exit.destination.name}")
+            return
+            
+        # Don't try to look at exit directions - they're for movement
+        exits = caller.location.exits
+        exit_aliases = []
+        for exit in exits:
+            exit_aliases.extend([alias.lower() for alias in exit.aliases.all()])
+            
+        if search_term in exit_aliases or any(search_term == exit.key.lower() for exit in exits):
+            self.msg("That's a direction you can move in, not something you can look at.")
+            return
+            
+        # Get candidates for looking (excluding exits)
+        candidates = [obj for obj in caller.location.contents 
+                     if obj != caller and not obj.destination]
+        
+        # Get full descriptions for logging and matching
+        candidate_descs = []
+        for obj in candidates:
+            if hasattr(obj, 'get_display_name'):
+                full_desc = obj.get_display_name(caller)
+            else:
+                full_desc = obj.name
+            candidate_descs.append((obj, full_desc))
+            
+        logger.log_info(f"Candidates: {[desc for obj, desc in candidate_descs]}")
+        
+        # Fuzzy match against full descriptions
+        matches = []
+        for obj, full_desc in candidate_descs:
+            ratio = SequenceMatcher(None, search_term, full_desc.lower()).ratio()
+            if ratio > 0.4:  # Lower threshold since we're matching longer strings
+                matches.append((ratio, obj))
+        
+        # Sort by match ratio
+        matches.sort(reverse=True)
+        
+        if matches:
+            # Take the best match and use the parent class's look handling
+            best_match = matches[0][1]
+            # Set the args to the exact key and call parent's func()
+            self.args = best_match.key
             super().func()
+            return
+                
+        self.msg(f"You don't see anything matching '{search_term}' here.")

@@ -25,6 +25,7 @@ from commands.admin import (
     CmdLastWipe, CmdChangelog, CmdResetWorld
 )
 from commands.command import CmdWho, CmdLook
+from commands.emote import CmdEmote, CmdPmote, CmdOmote, CmdTmote, CmdEmoteList
 
 class CharacterCmdSet(DefaultCharacterCmdSet):
     """
@@ -49,6 +50,12 @@ class CharacterCmdSet(DefaultCharacterCmdSet):
         self.add(CmdLongIntro())
         self.add(CmdQuit())
         self.add(CmdWho())
+        # Add the emote commands
+        self.add(CmdEmote())
+        self.add(CmdPmote())
+        self.add(CmdOmote())
+        self.add(CmdTmote())
+        self.add(CmdEmoteList())
 
 
 class AccountCmdSet(DefaultAccountCmdSet):

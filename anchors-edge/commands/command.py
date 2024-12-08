@@ -835,8 +835,9 @@ class CmdLook(default_cmds.CmdLook):
     """
     def fuzzy_match(self, target_name, objects):
         """
-        Find objects that match the target name using fuzzy matching.
-        Returns a list of tuples (object, score) sorted by match score.
+        Find objects that match the target name, aliases, or basic description.
+        For characters, also checks their basic description from get_basic_description().
+        Returns a list of tuples (object, score, match_type) sorted by match score.
         """
         from difflib import SequenceMatcher
         
@@ -850,7 +851,7 @@ class CmdLook(default_cmds.CmdLook):
             
             # Check exact matches first
             if obj_name == target_name or target_name in aliases:
-                return [(obj, 1.0)]
+                return [(obj, 1.0, "name")]
             
             # Calculate fuzzy match score for name
             name_score = SequenceMatcher(None, target_name, obj_name).ratio()
@@ -858,12 +859,27 @@ class CmdLook(default_cmds.CmdLook):
             # Calculate scores for aliases
             alias_scores = [SequenceMatcher(None, target_name, alias).ratio() for alias in aliases]
             
-            # Use the highest score from name or aliases
-            best_score = max([name_score] + alias_scores)
+            # Calculate score for basic description match (only for characters)
+            basic_desc_score = 0
+            if obj.is_typeclass('typeclasses.characters.Character') and hasattr(obj, 'get_basic_description'):
+                basic_desc = obj.get_basic_description().lower()
+                # Check if target appears in basic description
+                if target_name in basic_desc:
+                    basic_desc_score = 0.9  # High score but not perfect match
+                else:
+                    # Look for partial matches in basic description
+                    desc_words = basic_desc.split()
+                    word_scores = [SequenceMatcher(None, target_name, word).ratio() for word in desc_words]
+                    if word_scores:
+                        basic_desc_score = max(word_scores) * 0.8  # Scale down description matches slightly
+            
+            # Use the highest score from name, aliases, or basic description
+            best_score = max([name_score] + alias_scores + [basic_desc_score])
+            match_type = "basic description" if best_score == basic_desc_score else "name"
             
             # Only include matches above a certain threshold
             if best_score > 0.6:  # Adjust threshold as needed
-                matches.append((obj, best_score))
+                matches.append((obj, best_score, match_type))
         
         # Sort by score in descending order
         return sorted(matches, key=lambda x: x[1], reverse=True)
@@ -906,8 +922,9 @@ class CmdLook(default_cmds.CmdLook):
                 else:
                     # Multiple potential matches
                     self.msg("Did you mean one of these?")
-                    for obj, score in matches[:3]:  # Show top 3 matches
-                        self.msg(f"- {obj.name}")
+                    for obj, score, match_type in matches[:3]:  # Show top 3 matches
+                        match_source = " (matched by basic description)" if match_type == "basic description" else ""
+                        self.msg(f"- {obj.name}{match_source}")
                     return
             else:
                 self.msg("You don't see that here.")

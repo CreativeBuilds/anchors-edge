@@ -677,7 +677,7 @@ class Character(ObjectParent, DefaultCharacter):
         
         # Get all characters in the room except self
         chars = [obj for obj in self.location.contents 
-                if hasattr(obj, 'get_display_name') and obj != self]
+                if hasattr(obj, 'generate_basic_description') and obj != self]
         
         if not chars:
             return None
@@ -688,7 +688,8 @@ class Character(ObjectParent, DefaultCharacter):
         # First try exact matches
         matches = []
         for char in chars:
-            desc = char.get_display_name(self).lower()
+            # Use basic description for unknown characters
+            desc = char.generate_basic_description().lower()
             # Remove "a" or "an" from the start for matching
             desc = ' '.join(desc.split()[1:]) if desc.split()[0] in ['a', 'an'] else desc
             if search_text == desc:
@@ -697,7 +698,8 @@ class Character(ObjectParent, DefaultCharacter):
         # If no exact match, try partial matches
         if not matches:
             for char in chars:
-                desc = char.get_display_name(self).lower()
+                # Use basic description for unknown characters
+                desc = char.generate_basic_description().lower()
                 # Remove "a" or "an" from the start for matching
                 desc = ' '.join(desc.split()[1:]) if desc.split()[0] in ['a', 'an'] else desc
                 # Split description into words for partial matching
@@ -715,12 +717,12 @@ class Character(ObjectParent, DefaultCharacter):
             return matches[0]
         else:
             # If multiple matches, check if they're the same race/type
-            descriptions = [m.get_display_name(self) for m in matches]
+            descriptions = [m.generate_basic_description() for m in matches]
             base_desc = descriptions[0].split()[1:]  # Remove the "A/An" prefix
             
             # Number the similar characters (e.g., "feline-1", "feline-2")
             for i, match in enumerate(matches, 1):
-                if match.get_display_name(self).split()[1:] == base_desc:
+                if match.generate_basic_description().split()[1:] == base_desc:
                     match.temp_numbered_desc = f"{' '.join(base_desc)}-{i}"
             
             return "ambiguous"

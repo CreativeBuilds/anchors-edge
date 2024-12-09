@@ -487,9 +487,9 @@ class Character(ObjectParent, DefaultCharacter):
         Returns a string like 'A 6'2" female wood elf' or 'A stocky male dwarf'
         """
         if not all([self.db.gender, self.db.race]):
-            return "An unknown person."
+            return "an unknown person."
             
-        parts = ["A"]
+        parts = ["a"]
         
         # Add height if set
         height_str = self.format_height()

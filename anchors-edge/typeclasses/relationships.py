@@ -42,9 +42,9 @@ def get_brief_description(character):
         
     # Format the description
     if height_desc:
-        return f"A {height_desc} {race_desc.lower()}"
+        return f"a {height_desc} {race_desc.lower()}"
     else:
-        return f"A {race_desc}"
+        return f"a {race_desc}"
         
 def get_basic_description(character):
     """
@@ -75,7 +75,7 @@ def get_basic_description(character):
     # Combine features
     if notable_features:
         features_text = " and ".join(notable_features)
-        return f"A {character.db.race.lower()} with {features_text} can be seen."
+        return f"a {character.db.race.lower()} with {features_text} can be seen."
     else:
         return get_brief_description(character)
         

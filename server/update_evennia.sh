@@ -18,6 +18,11 @@ git pull || {
     exit 1
 }
 
+cd anchors-edge || {
+    log "Failed to change directory"
+    exit 1
+}
+
 evennia restart || {
     log "Failed to restart Evennia"
     exit 1

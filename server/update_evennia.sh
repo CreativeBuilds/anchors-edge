@@ -22,15 +22,30 @@ git pull || {
     exit 1
 }
 
-# Activate the virtual environment activation script
-if [ -f "$VENV_PATH/bin/activate" ]; then
-    log "Activating virtual environment"
-    . "$VENV_PATH/bin/activate" || {
-        log "Failed to activate virtual environment at $VENV_PATH"
+# Manually activate virtual environment
+if [ -d "$VENV_PATH" ]; then
+    log "Manually activating virtual environment"
+    
+    # Set VIRTUAL_ENV variable
+    export VIRTUAL_ENV="$VENV_PATH"
+    
+    # Modify PATH to prioritize venv binaries
+    export PATH="$VIRTUAL_ENV/bin:$PATH"
+    
+    # Unset PYTHONHOME to avoid conflicts
+    unset PYTHONHOME
+    
+    # Set PS1 prompt (optional but matches activate behavior)
+    PS1="(.venv) ${PS1:-}"
+    
+    # Verify Python is from venv
+    PYTHON_PATH=$(which python)
+    if [[ $PYTHON_PATH != "$VENV_PATH/bin/python" ]]; then
+        log "Failed to properly set Python path from virtual environment"
         exit 1
-    }
+    fi
 else
-    log "Virtual environment not found at $VENV_PATH"
+    log "Virtual environment directory not found at $VENV_PATH"
     exit 1
 fi
 

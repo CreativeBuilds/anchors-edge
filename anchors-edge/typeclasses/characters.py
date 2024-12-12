@@ -23,7 +23,12 @@ from evennia.utils import logger
 from django.conf import settings
 import json
 from pathlib import Path
-from typeclasses.relationships import KnowledgeLevel, get_brief_description, get_basic_description, get_full_description
+from typeclasses.relationships import (
+    KnowledgeLevel, 
+    get_brief_description,
+    get_basic_description, 
+    get_full_description
+)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -312,84 +317,31 @@ class Character(ObjectParent, DefaultCharacter):
         is_self = (looker == self)
         knows_character = is_self or (looker.knows_character(self) if hasattr(looker, 'knows_character') else False)
         
-        # Get the character's name or basic description
-        if knows_character:
-            name_display = f"|c{self.get_display_name(looker)}|n"
-        else:
-            # For unknown characters, use their basic description instead of name
-            name_display = f"|c{self.generate_basic_description()}|n"
-        
-        # Get gender for proper pronouns
-        gender = self.db.gender.lower() if hasattr(self.db, 'gender') else 'their'
-        pronoun = 'Her' if gender == 'female' else 'His' if gender == 'male' else 'Their'
-        
-        # Start with the basic description
-        description_parts = []
-
-        # Always add the basic description line
-        basic_desc = []
-        basic_desc.append("A")
-        
-        # Add height if it exists
-        height_str = self.format_height()
-        if height_str:
-            basic_desc.append(f"{height_str} tall")
-        
-        # Add gender and race
-        if hasattr(self.db, 'gender') and self.db.gender:
-            basic_desc.append(self.db.gender.lower())
-        if hasattr(self.db, 'race') and self.db.race:
-            if hasattr(self.db, 'subrace') and self.db.subrace and self.db.subrace.lower() != "normal":
-                basic_desc.append(f"{self.db.subrace.lower()} {self.db.race.lower()}")
+        # Get the appropriate description based on knowledge level
+        if is_self:
+            name_display = f"|c{self.name}|n"
+            description = get_full_description(self)
+        elif knows_character:
+            knowledge_level = looker.db.known_by.get(self.id, KnowledgeLevel.STRANGER)
+            name_display = f"|c{self.name}|n"
+            
+            if knowledge_level >= KnowledgeLevel.FRIEND:
+                description = get_full_description(self)
+            elif knowledge_level >= KnowledgeLevel.ACQUAINTANCE:
+                description = get_basic_description(self)
             else:
-                basic_desc.append(self.db.race.lower())
-        
-        # Add the basic description line
-        description_parts.append(format_sentence(" ".join(basic_desc)))
-        
-        # Add the text description if it exists and character is known
-        if self.db.text_description and (is_self or knows_character):
-            description_parts.append(format_sentence(self.db.text_description))
-        
-        # Add the detailed description if it exists and character is known
-        if self.db.desc and (is_self or knows_character):
-            description_parts.append(format_sentence(self.db.desc))
+                description = get_brief_description(self)
+        else:
+            name_display = f"|c{get_brief_description(self)}|n"
+            description = get_brief_description(self)
 
-        # Format descriptions with proper pronouns and line breaks
-        if hasattr(self.db, 'descriptions') and (is_self or knows_character):
-            # Define the order of body parts
-            body_parts = [
-                'eyes', 'hair', 'face',
-                'arms', 'chest', 'back',
-                'stomach', 'legs', 'feet',
-                'groin', 'bottom', 'tail',
-                'horns'  # Special feature for certain races
-            ]
-            
-            # Add each body part description if it exists
-            body_descriptions = []
-            for part in body_parts:
-                if part in self.db.descriptions:
-                    description = self.db.descriptions[part]
-                    if description:
-                        # Format the description but don't capitalize (since it starts with a pronoun)
-                        description = format_sentence(description, capitalize=False)
-                        body_descriptions.append(f"{pronoun} {part} {description}")
-            
-            if body_descriptions:
-                description_parts.append("\n".join(body_descriptions))
-        
-        # Get intoxication description if any
+        # Add intoxication description if any
         if hasattr(self.db, 'intoxication') and self.db.intoxication > 0:
             intox_desc = get_intoxication_description(self.db.intoxication)
             if intox_desc:
-                description_parts.append(format_sentence(intox_desc))
-        
-        # Join all description parts with newlines
-        desc = "\n\n".join(description_parts) if description_parts else "This character has no description yet."
-        
-        # Combine into final appearance
-        return f"{name_display}\n\n{desc}"
+                description += f"\n\n{intox_desc}"
+
+        return f"{name_display}\n\n{description}"
 
     def can_show_consume_message(self):
         """Check if enough time has passed to show another consume message"""
@@ -545,11 +497,11 @@ class Character(ObjectParent, DefaultCharacter):
         if hasattr(character.db, 'is_npc') and character.db.is_npc:
             return True
         
-        # Initialize known_by if it doesn't exist or is None
+        # Initialize known_by if it doesn't exist
         if not hasattr(self.db, 'known_by') or self.db.known_by is None:
             self.db.known_by = {}
         
-        # Check if they've introduced themselves to us
+        # Return knowledge level >= ACQUAINTANCE
         return character.id in self.db.known_by and self.db.known_by[character.id] >= KnowledgeLevel.ACQUAINTANCE
 
     def get_display_name(self, looker=None, **kwargs):
@@ -564,13 +516,15 @@ class Character(ObjectParent, DefaultCharacter):
         if looker == self:
             return self.name
         
-        # For others, only show name if they know you
+        # For others, check knowledge level
         if looker and hasattr(looker, 'knows_character'):
             if looker.knows_character(self):
-                return self.name
-            
-        # Return basic description for unknown characters
-        return self.generate_basic_description()
+                knowledge_level = looker.db.known_by.get(self.id, KnowledgeLevel.STRANGER)
+                if knowledge_level >= KnowledgeLevel.ACQUAINTANCE:
+                    return self.name
+                
+        # Return brief description for unknown characters
+        return get_brief_description(self)
 
     def announce_move_from(self, destination, msg=None, mapping=None, **kwargs):
         """

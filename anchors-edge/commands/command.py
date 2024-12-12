@@ -18,6 +18,7 @@ from time import time
 import logging
 from difflib import SequenceMatcher
 from evennia.utils import logger
+from evennia import SESSION_HANDLER
 
 class CmdDescribeSelf(MuxCommand):
     """
@@ -798,23 +799,26 @@ class CmdWho(Command):
     def func(self):
         """Execute command."""
         logger.log_info("Who command executed")
-        # Get all connected accounts
         from evennia.accounts.models import AccountDB
+        from evennia.objects.models import ObjectDB
         
         # Build list of connected characters
         connected_chars = []
-        for account in AccountDB.objects.filter(db_is_connected=True):
-            # Get all sessions for this account
-            sessions = account.sessions.all()
-            for session in sessions:
-                # Get the character this account is currently puppeting in this session
-                puppet = session.puppet
-                if puppet and puppet.key != account.key:
-                    # Only include if:
-                    # 1. Account is puppeting a character
-                    # 2. Character name is different from account name
-                    if puppet not in connected_chars:  # Avoid duplicates
-                        connected_chars.append(puppet)
+        
+        # Method 1: Get characters through sessions
+        for session in SESSION_HANDLER.get_sessions():
+            puppet = session.puppet
+            if puppet and puppet not in connected_chars:
+                connected_chars.append(puppet)
+                
+        # Method 2: Get characters through their connection status
+        # This catches any characters that might be connected through other means
+        for char in ObjectDB.objects.filter(db_account__isnull=False, db_is_connected=True):
+            if char not in connected_chars:
+                connected_chars.append(char)
+                
+        # Sort the list by character name for consistent output
+        connected_chars.sort(key=lambda x: x.key.lower())
         
         if not connected_chars:
             self.msg("No one is connected.")

@@ -19,11 +19,9 @@ def sync_with_server() -> bool:
             'compute',
             'ssh',
             instance_name,
-            f'--zone={zone}',
-            f'--project={project}',
             '--',  # Separates gcloud flags from SSH command
             'bash',  # Explicitly use bash to execute the script
-            '/home/nick/anchors-edge/server/update_evennia.sh'
+            '/home/creativebuilds/anchors-edge/server/update_evennia.sh'
         ], check=True)
         return True
     except subprocess.CalledProcessError as e:

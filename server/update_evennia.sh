@@ -18,6 +18,11 @@ git pull || {
     exit 1
 }
 
+. .venv/bin/activate || {
+    log "Failed to activate virtual environment"
+    exit 1
+}
+
 cd anchors-edge || {
     log "Failed to change directory"
     exit 1

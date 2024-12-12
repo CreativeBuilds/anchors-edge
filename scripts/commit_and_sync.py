@@ -66,9 +66,11 @@ def commit_changes(message: str) -> bool:
 def sync_with_server() -> bool:
     """Sync changes with the Evennia server via gcloud CLI"""
     instance_name = os.getenv("EVENNIA_INSTANCE")
+    zone = os.getenv("EVENNIA_ZONE", "us-central1-a")  # Default to us-central1-a if not specified
+    project = os.getenv("EVENNIA_PROJECT")
     
-    if not instance_name:
-        print("Error: EVENNIA_INSTANCE environment variable not set")
+    if not instance_name or not project:
+        print("Error: EVENNIA_INSTANCE and EVENNIA_PROJECT environment variables must be set")
         return False
 
     try:
@@ -78,7 +80,10 @@ def sync_with_server() -> bool:
             'compute',
             'ssh',
             instance_name,
-            '--command',
+            f'--zone={zone}',
+            f'--project={project}',
+            '--',  # Separates gcloud flags from SSH command
+            'bash',  # Explicitly use bash to execute the script
             '/home/nick/anchors-edge/server/update_evennia.sh'
         ], check=True)
         return True

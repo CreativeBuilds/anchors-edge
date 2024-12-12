@@ -4,7 +4,7 @@ LOG_FILE="/home/creativebuilds/evennia_updates.log"
 GAME_DIR="/home/creativebuilds/anchors-edge"
 VENV_PATH="$GAME_DIR/.venv"
 PYTHON_BIN="$VENV_PATH/bin/python"
-EVENNIA_BIN="$VENV_PATH/bin/evennia"
+PIP_BIN="$VENV_PATH/bin/pip"
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
@@ -24,14 +24,36 @@ git pull || {
     exit 1
 }
 
-# Verify Python and Evennia exist in venv
+# Verify Python exists in venv
 if [ ! -f "$PYTHON_BIN" ]; then
     log "Python not found at $PYTHON_BIN"
     exit 1
 fi
 
+if [ ! -f "$PIP_BIN" ]; then
+    log "Pip not found at $PIP_BIN"
+    exit 1
+fi
+
+# Update requirements
+log "Updating requirements"
+"$PIP_BIN" install -r requirements.txt || {
+    log "Failed to install requirements"
+    exit 1
+}
+
+# Ensure evennia is installed
+log "Installing/updating evennia"
+"$PIP_BIN" install --upgrade evennia || {
+    log "Failed to install/update evennia"
+    exit 1
+}
+
+# Now get the evennia binary path after installation
+EVENNIA_BIN="$VENV_PATH/bin/evennia"
+
 if [ ! -f "$EVENNIA_BIN" ]; then
-    log "Evennia not found at $EVENNIA_BIN"
+    log "Evennia not found at $EVENNIA_BIN even after installation"
     exit 1
 fi
 

@@ -5,7 +5,7 @@ from evennia import Command, InterruptCommand
 from evennia.utils import inherits_from
 from typing import Dict, List
 import re
-from ..utils.text_formatting import format_sentence
+from utils.text_formatting import format_sentence
 
 # Helper functions
 def get_possessive(name: str) -> str:

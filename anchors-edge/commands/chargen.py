@@ -12,7 +12,9 @@ import json
 import random
 from pathlib import Path
 from typeclasses.characters import Character
-from utils.text import format_description
+from utils.text_formatting import format_sentence
+
+format_description = format_sentence
 
 def _check_name(caller, name):
     """Check if name is valid and unique."""

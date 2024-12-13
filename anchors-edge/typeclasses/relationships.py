@@ -3,6 +3,7 @@ Relationship and knowledge tracking for characters.
 """
 
 from enum import IntEnum
+from django.conf import settings
 
 class KnowledgeLevel(IntEnum):
     """Enum for tracking how well one character knows another."""
@@ -25,7 +26,6 @@ def get_brief_description(character, include_height=True, include_race=True, inc
         gender = character.db.gender.lower() if hasattr(character.db, 'gender') else 'male'
 
         # Get height ranges for race/subrace/gender from settings
-        from evennia.conf import settings
         height_ranges = settings.RACE_HEIGHT_RANGES
 
         if subrace and race in height_ranges and subrace in height_ranges[race]:

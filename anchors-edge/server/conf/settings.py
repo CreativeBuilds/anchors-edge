@@ -175,9 +175,20 @@ CHARACTER_GENDERS = {
     }
 }
 
-RACE_HEIGHT_RANGES = {}
 # Import the race heights from the JSON file
-with open(Path("data/descriptions/race_heights.json"), 'r') as f:
+import json
+from pathlib import Path
+from evennia.settings_default import GAME_DIR
+
+# Use GAME_DIR to create absolute paths
+GAME_DATA_PATH = Path(GAME_DIR) / "data" / "descriptions"
+
+# Load race descriptions
+with open(GAME_DATA_PATH / "body_parts.json", 'r') as f:
+    RACE_DESCRIPTIONS = json.load(f)
+
+# Load race heights
+with open(GAME_DATA_PATH / "race_heights.json", 'r') as f:
     RACE_HEIGHT_RANGES = json.load(f)
 
 # Command set configuration

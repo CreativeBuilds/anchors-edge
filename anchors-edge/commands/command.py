@@ -818,10 +818,10 @@ class CmdWho(Command):
             # Get name and brief description
             if self.caller == char:
                 # Looking at self - use full name
-                char_name = f"|c{char.name}|n, {get_brief_description(char)}"
+                char_name = f"|c{char.name}|n, {get_brief_description(char, include_height=False)}"
             else:
                 # For others, show name and brief description
-                char_name = f"{char.name}, {get_brief_description(char)}"
+                char_name = f"{char.name}, {get_brief_description(char, include_height=False)}"
                 
             who_list.append(char_name)
 

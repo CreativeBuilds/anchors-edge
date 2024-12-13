@@ -467,8 +467,15 @@ class CmdEmote(Command):
             # Send personalized messages to each observer
             for observer in self.caller.location.contents:
                 if hasattr(observer, 'msg'):
-                    personalized_msg = self.create_message(base_msg, viewer=observer)
-                    observer.msg(personalized_msg)
+                    # Get appropriate name based on knowledge
+                    actor_name = get_name_or_description(observer, self.caller)
+                    personalized_msg = base_msg.replace(self.caller.name, actor_name)
+                    
+                    if observer != self.caller:
+                        observer.msg(format_sentence(personalized_msg))
+            
+            # Message for the caller (always sees their own name)
+            self.caller.msg(format_sentence(base_msg))
             return
         
         # Handle regular emotes
@@ -481,8 +488,15 @@ class CmdEmote(Command):
         # Send personalized messages to each observer
         for observer in self.caller.location.contents:
             if hasattr(observer, 'msg'):
-                personalized_msg = self.create_message(base_msg, viewer=observer)
-                observer.msg(personalized_msg)
+                # Get appropriate name based on knowledge
+                actor_name = get_name_or_description(observer, self.caller)
+                personalized_msg = base_msg.replace(self.caller.name, actor_name)
+                
+                if observer != self.caller:
+                    observer.msg(format_sentence(personalized_msg))
+        
+        # Message for the caller (always sees their own name)
+        self.caller.msg(format_sentence(base_msg))
 
 class CmdPmote(Command):
     """
@@ -505,9 +519,16 @@ class CmdPmote(Command):
         # Create personalized messages for each observer
         for observer in self.caller.location.contents:
             if hasattr(observer, 'msg'):
-                # Get appropriate name display for this observer
-                char_name = get_name_or_description(observer, self.caller)
-                message = format_sentence(f"{get_possessive(char_name)} {self.args.strip()}")
+                # Get appropriate name based on knowledge
+                actor_name = get_name_or_description(observer, self.caller)
+                
+                # Create possessive form based on whether it's "you" or a name/description
+                if actor_name == "you":
+                    possessive = "your"
+                else:
+                    possessive = get_possessive(actor_name)
+                
+                message = format_sentence(f"{possessive} {self.args.strip()}")
                 if observer != self.caller:
                     observer.msg(message)
         
@@ -540,9 +561,10 @@ class CmdOmote(Command):
         # Create personalized messages for each observer
         for observer in self.caller.location.contents:
             if hasattr(observer, 'msg'):
-                # Get appropriate name display for this observer
-                char_name = get_name_or_description(observer, self.caller)
-                message = format_sentence(self.args.strip().replace(";", char_name, 1))
+                # Get appropriate name based on knowledge
+                actor_name = get_name_or_description(observer, self.caller)
+                message = format_sentence(self.args.strip().replace(";", actor_name, 1))
+                
                 if observer != self.caller:
                     observer.msg(message)
         

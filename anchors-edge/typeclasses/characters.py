@@ -28,7 +28,7 @@ from typeclasses.relationships import (
     get_full_description
 )
 from evennia.utils import inherits_from
-
+from utils.text_formatting import format_sentence
 # Load environment variables from .env file
 load_dotenv()
 
@@ -638,6 +638,42 @@ class Character(ObjectParent, DefaultCharacter):
             return matches[0][0]
             
         return None
+
+    def at_post_puppet(self):
+        """
+        Called just after puppeting has completed.
+        """
+        super().at_post_puppet()
+        
+        # Announce entry to the room
+        if self.location:
+            # Get description based on relationships system
+            desc = self.generate_basic_description()
+            entry_msg = format_sentence(f"{desc} has entered the game.")
+            
+            # Announce to everyone in the location except the character
+            # Using msg_contents for proper actor stance handling
+            self.location.msg_contents(
+                entry_msg,
+                exclude=self,  # Don't send to the entering character
+                from_obj=self
+            )
+            
+            # Send a personalized message to the entering character
+            self.msg(format_sentence("You feel your consciousness settle into your physical form as the world materializes around you."))
+
+    def at_pre_unpuppet(self):
+        """
+        Called just before beginning to un-puppet.
+        """
+        if self.location:  # If not in a None location
+            desc = self.generate_basic_description()
+            self.location.msg_contents(
+                format_sentence(f"{desc} has left the game."),
+                exclude=self,
+                from_obj=self
+            )
+        super().at_pre_unpuppet()
 
 class NPC(Character):
     """Base NPC class with conversation memory"""

@@ -15,6 +15,10 @@ import random
 import os
 import requests
 from time import time
+import logging
+from difflib import SequenceMatcher
+from evennia.utils import logger
+from evennia import SESSION_HANDLER
 
 class CmdDescribeSelf(MuxCommand):
     """
@@ -794,23 +798,27 @@ class CmdWho(Command):
     
     def func(self):
         """Execute command."""
-        # Get all connected accounts
+        logger.log_info("Who command executed")
         from evennia.accounts.models import AccountDB
+        from evennia.objects.models import ObjectDB
         
         # Build list of connected characters
         connected_chars = []
-        for account in AccountDB.objects.filter(db_is_connected=True):
-            # Get all sessions for this account
-            sessions = account.sessions.all()
-            for session in sessions:
-                # Get the character this account is currently puppeting in this session
-                puppet = session.puppet
-                if puppet and puppet.key != account.key:
-                    # Only include if:
-                    # 1. Account is puppeting a character
-                    # 2. Character name is different from account name
-                    if puppet not in connected_chars:  # Avoid duplicates
-                        connected_chars.append(puppet)
+        
+        # Method 1: Get characters through sessions
+        for session in SESSION_HANDLER.get_sessions():
+            puppet = session.puppet
+            if puppet and puppet not in connected_chars:
+                connected_chars.append(puppet)
+                
+        # Method 2: Get characters through their connection status
+        # This catches any characters that might be connected through other means
+        for char in ObjectDB.objects.filter(db_account__isnull=False, db_is_connected=True):
+            if char not in connected_chars:
+                connected_chars.append(char)
+                
+        # Sort the list by character name for consistent output
+        connected_chars.sort(key=lambda x: x.key.lower())
         
         if not connected_chars:
             self.msg("No one is connected.")
@@ -833,85 +841,82 @@ class CmdLook(default_cmds.CmdLook):
       look *<account>
       l
     """
-    def fuzzy_match(self, target_name, objects):
-        """
-        Find objects that match the target name using fuzzy matching.
-        Returns a list of tuples (object, score) sorted by match score.
-        """
-        from difflib import SequenceMatcher
-        
-        matches = []
-        target_name = target_name.lower()
-        
-        for obj in objects:
-            # Get object name and any aliases
-            obj_name = obj.key.lower()
-            aliases = [alias.lower() for alias in obj.aliases.all()] if hasattr(obj, 'aliases') else []
-            
-            # Check exact matches first
-            if obj_name == target_name or target_name in aliases:
-                return [(obj, 1.0)]
-            
-            # Calculate fuzzy match score for name
-            name_score = SequenceMatcher(None, target_name, obj_name).ratio()
-            
-            # Calculate scores for aliases
-            alias_scores = [SequenceMatcher(None, target_name, alias).ratio() for alias in aliases]
-            
-            # Use the highest score from name or aliases
-            best_score = max([name_score] + alias_scores)
-            
-            # Only include matches above a certain threshold
-            if best_score > 0.6:  # Adjust threshold as needed
-                matches.append((obj, best_score))
-        
-        # Sort by score in descending order
-        return sorted(matches, key=lambda x: x[1], reverse=True)
-
     def func(self):
-        """
-        Handle the looking - if we are OOC, show the character selection.
-        """
+        """Handle the looking."""
         caller = self.caller
         
-        # If we're an account (OOC) or in a character selection room, show character selection
-        if not caller.is_typeclass("typeclasses.characters.Character") or \
-           (caller.location and caller.location.is_typeclass("typeclasses.rooms.character_select.CharacterSelectRoom")):
-            if hasattr(caller, 'account'):
-                account = caller.account
-            else:
-                account = caller
-            # Show the character selection screen
-            self.msg(account.at_look(target=None, session=None))
-            return
-            
-        if not self.args:
-            # No arguments - look at the current location
-            super().func()
-            return
-            
-        # Get all visible objects in the room
-        visible_objects = [obj for obj in caller.location.contents if obj != caller]
+        logger.log_info(f"Look command executed by {caller.name}")
         
-        # Try fuzzy matching if exact match fails
-        target = caller.search(self.args, quiet=True)
-        if not target:
-            matches = self.fuzzy_match(self.args, visible_objects)
-            
-            if matches:
-                if len(matches) == 1 or matches[0][1] > 0.8:  # If single match or very high confidence
-                    target = matches[0][0]
-                    # Look at the matched object
-                    self.msg(target.at_look(caller))
-                else:
-                    # Multiple potential matches
-                    self.msg("Did you mean one of these?")
-                    for obj, score in matches[:3]:  # Show top 3 matches
-                        self.msg(f"- {obj.name}")
-                    return
-            else:
-                self.msg("You don't see that here.")
-                return
-        else:
-            # Exact match found - use normal look behavior
+        # Handle basic cases
+        if not self.args:
             super().func()
+            return
+            
+        search_term = self.args.lower().strip()
+        
+        # Handle special terms first
+        if search_term in ['here', 'room']:
+            super().func()
+            return
+            
+        if search_term in ['self', 'me']:
+            self.msg(caller.at_look(caller))
+            return
+        
+        # Handle looking at exits
+        if search_term in ['exits', 'exit', 'out']:
+            exits = [obj for obj in caller.location.contents if obj.destination]
+            if not exits:
+                self.msg("You don't see any obvious exits.")
+                return
+                
+            # Display exits
+            self.msg("Available exits:")
+            for exit in exits:
+                self.msg(f"- {exit.name} leads to {exit.destination.name}")
+            return
+            
+        # Don't try to look at exit directions - they're for movement
+        exits = caller.location.exits
+        exit_aliases = []
+        for exit in exits:
+            exit_aliases.extend([alias.lower() for alias in exit.aliases.all()])
+            
+        if search_term in exit_aliases or any(search_term == exit.key.lower() for exit in exits):
+            self.msg("That's a direction you can move in, not something you can look at.")
+            return
+            
+        # Get candidates for looking (excluding exits)
+        candidates = [obj for obj in caller.location.contents 
+                     if obj != caller and not obj.destination]
+        
+        # Get full descriptions for logging and matching
+        candidate_descs = []
+        for obj in candidates:
+            if hasattr(obj, 'get_display_name'):
+                full_desc = obj.get_display_name(caller)
+            else:
+                full_desc = obj.name
+            candidate_descs.append((obj, full_desc))
+            
+        logger.log_info(f"Candidates: {[desc for obj, desc in candidate_descs]}")
+        
+        # Fuzzy match against full descriptions
+        matches = []
+        for obj, full_desc in candidate_descs:
+            ratio = SequenceMatcher(None, search_term, full_desc.lower()).ratio()
+            if ratio > 0.4:  # Lower threshold since we're matching longer strings
+                matches.append((ratio, obj))
+        
+        # Sort by match ratio
+        matches.sort(reverse=True)
+        
+        if matches:
+            # Take the best match and use the parent class's look handling
+            best_match = matches[0][1]
+            # Set the args to the exact key and call parent's func()
+            self.args = best_match.key
+            super().func()
+            return
+                
+        self.msg(f"You don't see anything matching '{search_term}' here.")

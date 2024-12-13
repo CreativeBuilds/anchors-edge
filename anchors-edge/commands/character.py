@@ -205,7 +205,6 @@ class CmdCharSelect(Command):
         # Try to puppet/control the character
         try:
             self.caller.puppet_object(self.session, char)
-            self.caller.msg(f"\nYou become |w{char.name}|n.\n")
         except RuntimeError as err:
             self.caller.msg("|rError assuming character:|n %s" % err)
 

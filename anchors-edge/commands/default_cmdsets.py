@@ -57,6 +57,7 @@ class CharacterCmdSet(DefaultCharacterCmdSet):
         self.add(CmdOmote())
         self.add(CmdTmote())
         self.add(CmdEmoteList())
+        self.add(CmdLook())
 
 
 class AccountCmdSet(DefaultAccountCmdSet):
@@ -83,7 +84,6 @@ class AccountCmdSet(DefaultAccountCmdSet):
         self.add(CmdChangelog())
         self.add(CmdQuit())
         self.add(CmdWho())
-        self.add(CmdLook())
         
         
         # Admin commands

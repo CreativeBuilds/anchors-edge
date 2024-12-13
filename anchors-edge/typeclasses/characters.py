@@ -27,6 +27,7 @@ from typeclasses.relationships import (
     get_basic_description, 
     get_full_description
 )
+from evennia.utils import inherits_from
 
 # Load environment variables from .env file
 load_dotenv()
@@ -594,9 +595,11 @@ class Character(ObjectParent, DefaultCharacter):
         if not self.location:
             return None
         
-        # Get all characters in the room except self
+        # Get all characters in the room except self, excluding Exit objects
         chars = [obj for obj in self.location.contents 
-                if hasattr(obj, 'has_account') or (hasattr(obj.db, 'is_npc') and obj.db.is_npc) and obj != self]
+                if (hasattr(obj, 'has_account') or (hasattr(obj.db, 'is_npc') and obj.db.is_npc)) 
+                and obj != self
+                and not inherits_from(obj, "evennia.objects.objects.DefaultExit")]
         
         if not chars:
             return None

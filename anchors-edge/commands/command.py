@@ -816,9 +816,9 @@ class CmdWho(Command):
                 knowledge_level = self.caller.db.known_by.get(char.id, KnowledgeLevel.STRANGER)
                 
                 if knowledge_level >= KnowledgeLevel.FRIEND:
-                    char_name = f"|c{char.name}|n"
+                    char_name = f"{char.name}"
                 elif knowledge_level >= KnowledgeLevel.ACQUAINTANCE:
-                    char_name = get_basic_description(char)
+                    char_name = f"{char.name}"
                 else:
                     char_name = get_brief_description(char)
             else:

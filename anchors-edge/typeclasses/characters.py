@@ -29,6 +29,7 @@ from typeclasses.relationships import (
 )
 from evennia.utils import inherits_from
 from utils.text_formatting import format_sentence
+from django.utils.translation import gettext as _
 
 # Load environment variables from .env file
 load_dotenv()
@@ -640,63 +641,69 @@ class Character(ObjectParent, DefaultCharacter):
             
         return None
 
-    def at_post_puppet(self):
+    def at_post_puppet(self, **kwargs):
         """
-        Called just after puppeting has completed.
-        Override the default behavior completely.
-        """
-        
-        # Send a personalized message to the entering character
-        # self.msg("\n\n\n"+format_sentence("You feel your consciousness settle into your physical form as the world materializes around you."))
+        Called just after puppeting has been completed and all
+        Account<->Object links have been established.
 
-        # # Call parent's at_post_puppet without message sending
-        # super(Character, self).at_post_puppet(no_announce=True)
-        
-        # # Announce entry to the room
-        # if self.location:
-        #     # Get all characters in the room
-        #     for char in self.location.contents:
-        #         if inherits_from(char, "typeclasses.characters.Character"):
-        #             # Skip if it's the entering character
-        #             if char == self:
-        #                 continue
-                        
-        #             # Get appropriate description based on knowledge level
-        #             if self.db.introduced_to and char.id in self.db.introduced_to:
-        #                 desc = get_full_description(self, char)
-        #             else:
-        #                 desc = get_brief_description(self, char)
-                        
-        #             # Send personalized message to each character
-        #             char.msg(format_sentence(f"{desc} has entered the game."))
-        return
-            
-            
-    def at_pre_unpuppet(self):
+        Args:
+            **kwargs (dict): Arbitrary, optional arguments for users
+                overriding the call (unused by default).
+        Notes:
+
+            You can use `self.account` and `self.sessions.get()` to get
+            account and sessions at this point; the last entry in the
+            list from `self.sessions.get()` is the latest Session
+            puppeting this Object.
+
         """
-        Called just before beginning to un-puppet.
-        Override the default behavior completely.
+        self.msg(_("\nYou become |c{name}|n.\n").format(name=self.key))
+        self.msg((self.at_look(self.location), {"type": "look"}), options=None)
+
+        def message(obj, from_obj):
+            obj.msg(
+                format_sentence(_("{name} has entered the game.").format(name=self.get_display_name(obj))),
+                from_obj=from_obj,
+            )
+            
+            super().at_post_puppet()
+
+        self.location.for_contents(message, exclude=[self], from_obj=self)
+
+    def at_post_unpuppet(self, account=None, session=None, **kwargs):
         """
-        return
-        # Call parent's at_pre_unpuppet without message sending
-        # super(Character, self).at_pre_unpuppet(no_announce=True)
-        
-        # if self.location:  # If not in a None location
-        #     # Get all characters in the room
-        #     for char in self.location.contents:
-        #         if inherits_from(char, "typeclasses.characters.Character"):
-        #             # Skip if it's the leaving character
-        #             if char == self:
-        #                 continue
-                        
-        #             # Get appropriate description based on knowledge level
-        #             if self.db.introduced_to and char.id in self.db.introduced_to:
-        #                 desc = get_full_description(self, char)
-        #             else:
-        #                 desc = get_brief_description(self, char)
-                        
-        #             # Send personalized message to each character
-        #             char.msg(format_sentence(f"{desc} has left the game."))
+        We stove away the character when the account goes ooc/logs off,
+        otherwise the character object will remain in the room also
+        after the account logged off ("headless", so to say).
+
+        Args:
+            account (DefaultAccount): The account object that just disconnected
+                from this object.
+            session (Session): Session controlling the connection that
+                just disconnected.
+        Keyword Args:
+            reason (str): If given, adds a reason for the unpuppet. This
+                is set when the user is auto-unpuppeted due to being link-dead.
+            **kwargs: Arbitrary, optional arguments for users
+                overriding the call (unused by default).
+
+        """
+        if not self.sessions.count():
+            # only remove this char from grid if no sessions control it anymore.
+            if self.location:
+
+                def message(obj, from_obj):
+                    obj.msg(
+                        format_sentence(_("{name} has left the game{reason}.").format(
+                            name=self.get_display_name(obj),
+                            reason=kwargs.get("reason", ""),
+                        )),
+                        from_obj=from_obj,
+                    )
+
+                self.location.for_contents(message, exclude=[self], from_obj=self)
+                self.db.prelogout_location = self.location
+                self.location = None
 
 class NPC(Character):
     """Base NPC class with conversation memory"""

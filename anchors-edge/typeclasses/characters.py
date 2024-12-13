@@ -660,7 +660,7 @@ class Character(ObjectParent, DefaultCharacter):
             )
             
             # Send a personalized message to the entering character
-            self.msg(format_sentence("You feel your consciousness settle into your physical form as the world materializes around you."))
+            self.msg("\n\n\n"+format_sentence("You feel your consciousness settle into your physical form as the world materializes around you."))
         
         super().at_post_puppet()
 

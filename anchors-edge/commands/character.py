@@ -296,6 +296,11 @@ class CmdIntro(Command):
         if target == self.caller:
             self.caller.msg("You already know yourself!")
             return
+        
+        # Check if caller has already introduced themselves to target
+        if target.knows_character(self.caller):
+            self.caller.msg(f"You have already introduced yourself to them.")
+            return
             
         # Initialize relationships dicts if they don't exist
         if not self.caller.db.known_by:
@@ -378,6 +383,11 @@ class CmdLongIntro(Command):
         # Check if target is a character
         if not target.is_typeclass('typeclasses.characters.Character'):
             self.caller.msg("You can only introduce yourself to other characters.")
+            return
+        
+        # Check if target already has knowledge level of FRIEND
+        if target.db.known_by.get(self.caller.id, KnowledgeLevel.NONE) == KnowledgeLevel.FRIEND:
+            self.caller.msg(f"You've already formally introduced yourself to {target.name}.")
             return
             
         # Initialize relationships dicts if they don't exist

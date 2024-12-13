@@ -649,14 +649,8 @@ class Character(ObjectParent, DefaultCharacter):
         Args:
             **kwargs (dict): Arbitrary, optional arguments for users
                 overriding the call (unused by default).
-        Notes:
-
-            You can use `self.account` and `self.sessions.get()` to get
-            account and sessions at this point; the last entry in the
-            list from `self.sessions.get()` is the latest Session
-            puppeting this Object.
-
         """
+        # Send initial messages
         self.msg(_("\nYou become |c{name}|n.\n").format(name=self.key))
         self.msg((self.at_look(self.location), {"type": "look"}), options=None)
 
@@ -666,7 +660,9 @@ class Character(ObjectParent, DefaultCharacter):
                 from_obj=from_obj,
             )
             
-        self.location.for_contents(message, exclude=[self], from_obj=self)
+        # Announce to room
+        if self.location:
+            self.location.for_contents(message, exclude=[self], from_obj=self)
 
     def at_post_unpuppet(self, account=None, session=None, **kwargs):
         """

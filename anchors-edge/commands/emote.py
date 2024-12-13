@@ -6,6 +6,12 @@ from evennia.utils import inherits_from
 from typing import Dict, List
 import re
 from utils.text_formatting import format_sentence
+from typeclasses.relationships import (
+    KnowledgeLevel,
+    get_brief_description,
+    get_basic_description,
+    get_full_description
+)
 
 # Helper functions
 def get_possessive(name: str) -> str:

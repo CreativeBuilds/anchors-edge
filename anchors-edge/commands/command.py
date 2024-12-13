@@ -807,23 +807,13 @@ class CmdWho(Command):
         # Create the who list
         who_list = []
         for char in characters:
-            # Check relationship level and get appropriate description
+            # Get name and brief description
             if self.caller == char:
                 # Looking at self - use full name
                 char_name = f"|c{char.name}|n"
-            elif hasattr(self.caller, 'knows_character') and self.caller.knows_character(char):
-                # Get knowledge level
-                knowledge_level = self.caller.db.known_by.get(char.id, KnowledgeLevel.STRANGER)
-                
-                if knowledge_level >= KnowledgeLevel.FRIEND:
-                    char_name = f"{char.name}"
-                elif knowledge_level >= KnowledgeLevel.ACQUAINTANCE:
-                    char_name = f"{char.name}"
-                else:
-                    char_name = get_brief_description(char)
             else:
-                # Don't know them - use brief description
-                char_name = get_brief_description(char)
+                # For others, show name and brief description
+                char_name = f"{char.name} ({get_brief_description(char)})"
                 
             who_list.append(char_name)
 

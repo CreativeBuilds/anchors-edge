@@ -27,7 +27,6 @@ from typeclasses.relationships import (
     get_basic_description, 
     get_full_description
 )
-from ..utils.text_formatting import ensure_sentence_period, format_sentence
 
 # Load environment variables from .env file
 load_dotenv()

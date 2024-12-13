@@ -5,6 +5,7 @@ from evennia import Command, InterruptCommand
 from evennia.utils import inherits_from
 from typing import Dict, List
 import re
+from ..utils.text_formatting import format_sentence
 
 # Helper functions
 def get_possessive(name: str) -> str:
@@ -40,7 +41,7 @@ def get_name_or_description(viewer, character) -> str:
         # Fallback to a basic description if method not available
         race = character.db.race if hasattr(character.db, 'race') else "person"
         gender = character.db.gender if hasattr(character.db, 'gender') else ""
-        return f"a {gender} {race}".strip()
+        return format_sentence(f"a {gender} {race}")
 
 def format_target_list(targets: List[str], viewer=None) -> str:
     """
@@ -66,9 +67,9 @@ def format_target_list(targets: List[str], viewer=None) -> str:
     if len(target_names) == 1:
         return target_names[0]
     elif len(target_names) == 2:
-        return f"{target_names[0]} and {target_names[1]}"
+        return format_sentence(f"{target_names[0]} and {target_names[1]}")
     else:
-        return f"{', '.join(target_names[:-1])}, and {target_names[-1]}"
+        return format_sentence(f"{', '.join(target_names[:-1])}, and {target_names[-1]}")
 
 STANDARD_EMOTES: Dict[str, Dict[str, str]] = {
     # Basic expressions
@@ -388,7 +389,7 @@ class CmdEmote(Command):
                     target_name = get_name_or_description(viewer, target)
                     message = message.replace(target.name, target_name)
         
-        return message
+        return format_sentence(message)
     
     def func(self):
         if not self.args:
@@ -495,7 +496,7 @@ class CmdPmote(Command):
             self.caller.msg("What do you want to emote?")
             return
         
-        message = f"{get_possessive(self.caller.name)} {self.args.strip()}"
+        message = format_sentence(f"{get_possessive(self.caller.name)} {self.args.strip()}")
         self.caller.location.msg_contents(message, exclude=[self.caller])
         self.caller.msg(message)
 
@@ -521,7 +522,7 @@ class CmdOmote(Command):
             self.caller.msg("You must include ; where you want your name to appear.")
             return
         
-        message = self.args.strip().replace(";", self.caller.name, 1)
+        message = format_sentence(self.args.strip().replace(";", self.caller.name, 1))
         self.caller.location.msg_contents(message, exclude=[self.caller])
         self.caller.msg(message)
 
@@ -578,17 +579,17 @@ class CmdTmote(Command):
                 else:
                     target_message = target_message.replace("-", other_target.name)
             
-            target.msg(target_message)
+            target.msg(format_sentence(target_message))
         
         # Message for the caller
         caller_message = base_message
         for target in targets:
             caller_message = caller_message.replace("-", target.name)
-        self.caller.msg(caller_message)
+        self.caller.msg(format_sentence(caller_message))
         
         # Message for the room
         room_message = caller_message
         self.caller.location.msg_contents(
-            room_message,
+            format_sentence(room_message),
             exclude=[self.caller] + targets
         )

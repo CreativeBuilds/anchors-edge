@@ -19,6 +19,10 @@ import logging
 from difflib import SequenceMatcher
 from evennia.utils import logger
 from evennia import SESSION_HANDLER
+from evennia.objects.models import ObjectDB
+from evennia.accounts.models import AccountDB
+from typeclasses.relationships import KnowledgeLevel, get_brief_description, get_basic_description, get_full_description
+from utils.text_formatting import format_sentence
 
 class CmdDescribeSelf(MuxCommand):
     """
@@ -782,54 +786,55 @@ class CmdIdentify(Command):
 
 class CmdWho(Command):
     """
-    List all connected players.
-    
-    Usage:
-        who
-        
-    Shows the names of all characters currently connected to the game,
-    excluding accounts that haven't selected a character yet.
+    List who is currently online.
     """
     key = "who"
-    aliases = ["doing"]
     locks = "cmd:all()"
-    help_category = "General"
-    account_caller = True
-    
+
     def func(self):
-        """Execute command."""
-        logger.log_info("Who command executed")
-        from evennia.accounts.models import AccountDB
-        from evennia.objects.models import ObjectDB
+        # Get all connected accounts
+        connected_accounts = AccountDB.objects.filter(is_connected=True)
         
-        # Build list of connected characters
-        connected_chars = []
-        
-        # Method 1: Get characters through sessions
-        for session in SESSION_HANDLER.get_sessions():
-            puppet = session.puppet
-            if puppet and puppet not in connected_chars:
-                connected_chars.append(puppet)
-                
-        # Method 2: Get characters through their connection status
-        # This catches any characters that might be connected through other means
-        for char in ObjectDB.objects.filter(db_account__isnull=False, db_is_connected=True):
-            if char not in connected_chars:
-                connected_chars.append(char)
-                
-        # Sort the list by character name for consistent output
-        connected_chars.sort(key=lambda x: x.key.lower())
-        
-        if not connected_chars:
-            self.msg("No one is connected.")
+        # Get their characters
+        characters = ObjectDB.objects.filter(
+            db_account__in=connected_accounts
+        ).exclude(db_account__isnull=True)
+
+        if not characters:
+            self.caller.msg("No one is connected.")
             return
+
+        # Create the who list
+        who_list = []
+        for char in characters:
+            # Check relationship level and get appropriate description
+            if self.caller == char:
+                # Looking at self - use full name
+                char_name = f"|c{char.name}|n"
+            elif hasattr(self.caller, 'knows_character') and self.caller.knows_character(char):
+                # Get knowledge level
+                knowledge_level = self.caller.db.known_by.get(char.id, KnowledgeLevel.STRANGER)
+                
+                if knowledge_level >= KnowledgeLevel.FRIEND:
+                    char_name = f"|c{char.name}|n"
+                elif knowledge_level >= KnowledgeLevel.ACQUAINTANCE:
+                    char_name = get_basic_description(char)
+                else:
+                    char_name = get_brief_description(char)
+            else:
+                # Don't know them - use brief description
+                char_name = get_brief_description(char)
+                
+            who_list.append(char_name)
+
+        # Format and send the message
+        if len(who_list) == 1:
+            msg = "One character is connected:\n"
+        else:
+            msg = f"{len(who_list)} characters are connected:\n"
             
-        # Format the output
-        string = "|wConnected Characters:|n\n"
-        for char in connected_chars:
-            string += f"\n  {char.name}"
-            
-        self.msg(string)
+        msg += "\n".join(f"  {name}" for name in who_list)
+        self.caller.msg(msg)
 
 class CmdLook(default_cmds.CmdLook):
     """

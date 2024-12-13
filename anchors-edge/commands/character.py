@@ -9,6 +9,7 @@ from difflib import SequenceMatcher
 from django.conf import settings
 import re
 from unicodedata import normalize
+from utils.text_formatting import format_sentence
 
 def string_similarity(a, b):
     """Calculate similarity ratio between two strings"""
@@ -320,11 +321,19 @@ class CmdIntro(Command):
         
         
         
-        # Notify the room
-        self.caller.location.msg_contents(
-            f"{caller_display} introduces themselves to {target_basic}.",
-            exclude=[self.caller, target]
-        )
+        # Notify the room with custom messages based on knowledge level
+        for obj in self.caller.location.contents:
+            if obj not in [self.caller, target] and hasattr(obj, 'has_account') and obj.has_account:
+                # Get display names based on observer's knowledge
+                caller_name = self.caller.get_display_name(obj) if obj.knows_character(self.caller) else caller_display
+                target_name = target.get_display_name(obj) if obj.knows_character(target) else target_basic
+                
+                # Format names to start lowercase
+                caller_name = caller_name[0].lower() + caller_name[1:].rstrip('.')
+                target_name = target_name[0].lower() + target_name[1:].rstrip('.')
+                
+                # Send customized message
+                obj.msg(format_sentence(f"{caller_name} introduces themselves to {target_name}."))
         
         # If mutual introduction, notify both parties
         if is_mutual:

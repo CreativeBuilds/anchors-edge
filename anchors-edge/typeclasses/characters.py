@@ -666,8 +666,6 @@ class Character(ObjectParent, DefaultCharacter):
                 from_obj=from_obj,
             )
             
-            super().at_post_puppet()
-
         self.location.for_contents(message, exclude=[self], from_obj=self)
 
     def at_post_unpuppet(self, account=None, session=None, **kwargs):

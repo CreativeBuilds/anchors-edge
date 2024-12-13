@@ -813,7 +813,7 @@ class CmdWho(Command):
                 char_name = f"|c{char.name}|n, {get_brief_description(char)}"
             else:
                 # For others, show name and brief description
-                char_name = f"{char.name}, ({get_brief_description(char)})"
+                char_name = f"{char.name}, {get_brief_description(char)}"
                 
             who_list.append(char_name)
 

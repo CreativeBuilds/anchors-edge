@@ -613,25 +613,41 @@ class CmdTmote(Command):
             if not hasattr(observer, 'msg'):
                 continue
                 
-            # Get appropriate name for the actor based on observer
+            # Get appropriate name for the actor based on observer's knowledge
             actor_name = get_name_or_description(observer, self.caller)
             
             # Create message with proper names for this observer
             observer_message = base_message.format(actor=actor_name)
             
-            # Replace target placeholders with appropriate names
+            # Replace target placeholders with appropriate names based on observer's knowledge
             for i, target in enumerate(targets):
                 if observer == target:
+                    # If observer is the target, use "you"
                     observer_message = observer_message.replace("-", "you", 1)
+                elif observer == self.caller:
+                    # If observer is the actor, use target's name if known, otherwise description
+                    target_display = target.name if self.caller.knows_character(target) else get_brief_description(target)
+                    observer_message = observer_message.replace("-", target_display, 1)
                 else:
-                    target_name = get_name_or_description(observer, target)
-                    observer_message = observer_message.replace("-", target_name, 1)
+                    # For third-party observers, use names only if they know both characters
+                    knows_actor = observer.knows_character(self.caller) if hasattr(observer, 'knows_character') else False
+                    knows_target = observer.knows_character(target) if hasattr(observer, 'knows_character') else False
+                    
+                    if knows_actor and knows_target:
+                        # If observer knows both, use target's name
+                        target_display = target.name
+                    else:
+                        # If observer doesn't know either character, use brief descriptions
+                        target_display = get_brief_description(target)
+                    
+                    observer_message = observer_message.replace("-", target_display, 1)
             
             if observer != self.caller:
                 observer.msg(format_sentence(observer_message))
         
-        # Message for the caller (sees all true names)
+        # Message for the caller (sees names if known, descriptions if not)
         caller_message = base_message.format(actor=self.caller.name)
         for target in targets:
-            caller_message = caller_message.replace("-", target.name, 1)
+            target_display = target.name if self.caller.knows_character(target) else get_brief_description(target)
+            caller_message = caller_message.replace("-", target_display, 1)
         self.caller.msg(format_sentence(caller_message))

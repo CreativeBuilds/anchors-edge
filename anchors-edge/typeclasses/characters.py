@@ -661,21 +661,27 @@ class Character(ObjectParent, DefaultCharacter):
             
             # Send a personalized message to the entering character
             self.msg("\n\n\n"+format_sentence("You feel your consciousness settle into your physical form as the world materializes around you."))
-        
-        super().at_post_puppet()
 
     def at_pre_unpuppet(self):
         """
         Called just before beginning to un-puppet.
         """
         if self.location:  # If not in a None location
-            desc = self.generate_basic_description()
-            self.location.msg_contents(
-                format_sentence(f"{desc} has left the game."),
-                exclude=self,
-                from_obj=self
-            )
-        super().at_pre_unpuppet()
+            # Get all characters in the room
+            for char in self.location.contents:
+                if inherits_from(char, "typeclasses.characters.Character"):
+                    # Skip if it's the leaving character
+                    if char == self:
+                        continue
+                        
+                    # Get appropriate description based on knowledge level
+                    if self.db.introduced_to and char.id in self.db.introduced_to:
+                        desc = get_full_description(self, char)
+                    else:
+                        desc = get_brief_description(self, char)
+                        
+                    # Send personalized message to each character
+                    char.msg(format_sentence(f"{desc} has left the game."))
 
 class NPC(Character):
     """Base NPC class with conversation memory"""

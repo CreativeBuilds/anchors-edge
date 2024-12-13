@@ -54,8 +54,12 @@ def get_brief_description(character, include_height=True, include_race=True, inc
                 description_parts.append("tall")
             else:
                 description_parts.append("average height")
-                
-    # Get race description if included
+        
+    # Get gender if included
+    if include_gender and hasattr(character.db, 'gender'):
+        description_parts.append(character.db.gender.lower())
+        
+     # Get race description if included
     if include_race:
         race = character.db.race
         if include_subrace and character.db.subrace:
@@ -63,10 +67,6 @@ def get_brief_description(character, include_height=True, include_race=True, inc
         else:
             race_desc = race
         description_parts.append(race_desc.lower())
-        
-    # Get gender if included
-    if include_gender and hasattr(character.db, 'gender'):
-        description_parts.insert(0, character.db.gender.lower())
         
     # Combine all parts
     if description_parts:

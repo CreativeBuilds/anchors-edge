@@ -643,21 +643,28 @@ class Character(ObjectParent, DefaultCharacter):
     def at_post_puppet(self):
         """
         Called just after puppeting has completed.
+        Override the default behavior completely.
         """
+        # Call parent's at_post_puppet without message sending
+        super(Character, self).at_post_puppet(no_announce=True)
         
         # Announce entry to the room
         if self.location:
-            # Get description based on relationships system
-            desc = self.generate_basic_description()
-            entry_msg = format_sentence(f"{desc} has entered the game.")
-            
-            # Announce to everyone in the location except the character
-            # Using msg_contents for proper actor stance handling
-            self.location.msg_contents(
-                entry_msg,
-                exclude=self,  # Don't send to the entering character
-                from_obj=self
-            )
+            # Get all characters in the room
+            for char in self.location.contents:
+                if inherits_from(char, "typeclasses.characters.Character"):
+                    # Skip if it's the entering character
+                    if char == self:
+                        continue
+                        
+                    # Get appropriate description based on knowledge level
+                    if self.db.introduced_to and char.id in self.db.introduced_to:
+                        desc = get_full_description(self, char)
+                    else:
+                        desc = get_brief_description(self, char)
+                        
+                    # Send personalized message to each character
+                    char.msg(format_sentence(f"{desc} has entered the game."))
             
             # Send a personalized message to the entering character
             self.msg("\n\n\n"+format_sentence("You feel your consciousness settle into your physical form as the world materializes around you."))
@@ -665,7 +672,11 @@ class Character(ObjectParent, DefaultCharacter):
     def at_pre_unpuppet(self):
         """
         Called just before beginning to un-puppet.
+        Override the default behavior completely.
         """
+        # Call parent's at_pre_unpuppet without message sending
+        super(Character, self).at_pre_unpuppet(no_announce=True)
+        
         if self.location:  # If not in a None location
             # Get all characters in the room
             for char in self.location.contents:

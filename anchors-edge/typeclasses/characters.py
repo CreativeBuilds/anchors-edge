@@ -596,7 +596,7 @@ class Character(ObjectParent, DefaultCharacter):
         
         # Get all characters in the room except self
         chars = [obj for obj in self.location.contents 
-                if hasattr(obj, 'generate_basic_description') and obj != self]
+                if hasattr(obj, 'has_account') or (hasattr(obj.db, 'is_npc') and obj.db.is_npc) and obj != self]
         
         if not chars:
             return None
@@ -609,10 +609,13 @@ class Character(ObjectParent, DefaultCharacter):
         # Find matches using fuzzy string matching
         matches = []
         for char in chars:
-            # Use basic description for unknown characters
-            desc = char.generate_basic_description().lower()
-            # Remove "a" or "an" from the start for matching
-            desc = ' '.join(desc.split()[1:]) if desc.split()[0] in ['a', 'an'] else desc
+            # Use name if character is known, otherwise use description
+            if hasattr(self, 'knows_character') and self.knows_character(char):
+                desc = char.name.lower()
+            else:
+                desc = char.generate_basic_description().lower()
+                # Remove "a" or "an" from the start for matching
+                desc = ' '.join(desc.split()[1:]) if desc.split()[0] in ['a', 'an'] else desc
             
             # Calculate fuzzy match ratio
             ratio = SequenceMatcher(None, search_text, desc).ratio()
@@ -631,7 +634,7 @@ class Character(ObjectParent, DefaultCharacter):
             return matches[0][0]
         else:
             # Multiple matches with similar scores
-            return "ambiguous"
+            return None
 
 class NPC(Character):
     """Base NPC class with conversation memory"""

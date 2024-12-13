@@ -72,13 +72,14 @@ def get_basic_description(character):
                 notable_features.append(f"{color} hair")
                 break
     
-    # Combine features
+    # Combine features without capitalization or period
     if notable_features:
         features_text = " and ".join(notable_features)
-        return f"a {character.db.race.lower()} with {features_text} can be seen."
+        return f"a {character.db.race.lower()} with {features_text} can be seen"
     else:
-        return get_brief_description(character)
-        
+        # Return basic race description without period
+        return f"a {character.db.race.lower()}"
+    
 def get_full_description(character):
     """
     Get the full description of a character (for friends).

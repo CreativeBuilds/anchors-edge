@@ -17,9 +17,7 @@ import requests
 from time import time
 from dotenv import load_dotenv
 import re
-from server.conf.settings import START_LOCATION, DEFAULT_HOME  # Direct import
-from evennia import DefaultCharacter
-from evennia.utils import logger
+from server.conf.settings import START_LOCATION 
 from django.conf import settings
 import json
 from pathlib import Path
@@ -466,7 +464,7 @@ class Character(ObjectParent, DefaultCharacter):
         parts.append(race.lower())
         
         # Join parts and ensure proper sentence formatting
-        return format_sentence(" ".join(parts))
+        return " ".join(parts)
 
     def at_post_create(self):
         """Called after character is created."""

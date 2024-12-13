@@ -792,8 +792,8 @@ class CmdWho(Command):
     locks = "cmd:all()"
 
     def func(self):
-        # Get all connected accounts
-        connected_accounts = AccountDB.objects.filter(is_connected=True)
+        # Get all connected accounts using the correct field name
+        connected_accounts = AccountDB.objects.filter(db_is_connected=True)
         
         # Get their characters
         characters = ObjectDB.objects.filter(

@@ -27,6 +27,7 @@ from typeclasses.relationships import (
     get_basic_description, 
     get_full_description
 )
+from ..utils.text_formatting import ensure_sentence_period, format_sentence
 
 # Load environment variables from .env file
 load_dotenv()
@@ -53,40 +54,6 @@ def get_intoxication_description(intoxication):
         return "|/|rThey are very drunk and unsteady on their feet.|n"
     else:
         return "|/|RThey are completely intoxicated and can barely stand.|n"
-
-def ensure_sentence_period(text):
-    """
-    Ensures the text ends with a period if it doesn't end with ., !, or ?
-    Args:
-        text (str): The text to check
-    Returns:
-        str: The text ending with proper punctuation
-    """
-    if not text:
-        return text
-    text = text.strip()
-    if not text.endswith(('.', '!', '?')):
-        text = text + '.'
-    return text
-
-def format_sentence(text, capitalize=True):
-    """
-    Formats text as a proper sentence with capitalization and period.
-    Args:
-        text (str): The text to format
-        capitalize (bool): Whether to capitalize the first letter
-    Returns:
-        str: The formatted text
-    """
-    if not text:
-        return text
-    text = text.strip()
-    # Add period if needed
-    text = ensure_sentence_period(text)
-    # Capitalize first letter if requested
-    if capitalize and text:
-        text = text[0].upper() + text[1:] if len(text) > 1 else text.upper()
-    return text
 
 class Character(ObjectParent, DefaultCharacter):
     """Base character class"""

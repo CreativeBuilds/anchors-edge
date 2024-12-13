@@ -806,7 +806,15 @@ class CmdWho(Command):
 
         # Create the who list
         who_list = []
-        for char in characters:
+        # Sort characters alphabetically, putting self first
+        sorted_chars = sorted(
+            [c for c in characters if c != self.caller],
+            key=lambda x: x.name.lower()
+        )
+        if self.caller in characters:
+            sorted_chars.insert(0, self.caller)
+            
+        for char in sorted_chars:
             # Get name and brief description
             if self.caller == char:
                 # Looking at self - use full name

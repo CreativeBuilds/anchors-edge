@@ -1,0 +1,118 @@
+{
+    "Human": {
+        "normal": {
+            "male": {
+                "min": 60,
+                "max": 82
+            },
+            "female": {
+                "min": 57,
+                "max": 79
+            }
+        },
+        "halfling": {
+            "male": {
+                "min": 36,
+                "max": 48
+            },
+            "female": {
+                "min": 33,
+                "max": 45
+            }
+        }
+    },
+    "Elf": {
+        "wood": {
+            "male": {
+                "min": 68,
+                "max": 88
+            },
+            "female": {
+                "min": 65,
+                "max": 85
+            }
+        },
+        "high": {
+            "male": {
+                "min": 66,
+                "max": 84
+            },
+            "female": {
+                "min": 63,
+                "max": 81
+            }
+        },
+        "half": {
+            "male": {
+                "min": 66,
+                "max": 82
+            },
+            "female": {
+                "min": 63,
+                "max": 79
+            }
+        }
+    },
+    "Dwarf": {
+        "hill": {
+            "male": {
+                "min": 48,
+                "max": 60
+            },
+            "female": {
+                "min": 45,
+                "max": 57
+            }
+        },
+        "mountain": {
+            "male": {
+                "min": 44,
+                "max": 56
+            },
+            "female": {
+                "min": 41,
+                "max": 53
+            }
+        }
+    },
+    "Gnome": {
+        "male": {
+            "min": 36,
+            "max": 42
+        },
+        "female": {
+            "min": 33,
+            "max": 39
+        }
+    },
+    "Kobold": {
+        "male": {
+            "min": 24,
+            "max": 30
+        },
+        "female": {
+            "min": 21,
+            "max": 27
+        }
+    },
+    "Feline": {
+        "male": {
+            "min": 60,
+            "max": 78
+        },
+        "female": {
+            "min": 57,
+            "max": 75
+        }
+    },
+    "Ashenkin": {
+        "male": {
+            "min": 66,
+            "max": 84
+        },
+        "female": {
+            "min": 63,
+            "max": 81
+        }
+    }
+} 

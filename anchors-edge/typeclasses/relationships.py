@@ -10,41 +10,69 @@ class KnowledgeLevel(IntEnum):
     ACQUAINTANCE = 1  # Basic physical description + name if introduced
     FRIEND = 2        # Full description + name + messaging
     
-def get_brief_description(character):
+def get_brief_description(character, include_height=True, include_race=True, include_subrace=True, include_gender=True):
     """
     Get a brief description of a character (for strangers).
-    Returns height + race description.
+    Returns height + race description based on included parameters.
     """
-    race = character.db.race
-    subrace = character.db.subrace if character.db.subrace else ""
-    height = character.db.height if hasattr(character.db, 'height') else 0
+    description_parts = []
     
-    # Convert height to feet/inches
-    feet = height // 12
-    inches = height % 12
-    
-    # Height descriptors
-    if height:
-        if height < 60:  # Under 5 feet
-            height_desc = "short"
-        elif height > 72:  # Over 6 feet
-            height_desc = "tall"
+    # Get height description if included
+    if include_height:
+        height = character.db.height if hasattr(character.db, 'height') else 0
+        race = character.db.race
+        subrace = character.db.subrace if hasattr(character.db, 'subrace') else None
+        gender = character.db.gender.lower() if hasattr(character.db, 'gender') else 'male'
+
+        # Get height ranges for race/subrace/gender from settings
+        from evennia.conf import settings
+        height_ranges = settings.RACE_HEIGHT_RANGES
+
+        if subrace and race in height_ranges and subrace in height_ranges[race]:
+            height_range = height_ranges[race][subrace][gender]
+        elif race in height_ranges:
+            if isinstance(height_ranges[race], dict) and gender in height_ranges[race]:
+                height_range = height_ranges[race][gender]
+            else:
+                height_range = height_ranges["Human"]["normal"][gender]
         else:
-            height_desc = "average height"
-    else:
-        height_desc = ""
-    
-    # Combine race and subrace
-    if subrace:
-        race_desc = f"{subrace} {race}"
-    else:
-        race_desc = race
+            height_range = height_ranges["Human"]["normal"][gender]
+
+        if height:
+            min_height = height_range["min"]
+            max_height = height_range["max"]
+            height_span = max_height - min_height
+            quarter_span = height_span / 4
+
+            if height < (min_height + quarter_span):
+                description_parts.append("very short")
+            elif height < (min_height + (2 * quarter_span)):
+                description_parts.append("short")
+            elif height > (max_height - quarter_span):
+                description_parts.append("very tall") 
+            elif height > (max_height - (2 * quarter_span)):
+                description_parts.append("tall")
+            else:
+                description_parts.append("average height")
+                
+    # Get race description if included
+    if include_race:
+        race = character.db.race
+        if include_subrace and character.db.subrace:
+            race_desc = f"{character.db.subrace} {race}"
+        else:
+            race_desc = race
+        description_parts.append(race_desc.lower())
         
-    # Format the description
-    if height_desc:
-        return f"a {height_desc} {race_desc.lower()}"
+    # Get gender if included
+    if include_gender and hasattr(character.db, 'gender'):
+        description_parts.insert(0, character.db.gender.lower())
+        
+    # Combine all parts
+    if description_parts:
+        return "a " + " ".join(description_parts)
     else:
-        return f"a {race_desc}"
+        return "a person"
         
 def get_basic_description(character):
     """

@@ -26,6 +26,8 @@ put secret game- or server-specific settings in secret_settings.py.
 
 # Use the defaults from Evennia unless explicitly overridden
 from evennia.settings_default import *
+import json
+from pathlib import Path
 
 ######################################################################
 # Evennia base server config
@@ -173,133 +175,10 @@ CHARACTER_GENDERS = {
     }
 }
 
-# Height ranges for races (in total inches)
-RACE_HEIGHT_RANGES = {
-    "Human": {
-        "normal": {
-            "male": {
-                "min": 60,  # 5'0"
-                "max": 82   # 6'10"
-            },
-            "female": {
-                "min": 57,  # 4'9"
-                "max": 79   # 6'7"
-            }
-        },
-        "halfling": {
-            "male": {
-                "min": 36,  # 3'0"
-                "max": 48   # 4'0"
-            },
-            "female": {
-                "min": 33,  # 2'9"
-                "max": 45   # 3'9"
-            }
-        }
-    },
-    "Elf": {
-        "wood": {
-            "male": {
-                "min": 68,  # 5'8"
-                "max": 88   # 7'4"
-            },
-            "female": {
-                "min": 65,  # 5'5"
-                "max": 85   # 7'1"
-            }
-        },
-        "high": {
-            "male": {
-                "min": 66,  # 5'6"
-                "max": 84   # 7'0"
-            },
-            "female": {
-                "min": 63,  # 5'3"
-                "max": 81   # 6'9"
-            }
-        },
-        "half": {
-            "male": {
-                "min": 66,  # 5'6"
-                "max": 82   # 6'10"
-            },
-            "female": {
-                "min": 63,  # 5'3"
-                "max": 79   # 6'7"
-            }
-        }
-    },
-    "Dwarf": {
-        "hill": {
-            "male": {
-                "min": 48,  # 4'0"
-                "max": 60   # 5'0"
-            },
-            "female": {
-                "min": 45,  # 3'9"
-                "max": 57   # 4'9"
-            }
-        },
-        "mountain": {
-            "male": {
-                "min": 44,  # 3'8"
-                "max": 56   # 4'8"
-            },
-            "female": {
-                "min": 41,  # 3'5"
-                "max": 53   # 4'5"
-            }
-        }
-    },
-    "Gnome": {
-        "male": {
-            "min": 36,  # 3'0"
-            "max": 42   # 3'6"
-        },
-        "female": {
-            "min": 33,  # 2'9"
-            "max": 39   # 3'3"
-        }
-    },
-    "Kobold": {
-        "male": {
-            "min": 24,  # 2'0"
-            "max": 30   # 2'6"
-        },
-        "female": {
-            "min": 21,  # 1'9"
-            "max": 27   # 2'3"
-        }
-    },
-    "Feline": {
-        "male": {
-            "min": 60,  # 5'0"
-            "max": 78   # 6'6"
-        },
-        "female": {
-            "min": 57,  # 4'9"
-            "max": 75   # 6'3"
-        }
-    },
-    "Ashenkin": {
-        "male": {
-            "min": 66,  # 5'6"
-            "max": 84   # 7'0"
-        },
-        "female": {
-            "min": 63,  # 5'3"
-            "max": 81   # 6'9"
-        }
-    }
-}
-
-# Import the race descriptions from the JSON file
-import json
-from pathlib import Path
-
-# Load race descriptions
-with open(Path("data/descriptions/body_parts.json"), 'r') as f:
-    RACE_DESCRIPTIONS = json.load(f)
+RACE_HEIGHT_RANGES = {}
+# Import the race heights from the JSON file
+with open(Path("data/descriptions/race_heights.json"), 'r') as f:
+    RACE_HEIGHT_RANGES = json.load(f)
 
 # Command set configuration
 CMDSET_CHARACTER = "commands.default_cmdsets.CharacterCmdSet"

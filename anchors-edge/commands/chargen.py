@@ -686,6 +686,9 @@ Enter |wm|n or |wf|n:"""
 
 def node_height_select(caller):
     """Select character height."""
+    # Load height ranges from JSON
+    height_ranges = settings.RACE_HEIGHT_RANGES
+        
     race = caller.ndb._menutree.race
     subrace = caller.ndb._menutree.subrace if hasattr(caller.ndb._menutree, 'subrace') else None
     gender = caller.ndb._menutree.gender.lower()
@@ -698,15 +701,15 @@ Choose your character's height. Different races have different natural height ra
 |wHeight Range for {race}{f" ({subrace})" if subrace else ""}:|n"""
 
     # Get height ranges for race/subrace/gender
-    if subrace and race in settings.RACE_HEIGHT_RANGES and subrace in settings.RACE_HEIGHT_RANGES[race]:
-        height_range = settings.RACE_HEIGHT_RANGES[race][subrace][gender]
-    elif race in settings.RACE_HEIGHT_RANGES:
-        if isinstance(settings.RACE_HEIGHT_RANGES[race], dict) and gender in settings.RACE_HEIGHT_RANGES[race]:
-            height_range = settings.RACE_HEIGHT_RANGES[race][gender]
+    if subrace and race in height_ranges and subrace in height_ranges[race]:
+        height_range = height_ranges[race][subrace][gender]
+    elif race in height_ranges:
+        if isinstance(height_ranges[race], dict) and gender in height_ranges[race]:
+            height_range = height_ranges[race][gender]
         else:
-            height_range = settings.RACE_HEIGHT_RANGES["Human"]["normal"][gender]
+            height_range = height_ranges["Human"]["normal"][gender]
     else:
-        height_range = settings.RACE_HEIGHT_RANGES["Human"]["normal"][gender]
+        height_range = height_ranges["Human"]["normal"][gender]
 
     # Convert min/max to feet and inches for display
     min_feet = height_range["min"] // 12
@@ -745,15 +748,15 @@ Choose your character's height. Different races have different natural height ra
             gender = caller.ndb._menutree.gender.lower()
             
             # Get valid height range
-            if subrace and race in settings.RACE_HEIGHT_RANGES and subrace in settings.RACE_HEIGHT_RANGES[race]:
-                valid_range = settings.RACE_HEIGHT_RANGES[race][subrace][gender]
-            elif race in settings.RACE_HEIGHT_RANGES:
-                if isinstance(settings.RACE_HEIGHT_RANGES[race], dict) and gender in settings.RACE_HEIGHT_RANGES[race]:
-                    valid_range = settings.RACE_HEIGHT_RANGES[race][gender]
+            if subrace and race in height_ranges and subrace in height_ranges[race]:
+                valid_range = height_ranges[race][subrace][gender]
+            elif race in height_ranges:
+                if isinstance(height_ranges[race], dict) and gender in height_ranges[race]:
+                    valid_range = height_ranges[race][gender]
                 else:
-                    valid_range = settings.RACE_HEIGHT_RANGES["Human"]["normal"][gender]
+                    valid_range = height_ranges["Human"]["normal"][gender]
             else:
-                valid_range = settings.RACE_HEIGHT_RANGES["Human"]["normal"][gender]
+                valid_range = height_ranges["Human"]["normal"][gender]
             
             # Check if height is within valid range
             if total_inches < valid_range["min"] or total_inches > valid_range["max"]:

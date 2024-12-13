@@ -595,9 +595,10 @@ class Character(ObjectParent, DefaultCharacter):
         if not self.location:
             return None
         
-        # Get all characters in the room except self, excluding Exit objects
+        # Get all characters in the room except self, excluding non-character objects
         chars = [obj for obj in self.location.contents 
-                if (hasattr(obj, 'has_account') or (hasattr(obj.db, 'is_npc') and obj.db.is_npc)) 
+                if (inherits_from(obj, "typeclasses.characters.Character") or 
+                    inherits_from(obj, "typeclasses.characters.NPC"))
                 and obj != self
                 and not inherits_from(obj, "evennia.objects.objects.DefaultExit")]
         

@@ -555,6 +555,7 @@ class CmdTmote(Command):
     Examples:
       tmote kobold walking in the room ; nods at -.
       tmote tall,short ; waves to - and -.
+      tmote kobold ; waves at -    (targets someone by description)
     """
     key = "tmote"
     locks = "cmd:all()"
@@ -569,10 +570,15 @@ class CmdTmote(Command):
         except ValueError:
             self.caller.msg("Usage: tmote <target(s)> <text>")
             return
+            
+        if ";" not in emote:
+            self.caller.msg("You must include ; where you want your name to appear.")
+            return
         
         # Handle multiple targets
         target_names = [t.strip() for t in targets_str.split(",")]
         targets = []
+        failed_targets = []
         
         for target_name in target_names:
             # Try to find target using description matching
@@ -581,12 +587,22 @@ class CmdTmote(Command):
                 targets.append(target)
             else:
                 # Fallback to exact search
-                target = self.caller.search(target_name)
-                if target:
-                    targets.append(target)
+                target = self.caller.search(target_name, quiet=True)
+                if target and len(target) == 1:
+                    targets.append(target[0])
+                else:
+                    failed_targets.append(target_name)
+        
+        if failed_targets:
+            if len(failed_targets) == len(target_names):
+                # All targets failed
+                self.caller.msg(f"Could not find anyone matching: {', '.join(failed_targets)}")
+                return
+            else:
+                # Some targets failed but others succeeded
+                self.caller.msg(f"Warning: Could not find: {', '.join(failed_targets)}")
         
         if not targets:
-            self.caller.msg(f"Could not find anyone matching '{targets_str}'.")
             return
         
         # Create the base message with placeholder for actor's name
@@ -606,10 +622,10 @@ class CmdTmote(Command):
             # Replace target placeholders with appropriate names
             for i, target in enumerate(targets):
                 if observer == target:
-                    observer_message = observer_message.replace("-", "you")
+                    observer_message = observer_message.replace("-", "you", 1)
                 else:
                     target_name = get_name_or_description(observer, target)
-                    observer_message = observer_message.replace("-", target_name)
+                    observer_message = observer_message.replace("-", target_name, 1)
             
             if observer != self.caller:
                 observer.msg(format_sentence(observer_message))
@@ -617,5 +633,5 @@ class CmdTmote(Command):
         # Message for the caller (sees all true names)
         caller_message = base_message.format(actor=self.caller.name)
         for target in targets:
-            caller_message = caller_message.replace("-", target.name)
+            caller_message = caller_message.replace("-", target.name, 1)
         self.caller.msg(format_sentence(caller_message))

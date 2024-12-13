@@ -496,9 +496,18 @@ class CmdPmote(Command):
             self.caller.msg("What do you want to emote?")
             return
         
-        message = format_sentence(f"{get_possessive(self.caller.name)} {self.args.strip()}")
-        self.caller.location.msg_contents(message, exclude=[self.caller])
-        self.caller.msg(message)
+        # Create personalized messages for each observer
+        for observer in self.caller.location.contents:
+            if hasattr(observer, 'msg'):
+                # Get appropriate name display for this observer
+                char_name = get_name_or_description(observer, self.caller)
+                message = format_sentence(f"{get_possessive(char_name)} {self.args.strip()}")
+                if observer != self.caller:
+                    observer.msg(message)
+        
+        # Message for the caller (always sees their own name)
+        caller_msg = format_sentence(f"{get_possessive(self.caller.name)} {self.args.strip()}")
+        self.caller.msg(caller_msg)
 
 class CmdOmote(Command):
     """
@@ -522,9 +531,18 @@ class CmdOmote(Command):
             self.caller.msg("You must include ; where you want your name to appear.")
             return
         
-        message = format_sentence(self.args.strip().replace(";", self.caller.name, 1))
-        self.caller.location.msg_contents(message, exclude=[self.caller])
-        self.caller.msg(message)
+        # Create personalized messages for each observer
+        for observer in self.caller.location.contents:
+            if hasattr(observer, 'msg'):
+                # Get appropriate name display for this observer
+                char_name = get_name_or_description(observer, self.caller)
+                message = format_sentence(self.args.strip().replace(";", char_name, 1))
+                if observer != self.caller:
+                    observer.msg(message)
+        
+        # Message for the caller (always sees their own name)
+        caller_msg = format_sentence(self.args.strip().replace(";", self.caller.name, 1))
+        self.caller.msg(caller_msg)
 
 class CmdTmote(Command):
     """
@@ -564,32 +582,33 @@ class CmdTmote(Command):
         if not targets:
             return
         
-        # Create the base message
-        base_message = emote.replace(";", self.caller.name)
+        # Create the base message with placeholder for actor's name
+        base_message = emote.replace(";", "{actor}", 1)
         
         # Send different messages to different recipients
-        for i, target in enumerate(targets):
-            # Create a personalized message for this target
-            target_message = base_message
+        for observer in self.caller.location.contents:
+            if not hasattr(observer, 'msg'):
+                continue
+                
+            # Get appropriate name for the actor based on observer
+            actor_name = get_name_or_description(observer, self.caller)
             
-            # Replace all instances of - with appropriate names/you
-            for j, other_target in enumerate(targets):
-                if j == i:
-                    target_message = target_message.replace("-", "you")
+            # Create message with proper names for this observer
+            observer_message = base_message.format(actor=actor_name)
+            
+            # Replace target placeholders with appropriate names
+            for i, target in enumerate(targets):
+                if observer == target:
+                    observer_message = observer_message.replace("-", "you")
                 else:
-                    target_message = target_message.replace("-", other_target.name)
+                    target_name = get_name_or_description(observer, target)
+                    observer_message = observer_message.replace("-", target_name)
             
-            target.msg(format_sentence(target_message))
+            if observer != self.caller:
+                observer.msg(format_sentence(observer_message))
         
-        # Message for the caller
-        caller_message = base_message
+        # Message for the caller (sees all true names)
+        caller_message = base_message.format(actor=self.caller.name)
         for target in targets:
             caller_message = caller_message.replace("-", target.name)
         self.caller.msg(format_sentence(caller_message))
-        
-        # Message for the room
-        room_message = caller_message
-        self.caller.location.msg_contents(
-            format_sentence(room_message),
-            exclude=[self.caller] + targets
-        )

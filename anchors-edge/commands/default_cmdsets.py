@@ -27,7 +27,7 @@ from commands.admin import (
 from commands.command import CmdWho, CmdLook
 from commands.emote import CmdEmote, CmdPmote, CmdOmote, CmdTmote, CmdEmoteList
 from commands.unloggedin import CmdUnloggedinLook
-
+from commands.social import add_social_commands
 class CharacterCmdSet(DefaultCharacterCmdSet):
     """
     The `CharacterCmdSet` contains general in-game commands like `look`,
@@ -58,6 +58,7 @@ class CharacterCmdSet(DefaultCharacterCmdSet):
         self.add(CmdTmote())
         self.add(CmdEmoteList())
         self.add(CmdLook())
+        add_social_commands(self)
 
 
 class AccountCmdSet(DefaultAccountCmdSet):

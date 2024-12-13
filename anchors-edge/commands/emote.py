@@ -553,8 +553,8 @@ class CmdTmote(Command):
       (use ; for your name and - for target names)
       
     Examples:
-      tmote joe walking in the room ; nods at -.
-      tmote bob,jane ; waves to - and -.
+      tmote kobold walking in the room ; nods at -.
+      tmote tall,short ; waves to - and -.
     """
     key = "tmote"
     locks = "cmd:all()"
@@ -575,11 +575,18 @@ class CmdTmote(Command):
         targets = []
         
         for target_name in target_names:
-            target = self.caller.search(target_name)
+            # Try to find target using description matching
+            target = self.caller.find_character_by_desc(target_name)
             if target:
                 targets.append(target)
+            else:
+                # Fallback to exact search
+                target = self.caller.search(target_name)
+                if target:
+                    targets.append(target)
         
         if not targets:
+            self.caller.msg(f"Could not find anyone matching '{targets_str}'.")
             return
         
         # Create the base message with placeholder for actor's name

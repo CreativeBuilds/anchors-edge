@@ -609,32 +609,31 @@ class Character(ObjectParent, DefaultCharacter):
         # Find matches using fuzzy string matching
         matches = []
         for char in chars:
-            # Use name if character is known, otherwise use description
+            # Check both name and description
             if hasattr(self, 'knows_character') and self.knows_character(char):
-                desc = char.name.lower()
+                name_match = SequenceMatcher(None, search_text, char.name.lower()).ratio()
+                matches.append((char, name_match))
             else:
                 desc = char.generate_basic_description().lower()
                 # Remove "a" or "an" from the start for matching
                 desc = ' '.join(desc.split()[1:]) if desc.split()[0] in ['a', 'an'] else desc
+                
+                # Check if search text appears in description
+                if search_text in desc:
+                    matches.append((char, 0.9))  # High confidence for direct substring match
+                else:
+                    # Fallback to fuzzy matching
+                    desc_match = SequenceMatcher(None, search_text, desc).ratio()
+                    matches.append((char, desc_match))
             
-            # Calculate fuzzy match ratio
-            ratio = SequenceMatcher(None, search_text, desc).ratio()
-            
-            # If good enough match, add to matches
-            if ratio > 0.4:  # Lower threshold for more lenient matching
-                matches.append((char, ratio))
-        
         # Sort matches by ratio, highest first
         matches.sort(key=lambda x: x[1], reverse=True)
         
-        # Handle results
-        if not matches:
-            return None
-        elif len(matches) == 1 or (matches[0][1] > 0.8):  # Single match or very high confidence
+        # Return best match if it's good enough
+        if matches and matches[0][1] > 0.4:  # Lower threshold for more lenient matching
             return matches[0][0]
-        else:
-            # Multiple matches with similar scores
-            return None
+            
+        return None
 
 class NPC(Character):
     """Base NPC class with conversation memory"""

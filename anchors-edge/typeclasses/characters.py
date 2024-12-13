@@ -29,6 +29,7 @@ from typeclasses.relationships import (
 )
 from evennia.utils import inherits_from
 from utils.text_formatting import format_sentence
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -643,7 +644,6 @@ class Character(ObjectParent, DefaultCharacter):
         """
         Called just after puppeting has completed.
         """
-        super().at_post_puppet()
         
         # Announce entry to the room
         if self.location:
@@ -661,6 +661,8 @@ class Character(ObjectParent, DefaultCharacter):
             
             # Send a personalized message to the entering character
             self.msg(format_sentence("You feel your consciousness settle into your physical form as the world materializes around you."))
+        
+        super().at_post_puppet()
 
     def at_pre_unpuppet(self):
         """

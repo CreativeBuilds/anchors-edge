@@ -25,12 +25,8 @@ class EmoteCommandBase(Command):
             
         first_word = words[0]
         
-        # Conjugate first word
-        if first_word.endswith('ies'):
-            conjugated = first_word[:-3] + 'y'
-        elif first_word.endswith('es'):
-            conjugated = first_word[:-2]
-        elif first_word.endswith('s'):
+        # Conjugate first word - just remove trailing 's'
+        if first_word.endswith('s'):
             conjugated = first_word[:-1]
         else:
             conjugated = first_word

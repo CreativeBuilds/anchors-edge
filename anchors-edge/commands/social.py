@@ -34,7 +34,8 @@ class EmoteCommandBase(Command):
                     obj.has_account):
                     
                     # Check if caller knows this character
-                    if hasattr(self.caller.db, 'relationships') and obj in self.caller.db.relationships:
+                    relationships = self.caller.db.relationships or {}  # Default to empty dict if None
+                    if hasattr(self.caller.db, 'relationships') and relationships.get(obj):
                         # Use character name if known
                         if search_term in obj.name.lower():
                             matches.append((obj, obj.name))
@@ -64,8 +65,9 @@ class EmoteCommandBase(Command):
                 # Send personalized messages to each observer
                 for observer in location.contents:
                     if hasattr(observer, 'msg'):  # Make sure it can receive messages
+                        observer_relationships = observer.db.relationships or {}
                         # Determine how to show the caller's name/description
-                        if hasattr(observer.db, 'relationships') and self.caller in observer.db.relationships:
+                        if hasattr(observer.db, 'relationships') and observer_relationships.get(self.caller):
                             caller_name = self.caller.name
                         else:
                             caller_name = get_brief_description(self.caller)
@@ -74,7 +76,7 @@ class EmoteCommandBase(Command):
                         target_char = matches[0][0]
                         
                         # Determine how to show the target's name/description
-                        if hasattr(observer.db, 'relationships') and target_char in observer.db.relationships:
+                        if hasattr(observer.db, 'relationships') and observer_relationships.get(target_char):
                             target_name = target_char.name
                         else:
                             target_name = get_brief_description(target_char)

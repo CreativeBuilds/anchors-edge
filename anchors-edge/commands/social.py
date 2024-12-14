@@ -64,14 +64,17 @@ class EmoteCommandBase(Command):
                 # Send personalized messages to each observer
                 for observer in location.contents:
                     if hasattr(observer, 'msg'):  # Make sure it can receive messages
+                        # Check if observer is a character that can know other characters
+                        is_character = hasattr(observer, 'knows_character')
+                        
                         # Determine how to show the caller's name/description
-                        if observer.knows_character(self.caller):
+                        if is_character and observer.knows_character(self.caller):
                             caller_name = self.caller.name
                         else:
                             caller_name = get_brief_description(self.caller)
                             
                         # Determine how to show the target's name/description
-                        if observer.knows_character(target):
+                        if is_character and observer.knows_character(target):
                             target_name = target.name
                         else:
                             target_name = get_brief_description(target)

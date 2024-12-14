@@ -5,6 +5,7 @@ Social commands module for common emotes and gestures.
 from evennia import Command
 from commands.emote import CmdEmote
 from typeclasses.relationships import get_brief_description
+from evennia.utils.utils import format_sentence
 
 class EmoteCommandBase(Command):
     """Base class for simple emote commands"""
@@ -85,7 +86,7 @@ class EmoteCommandBase(Command):
                         else:
                             msg = f"{caller_name} {self.emote_text} at {target_name}"
                             
-                        observer.msg(msg)
+                        observer.msg(format_sentence(msg))
 
 # Smile variants
 class CmdSmile(EmoteCommandBase):

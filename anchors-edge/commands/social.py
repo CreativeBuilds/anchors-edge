@@ -55,40 +55,45 @@ class EmoteCommandBase(Command):
                         display = get_brief_description(char)
                     self.caller.msg(f"- {display}")
                 return
-              
-            # Build the emote message
-            if target:
-                location = self.caller.location
-                if not location:
-                    return
+        
+        location = self.caller.location
+        if not location:
+            return
+            
+        # Send personalized messages to each observer
+        for observer in location.contents:
+            if hasattr(observer, 'msg'):  # Make sure it can receive messages
+                # Check if observer is a character that can know other characters
+                is_character = hasattr(observer, 'knows_character')
+                
+                # Determine how to show the caller's name/description
+                if is_character and observer.knows_character(self.caller):
+                    caller_name = self.caller.name
+                else:
+                    caller_name = get_brief_description(self.caller)
                     
-                # Send personalized messages to each observer
-                for observer in location.contents:
-                    if hasattr(observer, 'msg'):  # Make sure it can receive messages
-                        # Check if observer is a character that can know other characters
-                        is_character = hasattr(observer, 'knows_character')
+                # Build the personalized message
+                if target:
+                    # Targeted emote
+                    if is_character and observer.knows_character(target):
+                        target_name = target.name
+                    else:
+                        target_name = get_brief_description(target)
                         
-                        # Determine how to show the caller's name/description
-                        if is_character and observer.knows_character(self.caller):
-                            caller_name = self.caller.name
-                        else:
-                            caller_name = get_brief_description(self.caller)
-                            
-                        # Determine how to show the target's name/description
-                        if is_character and observer.knows_character(target):
-                            target_name = target.name
-                        else:
-                            target_name = get_brief_description(target)
-                            
-                        # Build the personalized message
-                        if observer == self.caller:
-                            msg = f"You {self.emote_text.rstrip('s')} at {target_name}"
-                        elif observer == target:
-                            msg = f"{caller_name} {self.emote_text} at you"
-                        else:
-                            msg = f"{caller_name} {self.emote_text} at {target_name}"
-                            
-                        observer.msg(format_sentence(msg))
+                    if observer == self.caller:
+                        msg = f"You {self.emote_text.rstrip('s')} at {target_name}"
+                    elif observer == target:
+                        msg = f"{caller_name} {self.emote_text} at you"
+                    else:
+                        msg = f"{caller_name} {self.emote_text} at {target_name}"
+                else:
+                    # Non-targeted emote
+                    if observer == self.caller:
+                        msg = f"You {self.emote_text.rstrip('s')}"
+                    else:
+                        msg = f"{caller_name} {self.emote_text}"
+                        
+                observer.msg(format_sentence(msg))
 
 # Smile variants
 class CmdSmile(EmoteCommandBase):

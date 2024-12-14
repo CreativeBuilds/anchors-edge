@@ -297,7 +297,7 @@ class CmdIntro(Command):
             self.caller.msg("You already know yourself!")
             return
         
-        # Check if caller has already introduced themselves to target
+        # Check if caller has already introduced themself to target
         if target.knows_character(self.caller):
             self.caller.msg(f"You have already introduced yourself to them.")
             return
@@ -315,14 +315,14 @@ class CmdIntro(Command):
         is_mutual = self.caller.knows_character(target) and target.knows_character(self.caller)
         
         # Get the appropriate display name based on mutual status
-        target_display = target.name if is_mutual else target.generate_basic_description()
+        target_display = target.name if is_mutual else target.generate_brief_description()
         target_display = target_display[0].lower() + target_display[1:].rstrip('.')
-        caller_display = self.caller.generate_basic_description().rstrip('.')
-        target_basic = target.generate_basic_description().rstrip('.')
+        caller_display = self.caller.generate_brief_description().rstrip('.')
+        target_basic = target.generate_brief_description().rstrip('.')
         
         # Notify both parties
         self.caller.msg(f"You introduce yourself to {target_display}.")
-        target.msg(f"{caller_display} introduces themselves to you as {self.caller.name}.")
+        target.msg(f"{caller_display} introduces themself to you as {self.caller.name}.")
         
         
         
@@ -338,11 +338,11 @@ class CmdIntro(Command):
                 target_name = target_name[0].lower() + target_name[1:].rstrip('.')
                 
                 # Send customized message
-                obj.msg(format_sentence(f"{caller_name} introduces themselves to {target_name}."))
+                obj.msg(format_sentence(f"{caller_name} introduces themself to {target_name}."))
         
         # If mutual introduction, notify both parties
         if is_mutual:
-            self.caller.msg(f"As they have already introduced themselves to you, you now know them as {target.name}.")
+            self.caller.msg(f"As they have already introduced themself to you, you now know them as {target.name}.")
             target.msg(f"Having already introduced yourself to them, they now know you as {target.name}.")
 
 class CmdLongIntro(Command):
@@ -396,7 +396,7 @@ class CmdLongIntro(Command):
         if not target.db.known_by:
             target.db.known_by = {}
             
-        target_basic = target.generate_basic_description().rstrip('.')
+        target_basic = target.generate_brief_description().rstrip('.')
             
         # Check if they have at least acquaintance status with each other
         if not (target.id in self.caller.db.known_by and 
@@ -423,7 +423,7 @@ class CmdLongIntro(Command):
         
         # Notify both parties
         self.caller.msg(f"You formally introduce yourself to {target.name}.")
-        target.msg(f"{self.caller.name} formally introduces themselves to you.")
+        target.msg(f"{self.caller.name} formally introduces themself to you.")
         
         if is_mutual_formal:
             self.caller.msg(f"|gYou and {target.name} are now formally introduced and can message each other from anywhere.|n")

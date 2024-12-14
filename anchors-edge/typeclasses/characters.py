@@ -30,6 +30,7 @@ from typeclasses.relationships import (
 from evennia.utils import inherits_from
 from utils.text_formatting import format_sentence
 from django.utils.translation import gettext as _
+from utils.text_formatting import capitalize_first_letter
 
 # Load environment variables from .env file
 load_dotenv()
@@ -481,14 +482,14 @@ class Character(ObjectParent, DefaultCharacter):
         """
         # Always show your own name to yourself
         if looker == self:
-            return self.name
+            return capitalize_first_letter(self.name)
         
         # For others, check knowledge level
         if looker and hasattr(looker, 'knows_character'):
             if looker.knows_character(self):
                 knowledge_level = looker.db.known_by.get(self.id, KnowledgeLevel.STRANGER)
                 if knowledge_level >= KnowledgeLevel.ACQUAINTANCE:
-                    return self.name
+                    return capitalize_first_letter(self.name)
                 
         # Return brief description for unknown characters
         return get_brief_description(self)
@@ -523,9 +524,9 @@ class Character(ObjectParent, DefaultCharacter):
             
             # Create the message text
             if knows_char:
-                message = f"{self.name} leaves {exits[0].name if exits else 'somewhere'}."
+                message = f"{capitalize_first_letter(self.name)} leaves {exits[0].name if exits else 'somewhere'}."
             else:
-                message = f"{self.generate_basic_description().rstrip('.')} leaves {exits[0].name if exits else 'somewhere'}."
+                message = format_sentence(f"{self.generate_basic_description().rstrip('.')} leaves {exits[0].name if exits else 'somewhere'}.")
             
             # Send the message
             char.msg(text=(message, {"type": "room"}))
@@ -560,9 +561,9 @@ class Character(ObjectParent, DefaultCharacter):
             
             # Create the message text
             if knows_char:
-                message = f"{self.name} arrives from {exits[0].name if exits else 'somewhere'}."
+                message = f"{capitalize_first_letter(self.name)} arrives from {exits[0].name if exits else 'somewhere'}."
             else:
-                message = f"{self.generate_basic_description().rstrip('.')} arrives from {exits[0].name if exits else 'somewhere'}."
+                message = format_sentence(f"{self.generate_basic_description().rstrip('.')} arrives from {exits[0].name if exits else 'somewhere'}.")
             
             # Send the message
             char.msg(text=(message, {"type": "room"}))
@@ -651,7 +652,7 @@ class Character(ObjectParent, DefaultCharacter):
                 overriding the call (unused by default).
         """
         # Send initial messages
-        self.msg(_("\nYou become |c{name}|n.\n").format(name=self.key))
+        self.msg(_("\nYou become |c{name}|n.\n").format(name=capitalize_first_letter(self.key)))
         self.msg((self.at_look(self.location), {"type": "look"}), options=None)
 
         def message(obj, from_obj):

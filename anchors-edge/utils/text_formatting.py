@@ -36,3 +36,13 @@ def format_sentence(text: str, capitalize: bool = True) -> str:
     if capitalize and text:
         text = text[0].upper() + text[1:] if len(text) > 1 else text.upper()
     return text 
+
+def capitalize_first_letter(text: str) -> str:
+    """
+    Capitalizes the first letter of the text.
+    Args:
+        text (str): The text to capitalize
+    Returns:
+        str: The capitalized text
+    """
+    return text[0].upper() + text[1:] if len(text) > 1 else text.upper()

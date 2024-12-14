@@ -150,11 +150,13 @@ class SayCommand(default_cmds.MuxCommand):
     Usage:
       say <message>
       say to <person1>[,person2,person3...] <message>
+      say <person> <message>
 
     Examples:
       say Hello everyone!
       say to Bob Can I get a drink?
       say to Bob,Jane,Tom Hey folks!
+      say Gad Hello there!  (same as "say to Gad Hello there!")
     """
 
     key = "say"
@@ -249,6 +251,42 @@ class SayCommand(default_cmds.MuxCommand):
         else:
             return "very drunkenly slur" if is_self else "very drunkenly slurs"
 
+    def parse_targets_and_message(self, args):
+        """Parse input to extract targets and message."""
+        # Handle empty input
+        if not args:
+            return [], ""
+
+        args = args.strip()
+
+        # Handle incomplete "say to" command
+        if args.lower() == "to":
+            return None, None
+
+        # Handle "say to <target> <message>"
+        if args.lower().startswith("to "):
+            try:
+                _, target_and_message = args.split(" ", 1)
+                targets_str, message = target_and_message.split(" ", 1)
+                target_names = [t.strip() for t in targets_str.split(",")]
+                return target_names, message
+            except ValueError:
+                return None, None
+
+        # Handle "say <target> <message>"
+        try:
+            words = args.split()
+            if len(words) > 1:
+                # Try to find the target in the room
+                potential_target = self.caller.search(words[0], location=self.caller.location, quiet=True)
+                if potential_target:
+                    return [words[0]], " ".join(words[1:])
+        except Exception:
+            pass
+
+        # If no target pattern is matched, treat entire input as message
+        return [], args
+
     def func(self):
         """Implements the command"""
         caller = self.caller
@@ -257,29 +295,25 @@ class SayCommand(default_cmds.MuxCommand):
             caller.msg("Say what?")
             return
 
-        # Get intoxication level
+        # Parse the input
+        target_names, message = self.parse_targets_and_message(self.args)
+        
+        # Handle incomplete or invalid "say to" command
+        if target_names is None:
+            caller.msg("Usage: say <message> OR say to <person> <message>")
+            return
+
+        # Get intoxication level and action text
         intoxication_level = caller.get_intoxication_level() if hasattr(caller, 'get_intoxication_level') else 0
         action_text_others = self.get_drunk_action_text(intoxication_level, is_self=False)
         action_text_self = self.get_drunk_action_text(intoxication_level, is_self=True)
 
-        # Parse the input for targeted messages
-        args = self.args.strip()
-        if args.lower().startswith("to "):
-            # Split into targets and message
-            try:
-                _, target_and_message = args.split(" ", 1)  # Split off "to "
-                targets_str, message = target_and_message.split(" ", 1)  # Split targets from message
-            except ValueError:
-                caller.msg("Usage: say to <character> <message>")
-                return
-
-            # Handle multiple targets
-            target_names = [t.strip() for t in targets_str.split(",")]
+        # If we have targets, handle targeted message
+        if target_names:
             targets = []
             failed_targets = []
 
             for target_name in target_names:
-                # Look for target in the same location
                 target = caller.search(target_name, location=caller.location, quiet=True)
                 if target:
                     if isinstance(target, list):
@@ -338,8 +372,6 @@ class SayCommand(default_cmds.MuxCommand):
 
         else:
             # Regular say command
-            message = args
-            
             # Modify speech if drunk
             if intoxication_level > 1:
                 message = self.modify_drunk_speech(message, intoxication_level)

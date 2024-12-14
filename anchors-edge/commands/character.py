@@ -355,10 +355,10 @@ class CmdIntro(Command):
         is_mutual = self.caller.knows_character(target) and target.knows_character(self.caller)
         
         # Get the appropriate display name based on mutual status
-        target_display = target.name if is_mutual else target.generate_brief_description()
+        target_display = target.name if is_mutual else get_brief_description(target)
         target_display = target_display[0].lower() + target_display[1:].rstrip('.')
-        caller_display = self.caller.generate_brief_description().rstrip('.')
-        target_basic = target.generate_brief_description().rstrip('.')
+        caller_display = get_brief_description(self.caller).rstrip('.')
+        target_basic = get_brief_description(target).rstrip('.')
         
         # Get pronouns for both characters
         caller_reflexive = get_pronoun(self.caller, "reflexive")

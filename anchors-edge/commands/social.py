@@ -57,41 +57,39 @@ class EmoteCommandBase(Command):
               
             # Build the emote message
             if target:
-                # Get the emoting character's location and contents
                 location = self.caller.location
                 if not location:
                     return
+                    
+                # Find the target character object from matches
+                target_char = matches[0][0]
                     
                 # Send personalized messages to each observer
                 for observer in location.contents:
                     if hasattr(observer, 'msg'):  # Make sure it can receive messages
                         observer_relationships = observer.db.relationships or {}
+                        
                         # Determine how to show the caller's name/description
                         if hasattr(observer.db, 'relationships') and observer_relationships.get(self.caller):
                             caller_name = self.caller.name
                         else:
                             caller_name = get_brief_description(self.caller)
                             
-                        # Find the target character object from matches
-                        target_char = matches[0][0]
-                        
-                        # Determine how to show the target's name/description
+                        # Determine how to show the target's name/description based on observer's knowledge
                         if hasattr(observer.db, 'relationships') and observer_relationships.get(target_char):
                             target_name = target_char.name
                         else:
                             target_name = get_brief_description(target_char)
                             
                         # Build the personalized message
-                        msg = f"{caller_name} {self.emote_text} at {target_name}"
-                        
-                        # Send the message
-                        if observer != self.caller:
-                            observer.msg(msg)
+                        if observer == self.caller:
+                            # Special case - message for the emoting character
+                            msg = f"You {self.emote_text.rstrip('s')} at {target_name}"
+                        else:
+                            msg = f"{caller_name} {self.emote_text} at {target_name}"
                             
-                # Special case - message for the emoting character
-                caller_msg = f"You {self.emote_text} at {target}"
-                self.caller.msg(caller_msg)
-                
+                        observer.msg(msg)
+                            
             else:
                 # No target - simple emote
                 location = self.caller.location
@@ -101,18 +99,18 @@ class EmoteCommandBase(Command):
                 # Send personalized messages
                 for observer in location.contents:
                     if hasattr(observer, 'msg'):
-                        if hasattr(observer.db, 'relationships') and self.caller in observer.db.relationships:
-                            name = self.caller.name
+                        observer_relationships = observer.db.relationships or {}
+                        if observer == self.caller:
+                            msg = f"You {self.emote_text.rstrip('s')}"
                         else:
-                            name = get_brief_description(self.caller)
+                            if hasattr(observer.db, 'relationships') and observer_relationships.get(self.caller):
+                                name = self.caller.name
+                            else:
+                                name = get_brief_description(self.caller)
+                                
+                            msg = f"{name} {self.emote_text}"
                             
-                        msg = f"{name} {self.emote_text}"
-                        
-                        if observer != self.caller:
-                            observer.msg(msg)
-                            
-                # Message for the emoting character
-                self.caller.msg(f"You {self.emote_text}")
+                        observer.msg(msg)
 # Smile variants
 class CmdSmile(EmoteCommandBase):
     """

@@ -5,7 +5,7 @@ Social commands module for common emotes and gestures.
 from evennia import Command
 from commands.emote import CmdEmote
 from typeclasses.relationships import get_brief_description
-from evennia.utils.utils import format_sentence
+from utils.text_formatting import format_sentence
 
 class EmoteCommandBase(Command):
     """Base class for simple emote commands"""

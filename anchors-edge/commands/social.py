@@ -11,10 +11,30 @@ class EmoteCommandBase(Command):
     help_category = "Social"
     
     def func(self):
+        # Parse target from args
+        target = None
+        emote_args = ""
+        
+        if self.args:
+            args = self.args.strip().split()
+            
+            # Check for "to" targeting first
+            if len(args) >= 2 and args[0].lower() == "to":
+                target = " ".join(args[1:])
+            # Otherwise treat first word as potential target
+            else:
+                target = args[0]
+                
         # Create an emote command instance
         emote = CmdEmote()
         emote.caller = self.caller
-        emote.args = self.emote_text
+        
+        # Build emote text with target if provided
+        if target:
+            emote.args = f"{self.emote_text} at {target}"
+        else:
+            emote.args = self.emote_text
+            
         # Execute the emote
         emote.func()
 
@@ -27,7 +47,7 @@ class CmdSmile(EmoteCommandBase):
       smile [<person>]
     """
     key = "smile"
-    emote_text = "smile"
+    emote_text = "smiles"
 
 class CmdGrin(EmoteCommandBase):
     """
@@ -37,7 +57,7 @@ class CmdGrin(EmoteCommandBase):
       grin [<person>]
     """
     key = "grin"
-    emote_text = "grin"
+    emote_text = "grins"
 
 # Laughter variants
 class CmdLaugh(EmoteCommandBase):
@@ -48,7 +68,7 @@ class CmdLaugh(EmoteCommandBase):
       laugh [<person>]
     """
     key = "laugh"
-    emote_text = "laugh"
+    emote_text = "laughs"
 
 class CmdChuckle(EmoteCommandBase):
     """
@@ -58,7 +78,7 @@ class CmdChuckle(EmoteCommandBase):
       chuckle [<person>]
     """
     key = "chuckle"
-    emote_text = "chuckle"
+    emote_text = "chuckles"
 
 class CmdGiggle(EmoteCommandBase):
     """
@@ -68,7 +88,7 @@ class CmdGiggle(EmoteCommandBase):
       giggle [<person>]
     """
     key = "giggle"
-    emote_text = "giggle"
+    emote_text = "giggles"
 
 # Gestures
 class CmdWave(EmoteCommandBase):
@@ -79,7 +99,7 @@ class CmdWave(EmoteCommandBase):
       wave [<person>]
     """
     key = "wave"
-    emote_text = "wave"
+    emote_text = "waves"
 
 class CmdBow(EmoteCommandBase):
     """
@@ -89,7 +109,7 @@ class CmdBow(EmoteCommandBase):
       bow [<person>]
     """
     key = "bow"
-    emote_text = "bow"
+    emote_text = "bows"
 
 class CmdNod(EmoteCommandBase):
     """
@@ -99,7 +119,7 @@ class CmdNod(EmoteCommandBase):
       nod [<person>]
     """
     key = "nod"
-    emote_text = "nod"
+    emote_text = "nods"
 
 # Facial expressions
 class CmdWink(EmoteCommandBase):
@@ -110,7 +130,7 @@ class CmdWink(EmoteCommandBase):
       wink [<person>]
     """
     key = "wink"
-    emote_text = "wink"
+    emote_text = "winks"
 
 class CmdFrown(EmoteCommandBase):
     """
@@ -120,7 +140,7 @@ class CmdFrown(EmoteCommandBase):
       frown [<person>]
     """
     key = "frown"
-    emote_text = "frown"
+    emote_text = "frowns"
 
 # Add these commands to the character command set
 def add_social_commands(cmdset):

@@ -33,10 +33,11 @@ class EmoteCommandBase(Command):
                     hasattr(obj, 'has_account') and 
                     obj.has_account):
                     
-                    # Check both name and description for matches
-                    brief_desc = get_brief_description(obj)
-                    if search_term in obj.name.lower() or search_term in brief_desc.lower():
-                        # Store the actual object for later use
+                    # If we know them, match against their name
+                    if self.caller.knows_character(obj) and search_term in obj.name.lower():
+                        matches.append((obj, obj))
+                    # Always try matching against description too
+                    elif search_term in get_brief_description(obj).lower():
                         matches.append((obj, obj))
                     
             # Handle matches
@@ -47,8 +48,7 @@ class EmoteCommandBase(Command):
                 self.caller.msg("Multiple characters match that description. Please be more specific:")
                 for char, _ in matches:
                     # Show name if known, otherwise description
-                    relationships = self.caller.db.relationships or {}
-                    if hasattr(self.caller.db, 'relationships') and relationships.get(char):
+                    if self.caller.knows_character(char):
                         display = char.name
                     else:
                         display = get_brief_description(char)
@@ -64,16 +64,14 @@ class EmoteCommandBase(Command):
                 # Send personalized messages to each observer
                 for observer in location.contents:
                     if hasattr(observer, 'msg'):  # Make sure it can receive messages
-                        observer_relationships = observer.db.relationships or {}
-                        
                         # Determine how to show the caller's name/description
-                        if hasattr(observer.db, 'relationships') and observer_relationships.get(self.caller):
+                        if observer.knows_character(self.caller):
                             caller_name = self.caller.name
                         else:
                             caller_name = get_brief_description(self.caller)
                             
                         # Determine how to show the target's name/description
-                        if hasattr(observer.db, 'relationships') and observer_relationships.get(target):
+                        if observer.knows_character(target):
                             target_name = target.name
                         else:
                             target_name = get_brief_description(target)

@@ -18,12 +18,31 @@ class EmoteCommandBase(Command):
         if self.args:
             args = self.args.strip().split()
             
-            # Check for "to" targeting first
-            if len(args) >= 2 and args[0].lower() == "to":
-                target = " ".join(args[1:])
-            # Otherwise treat first word as potential target
+            # Get target name to search for
+            target_name = ""
+            if len(args) >= 2 and args[0].lower() in ["to", "at"]:
+                target_name = " ".join(args[1:]).lower()
             else:
-                target = args[0]
+                target_name = args[0].lower()
+                
+            # Search for character in room with fuzzy name match
+            matches = []
+            for obj in self.caller.location.contents:
+                if (obj != self.caller and 
+                    hasattr(obj, 'has_account') and 
+                    obj.has_account and
+                    target_name in obj.name.lower()):
+                    matches.append(obj)
+                    
+            # Handle matches
+            if len(matches) == 1:
+                target = matches[0].name
+            elif len(matches) > 1:
+                # Multiple matches found
+                self.caller.msg("Multiple characters match that name. Please be more specific:")
+                for char in matches:
+                    self.caller.msg(f"- {char.name}")
+                return
                 
         # Create an emote command instance
         emote = CmdEmote()

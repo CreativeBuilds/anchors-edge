@@ -12,6 +12,66 @@ class EmoteCommandBase(Command):
     locks = "cmd:all()"
     help_category = "Social"
     
+    def get_pronouns(self, character):
+        """
+        Get pronouns for a character based on their gender.
+        Returns dict with: subjective (he/she/they), objective (him/her/them),
+        possessive (his/her/their), reflexive (himself/herself/themselves)
+        """
+        gender = character.db.gender.lower() if hasattr(character.db, 'gender') else None
+        
+        if gender == "female":
+            return {
+                "subjective": "she",
+                "objective": "her",
+                "possessive": "her",
+                "reflexive": "herself"
+            }
+        elif gender == "male":
+            return {
+                "subjective": "he",
+                "objective": "him",
+                "possessive": "his",
+                "reflexive": "himself"
+            }
+        else:  # Default to neutral pronouns
+            return {
+                "subjective": "they",
+                "objective": "them",
+                "possessive": "their",
+                "reflexive": "themselves"
+            }
+
+    def format_emote_text(self, is_self=False, char=None):
+        """Format emote text with proper pronouns"""
+        if is_self:
+            # Convert third-person to second-person
+            # e.g., "{char} sticks out {their} tongue" -> "stick out your tongue"
+            text = self.emote_text.format(
+                char="you",
+                their="your",
+                them="you",
+                they="you",
+                theirs="yours",
+                themselves="yourself"
+            )
+            # Convert to second person (remove 's' from verb)
+            words = text.split()
+            if words and words[0].endswith('s'):
+                words[0] = words[0][:-1]
+            return ' '.join(words)
+        else:
+            # Use character's pronouns
+            pronouns = self.get_pronouns(char)
+            return self.emote_text.format(
+                char="{char}",  # Placeholder for name/description
+                their=pronouns["possessive"],
+                them=pronouns["objective"],
+                they=pronouns["subjective"],
+                theirs=pronouns["possessive"],
+                themselves=pronouns["reflexive"]
+            )
+
     def conjugate_for_you(self, verb):
         """
         Conjugate the verb for 'you' as the subject.
@@ -140,17 +200,17 @@ class EmoteCommandBase(Command):
                     
                     # Build final message
                     if observer == self.caller:
-                        msg = f"You {self.conjugate_for_you(self.emote_text)} at {targets_str}"
+                        msg = f"You {self.format_emote_text(is_self=True)} at {targets_str}"
                     elif is_observer_target:
-                        msg = f"{caller_name} {self.emote_text} at {targets_str}"
+                        msg = f"{caller_name} {self.format_emote_text(char=self.caller)} at {targets_str}"
                     else:
-                        msg = f"{caller_name} {self.emote_text} at {targets_str}"
+                        msg = f"{caller_name} {self.format_emote_text(char=self.caller)} at {targets_str}"
                 else:
                     # Non-targeted emote
                     if observer == self.caller:
-                        msg = f"You {self.conjugate_for_you(self.emote_text)}"
+                        msg = f"You {self.format_emote_text(is_self=True)}"
                     else:
-                        msg = f"{caller_name} {self.emote_text}"
+                        msg = f"{caller_name} {self.format_emote_text(char=self.caller)}"
                 
                 # Add modifier if present
                 if modifier:
@@ -501,34 +561,23 @@ class CmdBeam(EmoteCommandBase):
 
 class CmdPoke(EmoteCommandBase):
     """
-    Poke someone, optionally with a modifier.
+    Poke someone with your finger.
     
     Usage:
       poke <person> [<modifier>]
-      
-    Examples:
-      poke Gad
-      poke Gad playfully
-      poke Gad in the ribs
     """
     key = "poke"
-    emote_text = "pokes"
+    emote_text = "pokes {them} with {their} finger"
 
 class CmdBrow(EmoteCommandBase):
     """
-    Arch an eyebrow, optionally at someone and with a modifier.
+    Arch an eyebrow questioningly.
     
     Usage:
       brow [<person>] [<modifier>]
-      
-    Examples:
-      brow
-      brow Gad
-      brow quizzically
-      brow Gad skeptically
     """
     key = "brow"
-    emote_text = "arches an eyebrow"
+    emote_text = "arches {their} eyebrow"
 
 class CmdAck(EmoteCommandBase):
     """
@@ -584,15 +633,9 @@ class CmdTongue(EmoteCommandBase):
     
     Usage:
       tongue [<person>] [<modifier>]
-      
-    Examples:
-      tongue
-      tongue Gad
-      tongue playfully
-      tongue Gad teasingly
     """
     key = "tongue"
-    emote_text = "sticks out their tongue"
+    emote_text = "sticks out {their} tongue"
 
 # Add these commands to the character command set
 def add_social_commands(cmdset):
@@ -609,8 +652,6 @@ def add_social_commands(cmdset):
     cmdset.add(CmdFrown())
     cmdset.add(CmdShrug())
     cmdset.add(CmdPout())
-    
-    # New commands
     cmdset.add(CmdGreet())
     cmdset.add(CmdBlush())
     cmdset.add(CmdSigh())

@@ -33,26 +33,26 @@ class EmoteCommandBase(Command):
                     hasattr(obj, 'has_account') and 
                     obj.has_account):
                     
-                    # Check if caller knows this character
-                    relationships = self.caller.db.relationships or {}  # Default to empty dict if None
-                    if hasattr(self.caller.db, 'relationships') and relationships.get(obj):
-                        # Use character name if known
-                        if search_term in obj.name.lower():
-                            matches.append((obj, obj.name))
-                    else:
-                        # Use brief description if unknown
-                        brief_desc = get_brief_description(obj)
-                        if search_term in brief_desc.lower():
-                            matches.append((obj, brief_desc))
+                    # Check both name and description for matches
+                    brief_desc = get_brief_description(obj)
+                    if search_term in obj.name.lower() or search_term in brief_desc.lower():
+                        # Store the actual object for later use
+                        matches.append((obj, obj))
                     
             # Handle matches
             if len(matches) == 1:
-                target = matches[0][1]  # Use the name/description we matched against
+                target = matches[0][1]  # Use the actual object
             elif len(matches) > 1:
                 # Multiple matches found
                 self.caller.msg("Multiple characters match that description. Please be more specific:")
-                for char, desc in matches:
-                    self.caller.msg(f"- {desc}")
+                for char, _ in matches:
+                    # Show name if known, otherwise description
+                    relationships = self.caller.db.relationships or {}
+                    if hasattr(self.caller.db, 'relationships') and relationships.get(char):
+                        display = char.name
+                    else:
+                        display = get_brief_description(char)
+                    self.caller.msg(f"- {display}")
                 return
               
             # Build the emote message
@@ -60,9 +60,6 @@ class EmoteCommandBase(Command):
                 location = self.caller.location
                 if not location:
                     return
-                    
-                # Find the target character object from matches
-                target_char = matches[0][0]
                     
                 # Send personalized messages to each observer
                 for observer in location.contents:
@@ -75,42 +72,20 @@ class EmoteCommandBase(Command):
                         else:
                             caller_name = get_brief_description(self.caller)
                             
-                        # Determine how to show the target's name/description based on observer's knowledge
-                        if hasattr(observer.db, 'relationships') and observer_relationships.get(target_char):
-                            target_name = target_char.name
+                        # Determine how to show the target's name/description
+                        if hasattr(observer.db, 'relationships') and observer_relationships.get(target):
+                            target_name = target.name
                         else:
-                            target_name = get_brief_description(target_char)
+                            target_name = get_brief_description(target)
                             
                         # Build the personalized message
                         if observer == self.caller:
-                            # Special case - message for the emoting character
                             msg = f"You {self.emote_text.rstrip('s')} at {target_name}"
                         else:
                             msg = f"{caller_name} {self.emote_text} at {target_name}"
                             
                         observer.msg(msg)
-                            
-            else:
-                # No target - simple emote
-                location = self.caller.location
-                if not location:
-                    return
-                    
-                # Send personalized messages
-                for observer in location.contents:
-                    if hasattr(observer, 'msg'):
-                        observer_relationships = observer.db.relationships or {}
-                        if observer == self.caller:
-                            msg = f"You {self.emote_text.rstrip('s')}"
-                        else:
-                            if hasattr(observer.db, 'relationships') and observer_relationships.get(self.caller):
-                                name = self.caller.name
-                            else:
-                                name = get_brief_description(self.caller)
-                                
-                            msg = f"{name} {self.emote_text}"
-                            
-                        observer.msg(msg)
+
 # Smile variants
 class CmdSmile(EmoteCommandBase):
     """

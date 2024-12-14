@@ -12,6 +12,19 @@ class EmoteCommandBase(Command):
     locks = "cmd:all()"
     help_category = "Social"
     
+    def conjugate_for_you(self, verb):
+        """
+        Conjugate the verb for 'you' as the subject.
+        Handles special cases like 'gives' -> 'give'
+        """
+        if verb.endswith('ies'):
+            return verb[:-3] + 'y'
+        elif verb.endswith('es'):
+            return verb[:-2]
+        elif verb.endswith('s'):
+            return verb[:-1]
+        return verb
+
     def func(self):
         # Parse target from args
         targets = []
@@ -116,7 +129,7 @@ class EmoteCommandBase(Command):
                     
                     # Build final message
                     if observer == self.caller:
-                        msg = f"You {self.emote_text.rstrip('s')} at {targets_str}"
+                        msg = f"You {self.conjugate_for_you(self.emote_text)} at {targets_str}"
                     elif is_observer_target:
                         msg = f"{caller_name} {self.emote_text} at {targets_str}"
                     else:
@@ -124,7 +137,7 @@ class EmoteCommandBase(Command):
                 else:
                     # Non-targeted emote
                     if observer == self.caller:
-                        msg = f"You {self.emote_text.rstrip('s')}"
+                        msg = f"You {self.conjugate_for_you(self.emote_text)}"
                     else:
                         msg = f"{caller_name} {self.emote_text}"
                 

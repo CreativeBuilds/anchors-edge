@@ -83,6 +83,8 @@ class EmoteCommandBase(Command):
                         # Build the personalized message
                         if observer == self.caller:
                             msg = f"You {self.emote_text.rstrip('s')} at {target_name}"
+                        elif observer == target:
+                            msg = f"{caller_name} {self.emote_text} at you"
                         else:
                             msg = f"{caller_name} {self.emote_text} at {target_name}"
                             

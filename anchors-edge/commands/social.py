@@ -184,17 +184,17 @@ class EmoteCommandBase(Command):
                     if target_names:
                         if is_observer_target:
                             if len(target_names) > 0:
-                                targets_str = f"you and {', '.join(target_names[:-1])}"
-                                if len(target_names) > 1:
-                                    targets_str += f" and {target_names[-1]}"
+                                if len(target_names) == 1:
+                                    targets_str = f"you and {target_names[0]}"
+                                else:
+                                    targets_str = f"you, {', '.join(target_names[:-1])} and {target_names[-1]}"
                             else:
                                 targets_str = "you"
                         else:
-                            targets_str = f"{', '.join(target_names[:-1])}"
-                            if len(target_names) > 1:
-                                targets_str += f" and {target_names[-1]}"
-                            else:
+                            if len(target_names) == 1:
                                 targets_str = target_names[0]
+                            else:
+                                targets_str = f"{', '.join(target_names[:-1])} and {target_names[-1]}"
                     else:
                         targets_str = "you" if is_observer_target else ""
                     

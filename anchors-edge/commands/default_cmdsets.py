@@ -28,6 +28,8 @@ from commands.command import CmdWho, CmdLook
 from commands.emote import CmdEmote, CmdPmote, CmdOmote, CmdTmote, CmdEmoteList
 from commands.unloggedin import CmdUnloggedinLook
 from commands.social import add_social_commands
+from commands.roleplay import CmdRoleplayStatus, CmdOptionalStatus
+
 class CharacterCmdSet(DefaultCharacterCmdSet):
     """
     The `CharacterCmdSet` contains general in-game commands like `look`,
@@ -58,6 +60,9 @@ class CharacterCmdSet(DefaultCharacterCmdSet):
         self.add(CmdTmote())
         self.add(CmdEmoteList())
         self.add(CmdLook())
+        # Add roleplay status commands
+        self.add(CmdRoleplayStatus())
+        self.add(CmdOptionalStatus())
         add_social_commands(self)
 
 

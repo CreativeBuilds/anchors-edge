@@ -11,11 +11,26 @@ class KnowledgeLevel(IntEnum):
     ACQUAINTANCE = 1  # Basic physical description + name if introduced
     FRIEND = 2        # Full description + name + messaging
     
-def get_brief_description(character, include_height=True, include_race=True, include_subrace=True, include_gender=True):
+def get_brief_description(character, include_height=True, include_race=True, include_subrace=True, include_gender=True, include_rstatus=False, include_ostatus=False):
     """
     Get a brief description of a character (for strangers).
     Returns height + race description based on included parameters.
+    
+    Args:
+        character: The character to describe
+        include_height (bool): Whether to include height description
+        include_race (bool): Whether to include race
+        include_subrace (bool): Whether to include subrace
+        include_gender (bool): Whether to include gender
+        include_rstatus (bool): Whether to include roleplay status
+        include_ostatus (bool): Whether to include optional status
     """
+    # Start with optional status if included
+    if include_ostatus and hasattr(character, 'get_ostatus'):
+        ostatus = character.get_ostatus()
+        if ostatus:
+            return f"{ostatus}\n\na {get_brief_description(character, include_height, include_race, include_subrace, include_gender)}"
+    
     description_parts = []
     
     # Get height description if included
@@ -68,17 +83,39 @@ def get_brief_description(character, include_height=True, include_race=True, inc
             race_desc = race
         description_parts.append(race_desc.lower())
         
-    # Combine all parts
+    # Build base description
+    base_desc = "a person"
     if description_parts:
-        return "a " + " ".join(description_parts)
-    else:
-        return "a person"
+        base_desc = "a " + " ".join(description_parts)
+
+    # Add roleplay status if included
+    if include_rstatus and hasattr(character, 'get_rstatus'):
+        rstatus = character.get_rstatus()
+        if rstatus:
+            # Check if character is drunk
+            is_drunk = hasattr(character.db, 'intoxication') and character.db.intoxication > 0
+            if is_drunk:
+                rstatus = f"{rstatus} (and appears to be drunk)"
+            return f"{base_desc} ({rstatus})"
+
+    return base_desc
         
-def get_basic_description(character):
+def get_basic_description(character, include_rstatus=False, include_ostatus=False):
     """
     Get a basic description of a character (for acquaintances).
     Returns notable physical features.
+    
+    Args:
+        character: The character to describe
+        include_rstatus (bool): Whether to include roleplay status
+        include_ostatus (bool): Whether to include optional status
     """
+    # Start with optional status if included
+    if include_ostatus and hasattr(character, 'get_ostatus'):
+        ostatus = character.get_ostatus()
+        if ostatus:
+            return f"{ostatus}\n\n{get_basic_description(character)}"
+    
     descriptions = character.db.descriptions or {}
     notable_features = []
     
@@ -100,19 +137,40 @@ def get_basic_description(character):
                 notable_features.append(f"{color} hair")
                 break
     
-    # Combine features without capitalization or period
+    # Build base description
+    base_desc = f"a {character.db.race.lower()}"
     if notable_features:
         features_text = " and ".join(notable_features)
-        return f"a {character.db.race.lower()} with {features_text} can be seen"
-    else:
-        # Return basic race description without period
-        return f"a {character.db.race.lower()}"
+        base_desc = f"a {character.db.race.lower()} with {features_text} can be seen"
+
+    # Add roleplay status if included
+    if include_rstatus and hasattr(character, 'get_rstatus'):
+        rstatus = character.get_rstatus()
+        if rstatus:
+            # Check if character is drunk
+            is_drunk = hasattr(character.db, 'intoxication') and character.db.intoxication > 0
+            if is_drunk:
+                rstatus = f"{rstatus} (and appears to be drunk)"
+            return f"{base_desc} ({rstatus})"
+
+    return base_desc
     
-def get_full_description(character):
+def get_full_description(character, include_rstatus=False, include_ostatus=False):
     """
     Get the full description of a character (for friends).
     Returns all description fields in a formatted way.
+    
+    Args:
+        character: The character to describe
+        include_rstatus (bool): Whether to include roleplay status
+        include_ostatus (bool): Whether to include optional status
     """
+    # Start with optional status if included
+    if include_ostatus and hasattr(character, 'get_ostatus'):
+        ostatus = character.get_ostatus()
+        if ostatus:
+            return f"{ostatus}\n\n{get_full_description(character)}"
+    
     descriptions = character.db.descriptions or {}
     
     # Get the overall text description first
@@ -142,4 +200,16 @@ def get_full_description(character):
         if part in descriptions:
             details.append(f"{descriptions[part]}")
             
-    return text + " ".join(details)
+    base_desc = text + " ".join(details)
+
+    # Add roleplay status if included
+    if include_rstatus and hasattr(character, 'get_rstatus'):
+        rstatus = character.get_rstatus()
+        if rstatus:
+            # Check if character is drunk
+            is_drunk = hasattr(character.db, 'intoxication') and character.db.intoxication > 0
+            if is_drunk:
+                rstatus = f"{rstatus} (and appears to be drunk)"
+            return f"{base_desc}\n\n{character.name} ({rstatus})"
+
+    return base_desc

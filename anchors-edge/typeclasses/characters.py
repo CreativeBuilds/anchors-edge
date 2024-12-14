@@ -77,6 +77,10 @@ class Character(ObjectParent, DefaultCharacter):
         self.db.basic_desc = None  # Generated basic description
         self.db.descriptions = {}  # Initialize empty descriptions dict
         
+        # Initialize roleplay and optional status
+        self.db.rstatus = None     # Roleplay status (max 50 chars)
+        self.db.ostatus = None     # Optional status (max 180 chars)
+        
         # Initialize introduction tracking
         self.db.introduced_to = set()  # Set of character IDs this character has been introduced to
         
@@ -288,20 +292,21 @@ class Character(ObjectParent, DefaultCharacter):
         # Get the appropriate description based on knowledge level
         if is_self:
             name_display = f"|c{self.name}|n"
-            description = get_full_description(self)
+            description = get_full_description(self, include_rstatus=True, include_ostatus=True)
         elif knows_character:
             knowledge_level = looker.db.known_by.get(self.id, KnowledgeLevel.STRANGER)
             name_display = f"|c{self.name}|n"
             
             if knowledge_level >= KnowledgeLevel.FRIEND:
-                description = get_full_description(self)
+                description = get_full_description(self, include_rstatus=True, include_ostatus=True)
             elif knowledge_level >= KnowledgeLevel.ACQUAINTANCE:
-                description = get_basic_description(self)
+                description = get_basic_description(self, include_rstatus=True, include_ostatus=True)
             else:
-                description = get_brief_description(self)
+                description = get_brief_description(self, include_rstatus=True, include_ostatus=True)
         else:
-            name_display = f"|c{get_brief_description(self)}|n"
-            description = get_brief_description(self)
+            brief_desc = get_brief_description(self, include_rstatus=True, include_ostatus=True)
+            name_display = f"|c{brief_desc}|n"
+            description = brief_desc
 
         # Add intoxication description if any
         if hasattr(self.db, 'intoxication') and self.db.intoxication > 0:
@@ -699,6 +704,62 @@ class Character(ObjectParent, DefaultCharacter):
                 self.location.for_contents(message, exclude=[self], from_obj=self)
                 self.db.prelogout_location = self.location
                 self.location = None
+
+    def get_rstatus(self):
+        """Get the character's roleplay status."""
+        if not hasattr(self.db, 'rstatus'):
+            return None
+        return self.db.rstatus
+
+    def set_rstatus(self, status=None):
+        """
+        Set the character's roleplay status.
+        Args:
+            status (str, optional): The status to set. If None, clears the status.
+        Returns:
+            tuple: (success, message)
+        """
+        if status:
+            if len(status) > 50:  # Max length check
+                return False, "Status description cannot exceed 50 characters."
+            self.db.rstatus = status
+            return True, f"Your roleplay status has been set to: {status}"
+        else:
+            self.db.rstatus = None
+            return True, "Your roleplay status has been cleared."
+
+    def get_ostatus(self):
+        """Get the character's optional status."""
+        if not hasattr(self.db, 'ostatus'):
+            return None
+        return self.db.ostatus
+
+    def set_ostatus(self, status=None):
+        """
+        Set the character's optional status.
+        Args:
+            status (str, optional): The status to set. If None, clears the status.
+        Returns:
+            tuple: (success, message)
+        """
+        if status:
+            if len(status) > 180:  # Max length check
+                return False, "Optional status description cannot exceed 180 characters."
+            self.db.ostatus = status
+            return True, f"Your optional status has been set to: {status}"
+        else:
+            self.db.ostatus = None
+            return True, "Your optional status has been cleared."
+
+    def clear_rstatus(self):
+        """Clear the character's roleplay status."""
+        self.db.rstatus = None
+
+    def at_pre_move(self, destination, **kwargs):
+        """Called before moving the object."""
+        # Clear rstatus when moving
+        self.clear_rstatus()
+        return super().at_pre_move(destination, **kwargs)
 
 class NPC(Character):
     """Base NPC class with conversation memory"""

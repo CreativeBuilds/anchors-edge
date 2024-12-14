@@ -101,6 +101,46 @@ def validate_description(desc):
         
     return cleaned, None
 
+def get_pronoun(character, pronoun_type="reflexive"):
+    """
+    Get the appropriate pronoun based on character's gender.
+    
+    Args:
+        character: The character object
+        pronoun_type (str): Type of pronoun to return:
+            - "reflexive" (e.g., himself/herself/themselves)
+            - "subjective" (e.g., he/she/they)
+            - "objective" (e.g., him/her/them)
+            - "possessive" (e.g., his/her/their)
+    
+    Returns:
+        str: The appropriate pronoun
+    """
+    gender = character.db.gender.lower() if hasattr(character.db, 'gender') else "their"
+    
+    pronouns = {
+        "male": {
+            "reflexive": "himself",
+            "subjective": "he",
+            "objective": "him",
+            "possessive": "his"
+        },
+        "female": {
+            "reflexive": "herself",
+            "subjective": "she",
+            "objective": "her",
+            "possessive": "her"
+        },
+        "their": {
+            "reflexive": "themselves",
+            "subjective": "they",
+            "objective": "them",
+            "possessive": "their"
+        }
+    }
+    
+    return pronouns.get(gender, pronouns["their"])[pronoun_type]
+
 class CmdCharList(Command):
     """
     List available characters
@@ -297,7 +337,7 @@ class CmdIntro(Command):
             self.caller.msg("You already know yourself!")
             return
         
-        # Check if caller has already introduced themself to target
+        # Check if caller has already introduced their self to target
         if target.knows_character(self.caller):
             self.caller.msg(f"You have already introduced yourself to them.")
             return
@@ -320,11 +360,13 @@ class CmdIntro(Command):
         caller_display = self.caller.generate_brief_description().rstrip('.')
         target_basic = target.generate_brief_description().rstrip('.')
         
+        # Get pronouns for both characters
+        caller_reflexive = get_pronoun(self.caller, "reflexive")
+        target_reflexive = get_pronoun(target, "reflexive")
+        
         # Notify both parties
         self.caller.msg(f"You introduce yourself to {target_display}.")
-        target.msg(f"{caller_display} introduces themself to you as {self.caller.name}.")
-        
-        
+        target.msg(f"{caller_display} introduces {caller_reflexive} to you as {self.caller.name}.")
         
         # Notify the room with custom messages based on knowledge level
         for obj in self.caller.location.contents:
@@ -338,12 +380,12 @@ class CmdIntro(Command):
                 target_name = target_name[0].lower() + target_name[1:].rstrip('.')
                 
                 # Send customized message
-                obj.msg(format_sentence(f"{caller_name} introduces themself to {target_name}."))
+                obj.msg(format_sentence(f"{caller_name} introduces {caller_reflexive} to {target_name}."))
         
         # If mutual introduction, notify both parties
         if is_mutual:
-            self.caller.msg(f"As they have already introduced themself to you, you now know them as {target.name}.")
-            target.msg(f"Having already introduced yourself to them, they now know you as {target.name}.")
+            self.caller.msg(f"As they have already introduced {target_reflexive} to you, you now know them as {target.name}.")
+            target.msg(f"Having already introduced {target_reflexive} to them, they now know you as {target.name}.")
 
 class CmdLongIntro(Command):
     """
@@ -421,9 +463,12 @@ class CmdLongIntro(Command):
                           target.db.known_by[self.caller.id] == KnowledgeLevel.FRIEND and
                           self.caller.db.known_by[target.id] == KnowledgeLevel.FRIEND)
         
+        # Get the proper reflexive pronoun for the caller
+        caller_reflexive = get_pronoun(self.caller, "reflexive")
+        
         # Notify both parties
         self.caller.msg(f"You formally introduce yourself to {target.name}.")
-        target.msg(f"{self.caller.name} formally introduces themself to you.")
+        target.msg(f"{self.caller.name} formally introduces {caller_reflexive} to you.")
         
         if is_mutual_formal:
             self.caller.msg(f"|gYou and {target.name} are now formally introduced and can message each other from anywhere.|n")

@@ -16,14 +16,29 @@ class EmoteCommandBase(Command):
         """
         Conjugate the verb for 'you' as the subject.
         Handles special cases like 'gives' -> 'give'
+        Takes a string and conjugates only the first word.
         """
-        if verb.endswith('ies'):
-            return verb[:-3] + 'y'
-        elif verb.endswith('es'):
-            return verb[:-2]
-        elif verb.endswith('s'):
-            return verb[:-1]
-        return verb
+        # Split into words and get first word
+        words = verb.split()
+        if not words:
+            return verb
+            
+        first_word = words[0]
+        
+        # Conjugate first word
+        if first_word.endswith('ies'):
+            conjugated = first_word[:-3] + 'y'
+        elif first_word.endswith('es'):
+            conjugated = first_word[:-2]
+        elif first_word.endswith('s'):
+            conjugated = first_word[:-1]
+        else:
+            conjugated = first_word
+            
+        # Reconstruct full string with conjugated first word
+        if len(words) > 1:
+            return conjugated + ' ' + ' '.join(words[1:])
+        return conjugated
 
     def func(self):
         # Parse target from args

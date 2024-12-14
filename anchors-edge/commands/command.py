@@ -145,15 +145,16 @@ class CmdRegenRoom(MuxCommand):
 
 class SayCommand(default_cmds.MuxCommand):
     """
-    Speak in the room or to a specific person
+    Speak in the room or to specific people.
 
     Usage:
       say <message>
-      say to <character> <message>
+      say to <person1>[,person2,person3...] <message>
 
     Examples:
       say Hello everyone!
-      say to Willow Can I get a drink?
+      say to Bob Can I get a drink?
+      say to Bob,Jane,Tom Hey folks!
     """
 
     key = "say"
@@ -264,33 +265,76 @@ class SayCommand(default_cmds.MuxCommand):
         # Parse the input for targeted messages
         args = self.args.strip()
         if args.lower().startswith("to "):
-            # Split into target and message, preserving message spaces
+            # Split into targets and message
             try:
                 _, target_and_message = args.split(" ", 1)  # Split off "to "
-                target_name, message = target_and_message.split(" ", 1)  # Split target from message
+                targets_str, message = target_and_message.split(" ", 1)  # Split targets from message
             except ValueError:
                 caller.msg("Usage: say to <character> <message>")
                 return
 
-            # Look for target in the same location
-            target = caller.search(target_name, location=caller.location)
-            if not target:
+            # Handle multiple targets
+            target_names = [t.strip() for t in targets_str.split(",")]
+            targets = []
+            failed_targets = []
+
+            for target_name in target_names:
+                # Look for target in the same location
+                target = caller.search(target_name, location=caller.location, quiet=True)
+                if target:
+                    if isinstance(target, list):
+                        if len(target) == 1:
+                            targets.append(target[0])
+                        else:
+                            caller.msg(f"Multiple matches for '{target_name}'. Please be more specific.")
+                            return
+                    else:
+                        targets.append(target)
+                else:
+                    failed_targets.append(target_name)
+
+            if failed_targets:
+                if len(failed_targets) == len(target_names):
+                    caller.msg(f"Could not find anyone matching: {', '.join(failed_targets)}")
+                    return
+                else:
+                    caller.msg(f"Warning: Could not find: {', '.join(failed_targets)}")
+
+            if not targets:
                 return
 
             # Modify speech if drunk
             if intoxication_level > 1:
                 message = self.modify_drunk_speech(message, intoxication_level)
 
-            # Send the targeted message with drunk action text
-            room_message = f'{caller.name} {action_text_others} to {target.name}, "{message}"'
-            caller.location.msg_contents(room_message, exclude=[caller])
-            caller.msg(f'You {action_text_self} to {target.name}, "{message}"')
-            
-            # If target is an NPC, handle conversation
-            if hasattr(target, 'db') and hasattr(target.db, 'is_npc') and target.db.is_npc:
-                response = target.handle_conversation(caller, message)
-                # Send response to everyone in the room
-                caller.location.msg_contents(response.strip())
+            # Send personalized messages to each observer
+            for observer in caller.location.contents:
+                if hasattr(observer, 'msg'):
+                    if observer == caller:
+                        # Message for the speaker
+                        target_list = ", ".join(t.name for t in targets)
+                        observer.msg(f'You {action_text_self} to {target_list}, "{message}"')
+                    elif observer in targets:
+                        # Message for the target(s)
+                        if len(targets) > 1:
+                            others = [t.name for t in targets if t != observer]
+                            if others:
+                                others_str = f" and {', '.join(others)}"
+                            else:
+                                others_str = ""
+                            observer.msg(f'{caller.name} {action_text_others} to you{others_str}, "{message}"')
+                        else:
+                            observer.msg(f'{caller.name} {action_text_others} to you, "{message}"')
+                    else:
+                        # Message for other observers
+                        target_list = ", ".join(t.name for t in targets)
+                        observer.msg(f'{caller.name} {action_text_others} to {target_list}, "{message}"')
+
+            # Handle NPC responses
+            for target in targets:
+                if hasattr(target, 'db') and hasattr(target.db, 'is_npc') and target.db.is_npc:
+                    response = target.handle_conversation(caller, message)
+                    caller.location.msg_contents(response.strip())
 
         else:
             # Regular say command

@@ -304,6 +304,10 @@ class CmdSay(default_cmds.MuxCommand):
             if char == ',':
                 continue
             if char == ' ' and (i == 0 or target_and_message[i-1] not in ','):
+                # Check if this space is followed by punctuation (like "!")
+                if (i + 1 < len(target_and_message) and 
+                    target_and_message[i + 1] in '!?.'):
+                    continue
                 target_end = i
                 break
 
@@ -316,8 +320,8 @@ class CmdSay(default_cmds.MuxCommand):
                 return None, None
                 
             # Try to find at least one target
-            potential_target = self.caller.search(target_string, location=self.caller.location, quiet=True)
-            if potential_target:
+            targets, failed = self.caller.find_targets(target_string, location=self.caller.location, quiet=True)
+            if targets:
                 return target_string, message
         
         # If no target pattern is matched, treat entire input as message

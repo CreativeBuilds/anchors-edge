@@ -393,13 +393,16 @@ class CmdEmote(Command):
             self.caller.msg("What do you want to do?")
             return
 
-        # Message for the emoting character
-        self.caller.msg(f"You {self.args}")
+        # Format the emote messages
+        self_message, observer_message = self.format_emote_message(self.caller, self.args)
 
-        # Send personalized messages to other observers
+        # Send message to the character performing the emote
+        self.caller.msg(self_message)
+
+        # Send messages to other observers
         for observer in self.caller.location.contents:
             if observer != self.caller and hasattr(observer, 'msg'):
-                observer.msg(f"{self.caller.get_display_name(looker=observer)} {self.args}")
+                observer.msg(observer_message(observer))
 
 class CmdPmote(Command):
     """

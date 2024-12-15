@@ -292,19 +292,19 @@ class Character(ObjectParent, DefaultCharacter):
         # Get the appropriate description based on knowledge level
         if is_self:
             name_display = f"|c{self.name}|n"
-            description = get_full_description(self, include_rstatus=True, include_ostatus=True)
+            description = get_full_description(self, include_rstatus=False, include_ostatus=True)
         elif knows_character:
             knowledge_level = looker.db.known_by.get(self.id, KnowledgeLevel.STRANGER)
             name_display = f"|c{self.name}|n"
             
             if knowledge_level >= KnowledgeLevel.FRIEND:
-                description = get_full_description(self, include_rstatus=True, include_ostatus=True)
+                description = get_full_description(self, include_rstatus=False, include_ostatus=True)
             elif knowledge_level >= KnowledgeLevel.ACQUAINTANCE:
-                description = get_basic_description(self, include_rstatus=True, include_ostatus=True)
+                description = get_basic_description(self, include_rstatus=False, include_ostatus=True)
             else:
-                description = get_brief_description(self, include_rstatus=True, include_ostatus=True)
+                description = get_brief_description(self, include_rstatus=False, include_ostatus=True)
         else:
-            brief_desc = get_brief_description(self, include_rstatus=True, include_ostatus=True)
+            brief_desc = get_brief_description(self, include_rstatus=False, include_ostatus=True)
             name_display = f"|c{brief_desc}|n"
             description = brief_desc
 

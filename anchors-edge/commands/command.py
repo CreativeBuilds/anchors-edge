@@ -1124,9 +1124,8 @@ class CmdLook(default_cmds.CmdLook):
             self.msg("That's a direction you can move in, not something you can look at.")
             return
 
-        # Get candidates for looking (excluding exits)
-        candidates = [obj for obj in caller.location.contents 
-                     if obj != caller and not obj.destination]
+        # Get candidates for looking (including self but excluding exits)
+        candidates = [obj for obj in caller.location.contents if not obj.destination]
         
         # Get descriptions for matching
         matches = []

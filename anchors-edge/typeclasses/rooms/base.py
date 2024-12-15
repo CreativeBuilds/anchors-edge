@@ -125,16 +125,15 @@ class WeatherAwareRoom(DefaultRoom):
                 # If this is the looker, show their name
                 if char == looker:
                     display_name = char.name
+                    # Get roleplay status if available
+                    rp_status = ""
+                    if hasattr(char.db, 'rstatus') and char.db.rstatus:
+                        rp_status = f" ({char.db.rstatus})"
+                    char_line = f"{display_name}{rp_status}"
                 else:
-                    display_name = char.get_display_name(looker)
+                    # For other characters, use get_display_name which already includes status
+                    char_line = char.get_display_name(looker)
                     
-                # Get roleplay status if available
-                rp_status = ""
-                if hasattr(char.db, 'rstatus') and char.db.rstatus:
-                    rp_status = f" ({char.db.rstatus})"
-                    
-                # Format the complete line
-                char_line = f"{display_name}{rp_status}"
                 full_text += f"|/  |c{char_line}|n"
         
         return full_text

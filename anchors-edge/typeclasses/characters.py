@@ -867,8 +867,7 @@ class Character(ObjectParent, DefaultCharacter):
             # First try exact or partial name match for characters we know
             for obj in location.contents:
                 if (obj != self and 
-                    hasattr(obj, 'has_account') and 
-                    obj.has_account):
+                    inherits_from(obj, "typeclasses.characters.Character")):
                     
                     # If we know them, try matching against their name
                     if self.knows_character(obj):

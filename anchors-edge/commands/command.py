@@ -354,8 +354,9 @@ class CmdSay(default_cmds.MuxCommand):
         """
         # Get intoxication level and action text
         intoxication_level = caller.get_intoxication_level() if hasattr(caller, 'get_intoxication_level') else 0
-        action_text_others = self.get_drunk_action_text(intoxication_level, is_self=False, message=message)
-        action_text_self = self.get_drunk_action_text(intoxication_level, is_self=True, message=message)
+        # Pass targets to get_drunk_action_text to help determine if "to" is needed
+        action_text_others = self.get_drunk_action_text(intoxication_level, is_self=False, message=message, has_targets=bool(targets))
+        action_text_self = self.get_drunk_action_text(intoxication_level, is_self=True, message=message, has_targets=bool(targets))
 
         # Add any prefix to the action text
         if action_prefix:
@@ -397,23 +398,22 @@ class CmdSay(default_cmds.MuxCommand):
                     others_str = ""
 
                 # Get caller display name based on whether target knows them
-                if hasattr(target, 'knows_character'):
-                    caller_display = caller.name if target.knows_character(caller) else get_brief_description(caller)
-                else:
-                    caller_display = get_brief_description(caller)
+                caller_display = caller.get_display_name(looker=target)
 
                 connector = " " if action_text_others.endswith(" to") else " "
                 target_messages[target] = format_sentence(f'{caller_display} {action_text_others}{connector}you{others_str}, "{format_sentence(message)}"', no_period=True)
 
             # Message for other observers
-            caller_display = caller.name  # Default to name for room message
-            connector = " " if action_text_others.endswith(" to") else " "
-            observer_message = format_sentence(f'{caller_display} {action_text_others}{connector}{target_str}, "{format_sentence(message)}"', no_period=True)
+            # Use get_display_name to handle knowledge level for observers
+            # This will be formatted per-observer in msg_contents
+            observer_message = lambda observer: format_sentence(f'{caller.get_display_name(looker=observer)} {action_text_others}{connector}{target_str}, "{format_sentence(message)}"', no_period=True)
 
         else:
             # Regular untargeted speech
             self_message = format_sentence(f'You {action_text_self}, "{format_sentence(message)}"', no_period=True)
-            observer_message = format_sentence(f'{caller.name} {action_text_others}, "{format_sentence(message)}"', no_period=True)
+            # Use get_display_name to handle knowledge level for observers
+            # This will be formatted per-observer in msg_contents
+            observer_message = lambda observer: format_sentence(f'{caller.get_display_name(looker=observer)} {action_text_others}, "{format_sentence(message)}"', no_period=True)
 
         return self_message, target_messages, observer_message
 
@@ -459,14 +459,10 @@ class CmdSay(default_cmds.MuxCommand):
         # Send message to other observers
         if observer_message:
             exclude = [caller] + (list(target_messages.keys()) if target_messages else [])
-            caller.location.msg_contents(observer_message, exclude=exclude)
-
-        # Handle NPC responses
-        if targets:
-            for target in targets:
-                if hasattr(target, 'db') and hasattr(target.db, 'is_npc') and target.db.is_npc:
-                    response = target.handle_conversation(caller, message)
-                    caller.location.msg_contents(format_sentence(response.strip(), no_period=True))
+            # For each observer, format the message with their specific view
+            for observer in caller.location.contents:
+                if observer not in exclude and hasattr(observer, 'msg'):
+                    observer.msg(observer_message(observer))
 
 class CmdLsay(CmdSay):
     """

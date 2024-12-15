@@ -320,6 +320,10 @@ class CmdSay(default_cmds.MuxCommand):
             if args.lower().startswith("to ") and not message:
                 return None, None
                 
+            # Check if any potential target is too short (less than 2 chars)
+            if any(len(t.strip()) < 2 for t in target_string.split(",")):
+                return "", target_and_message
+                
             # Try to find at least one target
             targets, failed = self.caller.find_targets(target_string, location=self.caller.location, quiet=True)
             if targets:

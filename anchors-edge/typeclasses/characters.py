@@ -820,57 +820,46 @@ class Character(ObjectParent, DefaultCharacter):
         if not location:
             return [], []
             
-        # Split target string by commas and clean up each part
-        target_strings = [t.strip() for t in target_string.split(",") if t.strip()]
+        # Split target string by commas
+        target_strings = [t.strip() for t in target_string.split(",")]
         targets = []
         failed_targets = []
         
-        # Get all potential targets from location
-        potential_targets = [obj for obj in location.contents 
-                           if obj != self and hasattr(obj, 'has_account') and obj.has_account]
-        
         for search_term in target_strings:
             found = False
-            best_match = None
-            best_ratio = 0.5  # Minimum match threshold
-            
-            # Try to find the best match among potential targets
-            for obj in potential_targets:
-                # If we know them, try matching against their name
-                if self.knows_character(obj):
-                    ratio = SequenceMatcher(None, search_term.lower(), obj.name.lower()).ratio()
-                    if ratio > best_ratio:
-                        best_ratio = ratio
-                        best_match = obj
+            # First try exact name match for characters we know
+            for obj in location.contents:
+                if (obj != self and 
+                    hasattr(obj, 'has_account') and 
+                    obj.has_account):
+                    
+                    # If we know them, match against their name
+                    if (self.knows_character(obj) and 
+                        search_term.lower() in obj.name.lower()):
+                        targets.append(obj)
                         found = True
-                
-                # Also try matching against description
-                desc_ratio = SequenceMatcher(None, search_term.lower(), 
-                                           get_brief_description(obj).lower()).ratio()
-                if desc_ratio > best_ratio and desc_ratio > ratio:
-                    best_ratio = desc_ratio
-                    best_match = obj
-                    found = True
-            
-            # If we found a good match, add it
-            if found and best_match:
-                if best_match not in targets:  # Avoid duplicates
-                    targets.append(best_match)
-            else:
-                # If no good match found through fuzzy matching, try standard search
+                        break
+                    # Always try matching against description too
+                    elif search_term.lower() in get_brief_description(obj).lower():
+                        targets.append(obj)
+                        found = True
+                        break
+                        
+            # If no match found through name/description, try standard search
+            if not found:
                 result = self.search(search_term, location=location, quiet=True)
                 if result:
                     if isinstance(result, list):
-                        if len(result) == 1 and result[0] not in targets:
+                        if len(result) == 1:
                             targets.append(result[0])
                             found = True
                         elif not quiet:
                             self.msg(f"Multiple matches for '{search_term}'. Please be more specific.")
                             return [], []
-                    elif result not in targets:
+                    else:
                         targets.append(result)
                         found = True
-                
+                        
             if not found:
                 failed_targets.append(search_term)
                 

@@ -26,25 +26,11 @@ from commands.admin import (
     CmdLastWipe, CmdChangelog, CmdResetWorld
 )
 from commands.command import CmdWho, CmdLook, CmdSay, CmdLsay
-from commands.emote import CmdEmote, CmdPmote, CmdOmote, CmdTmote, CmdEmoteList, register_standard_emotes
+from commands.emote import CmdEmote, CmdPmote, CmdOmote, CmdTmote
 from commands.unloggedin import CmdUnloggedinLook
 from commands.social import add_social_commands
 from commands.roleplay import CmdRoleplayStatus, CmdOptionalStatus
 from utils.error_handler import handle_error
-
-
-class EmoteCmdSet(CmdSet):
-    """
-    This cmdset contains all the standard emote commands.
-    """
-    key = "EmoteCmdSet"
-    priority = -1  # Lower than default (0)
-
-    def at_cmdset_creation(self):
-        """
-        Register all standard emotes
-        """
-        register_standard_emotes(self)
 
 
 class CharacterCmdSet(DefaultCharacterCmdSet):
@@ -78,7 +64,6 @@ class CharacterCmdSet(DefaultCharacterCmdSet):
         self.add(CmdPmote())
         self.add(CmdOmote())
         self.add(CmdTmote())
-        self.add(CmdEmoteList())
         self.add(CmdLook())
         self.add(CmdSay())
         self.add(CmdLsay())
@@ -86,12 +71,8 @@ class CharacterCmdSet(DefaultCharacterCmdSet):
         self.add(CmdRoleplayStatus())
         self.add(CmdOptionalStatus())
         # Add social commands
-        # add_social_commands(self)
-        
-        # Add the emote cmdset (create an instance)
-        emote_cmdset = EmoteCmdSet()
-        emote_cmdset.mergetype = "Union"  # Ensure it merges properly
-        self.add(emote_cmdset)
+        add_social_commands(self)
+
 
 
 class AccountCmdSet(DefaultAccountCmdSet):

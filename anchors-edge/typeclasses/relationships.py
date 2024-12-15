@@ -37,7 +37,7 @@ def get_brief_description(character, include_height=True, include_race=True, inc
     # Get height description if included
     if include_height:
         height = character.db.height if hasattr(character.db, 'height') else 0
-        race = character.db.race
+        race = character.db.race if hasattr(character.db, 'race') and character.db.race else "Human"
         subrace = character.db.subrace if hasattr(character.db, 'subrace') else None
         # Safely get gender, defaulting to 'male' if not set or None
         gender = (character.db.gender.lower() if hasattr(character.db, 'gender') and character.db.gender else 'male')
@@ -78,8 +78,9 @@ def get_brief_description(character, include_height=True, include_race=True, inc
         
      # Get race description if included
     if include_race:
-        race = character.db.race
-        if include_subrace and character.db.subrace:
+        # Safely get race, defaulting to "Human" if not set or None
+        race = character.db.race if hasattr(character.db, 'race') and character.db.race else "Human"
+        if include_subrace and hasattr(character.db, 'subrace') and character.db.subrace:
             race_desc = f"{character.db.subrace} {race}"
         else:
             race_desc = race

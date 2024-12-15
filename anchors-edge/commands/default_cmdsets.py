@@ -67,9 +67,9 @@ class CharacterCmdSet(DefaultCharacterCmdSet):
         self.add(CmdRoleplayStatus())
         self.add(CmdOptionalStatus())
         # Register all standard emotes
-        register_standard_emotes(self)
+        # register_standard_emotes(self)
         # Add social commands
-        add_social_commands(self)
+        # add_social_commands(self)
 
 
 class AccountCmdSet(DefaultAccountCmdSet):

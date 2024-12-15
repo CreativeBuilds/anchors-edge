@@ -385,14 +385,14 @@ class CmdIntro(Command):
             self.caller.msg(f"As they have already introduced {target_reflexive} to you, you now know them as {target.name}.")
             target.msg(f"Having already introduced {target_reflexive} to them, they now know you as {target.name}.")
 
-class CmdLongIntro(Command):
+class CmdIntroLong(Command):
     """
     Give a longer introduction to someone, sharing more details about yourself.
     
     Usage:
-      longintro <character>
+      introlong <character>
     """
-    key = "longintro"
+    key = "introlong"
     locks = "cmd:all()"
     help_category = "Social"
     
@@ -400,7 +400,7 @@ class CmdLongIntro(Command):
         """Handle the long introduction."""
         try:
             if not self.args:
-                self.caller.msg("Usage: longintro <character>")
+                self.caller.msg("Usage: introlong <character>")
                 return
                 
             # Find target

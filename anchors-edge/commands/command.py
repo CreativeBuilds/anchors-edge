@@ -390,7 +390,9 @@ class CmdSay(default_cmds.MuxCommand):
                         target_str = f"{', '.join(t.name if (hasattr(observer, 'knows_character') and observer.knows_character(t)) else get_brief_description(t) for t in targets[:-1])} and {targets[-1].name if (hasattr(observer, 'knows_character') and observer.knows_character(targets[-1])) else get_brief_description(targets[-1])}"
                     else:
                         target_str = targets[0].name if (hasattr(observer, 'knows_character') and observer.knows_character(targets[0])) else get_brief_description(targets[0])
-                    msg = format_sentence(f'You {action_text_self} to {target_str}, "{format_sentence(message)}"', no_period=True)
+                    # Check if action text already includes "to"
+                    connector = " " if action_text_self.endswith(" to") else " "
+                    msg = format_sentence(f'You {action_text_self}{connector}{target_str}, "{format_sentence(message)}"', no_period=True)
                     observer.msg(msg)
                 elif observer in targets:
                     # Message for the target(s)
@@ -406,7 +408,9 @@ class CmdSay(default_cmds.MuxCommand):
                             caller_display = caller.name if observer.knows_character(caller) else get_brief_description(caller)
                         else:
                             caller_display = get_brief_description(caller)
-                        msg = format_sentence(f'{caller_display} {action_text_others} to you{others_str}, "{format_sentence(message)}"', no_period=True)
+                        # Check if action text already includes "to"
+                        connector = " " if action_text_others.endswith(" to") else " "
+                        msg = format_sentence(f'{caller_display} {action_text_others}{connector}you{others_str}, "{format_sentence(message)}"', no_period=True)
                         observer.msg(msg)
                     else:
                         # Get caller display name based on whether observer is a character
@@ -414,7 +418,9 @@ class CmdSay(default_cmds.MuxCommand):
                             caller_display = caller.name if observer.knows_character(caller) else get_brief_description(caller)
                         else:
                             caller_display = get_brief_description(caller)
-                        msg = format_sentence(f'{caller_display} {action_text_others} to you, "{format_sentence(message)}"', no_period=True)
+                        # Check if action text already includes "to"
+                        connector = " " if action_text_others.endswith(" to") else " "
+                        msg = format_sentence(f'{caller_display} {action_text_others}{connector}you, "{format_sentence(message)}"', no_period=True)
                         observer.msg(msg)
                 else:
                     # Message for other observers
@@ -427,7 +433,9 @@ class CmdSay(default_cmds.MuxCommand):
                         caller_display = caller.name if observer.knows_character(caller) else get_brief_description(caller)
                     else:
                         caller_display = get_brief_description(caller)
-                    msg = format_sentence(f'{caller_display} {action_text_others} to {target_str}, "{format_sentence(message)}"', no_period=True)
+                    # Check if action text already includes "to"
+                    connector = " " if action_text_others.endswith(" to") else " "
+                    msg = format_sentence(f'{caller_display} {action_text_others}{connector}{target_str}, "{format_sentence(message)}"', no_period=True)
                     observer.msg(msg)
 
             # Handle NPC responses

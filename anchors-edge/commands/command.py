@@ -386,7 +386,7 @@ class CmdSay(default_cmds.MuxCommand):
 
                 if observer == caller:
                     # Message for the speaker
-                    target_str = ", ".join(t.name if observer.knows_character(t) else get_brief_description(t) for t in targets)
+                    target_str = ", ".join(t.name if (hasattr(observer, 'knows_character') and observer.knows_character(t)) else get_brief_description(t) for t in targets)
                     msg = format_sentence(f'You {action_text_self} to {target_str}, "{format_sentence(message)}"', no_period=True)
                     observer.msg(msg)
                 elif observer in targets:
@@ -394,7 +394,7 @@ class CmdSay(default_cmds.MuxCommand):
                     if len(targets) > 1:
                         # Get list of other targets (excluding the current observer)
                         other_targets = [t for t in targets if t != observer]
-                        others_str = f", {', '.join(t.name if observer.knows_character(t) else get_brief_description(t) for t in other_targets)}" if other_targets else ""
+                        others_str = f", {', '.join(t.name if (hasattr(observer, 'knows_character') and observer.knows_character(t)) else get_brief_description(t) for t in other_targets)}" if other_targets else ""
                         # Get caller display name based on whether observer is a character
                         if is_character:
                             caller_display = caller.name if observer.knows_character(caller) else get_brief_description(caller)
@@ -412,7 +412,7 @@ class CmdSay(default_cmds.MuxCommand):
                         observer.msg(msg)
                 else:
                     # Message for other observers
-                    target_str = ", ".join(t.name if observer.knows_character(t) else get_brief_description(t) for t in targets)
+                    target_str = ", ".join(t.name if (hasattr(observer, 'knows_character') and observer.knows_character(t)) else get_brief_description(t) for t in targets)
                     # Get caller display name based on whether observer is a character
                     if is_character:
                         caller_display = caller.name if observer.knows_character(caller) else get_brief_description(caller)

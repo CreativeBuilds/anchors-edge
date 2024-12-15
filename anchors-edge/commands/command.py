@@ -1123,35 +1123,55 @@ class CmdLook(default_cmds.CmdLook):
         if search_term in exit_aliases or any(search_term == exit.key.lower() for exit in exits):
             self.msg("That's a direction you can move in, not something you can look at.")
             return
-            
+
         # Get candidates for looking (excluding exits)
         candidates = [obj for obj in caller.location.contents 
                      if obj != caller and not obj.destination]
         
-        # Get full descriptions for logging and matching
+        # Get full descriptions and names for logging and matching
         candidate_descs = []
         for obj in candidates:
             if hasattr(obj, 'get_display_name'):
                 full_desc = obj.get_display_name(caller)
             else:
                 full_desc = obj.name
-            candidate_descs.append((obj, full_desc))
+            candidate_descs.append((obj, full_desc, obj.key.lower()))
             
-        logger.log_info(f"Candidates: {[desc for obj, desc in candidate_descs]}")
+        logger.log_info(f"Candidates: {[desc for obj, desc, key in candidate_descs]}")
         
-        # Fuzzy match against full descriptions
-        matches = []
-        for obj, full_desc in candidate_descs:
+        # Try exact matches on key first
+        exact_matches = [obj for obj, desc, key in candidate_descs if search_term == key]
+        if exact_matches:
+            self.args = exact_matches[0].key
+            super().func()
+            return
+
+        # Try partial matches on key next
+        key_matches = []
+        for obj, desc, key in candidate_descs:
+            if search_term in key:
+                key_matches.append((len(key) - len(search_term), obj))  # Score by how close the length match is
+        
+        if key_matches:
+            # Sort by closest length match
+            key_matches.sort()
+            self.args = key_matches[0][1].key
+            super().func()
+            return
+        
+        # Finally try fuzzy matching against full descriptions
+        desc_matches = []
+        for obj, full_desc, key in candidate_descs:
             ratio = SequenceMatcher(None, search_term, full_desc.lower()).ratio()
             if ratio > 0.4:  # Lower threshold since we're matching longer strings
-                matches.append((ratio, obj))
+                desc_matches.append((ratio, obj))
         
         # Sort by match ratio
-        matches.sort(reverse=True)
+        desc_matches.sort(reverse=True)
         
-        if matches:
+        if desc_matches:
             # Take the best match and use the parent class's look handling
-            best_match = matches[0][1]
+            best_match = desc_matches[0][1]
             # Set the args to the exact key and call parent's func()
             self.args = best_match.key
             super().func()

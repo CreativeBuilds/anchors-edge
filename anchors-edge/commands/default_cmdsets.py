@@ -24,7 +24,7 @@ from commands.admin import (
     CmdCleanupAccounts, CmdResetAccount, CmdDebugCharacter,
     CmdLastWipe, CmdChangelog, CmdResetWorld
 )
-from commands.command import CmdWho, CmdLook, CmdSay
+from commands.command import CmdWho, CmdLook, CmdSay, CmdLsay
 from commands.emote import CmdEmote, CmdPmote, CmdOmote, CmdTmote, CmdEmoteList
 from commands.unloggedin import CmdUnloggedinLook
 from commands.social import add_social_commands
@@ -62,6 +62,7 @@ class CharacterCmdSet(DefaultCharacterCmdSet):
         self.add(CmdEmoteList())
         self.add(CmdLook())
         self.add(CmdSay())
+        self.add(CmdLsay())
         # Add roleplay status commands
         self.add(CmdRoleplayStatus())
         self.add(CmdOptionalStatus())

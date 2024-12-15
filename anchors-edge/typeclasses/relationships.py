@@ -6,10 +6,11 @@ from enum import IntEnum
 from django.conf import settings
 
 class KnowledgeLevel(IntEnum):
-    """Enum for tracking how well one character knows another."""
-    STRANGER = 0      # Basic race/height info only
-    ACQUAINTANCE = 1  # Basic physical description + name if introduced
-    FRIEND = 2        # Full description + name + messaging
+    """Enum for different levels of character knowledge"""
+    NONE = 0
+    STRANGER = 1
+    ACQUAINTANCE = 2
+    FRIEND = 3
     
 def get_brief_description(character, include_height=True, include_race=True, include_subrace=True, include_gender=True, include_rstatus=False, include_ostatus=False):
     """

@@ -12,6 +12,8 @@ from typeclasses.relationships import (
     get_basic_description,
     get_full_description
 )
+from commands.social import EmoteCommandBase
+
 
 # Helper functions
 def get_possessive(name: str) -> str:
@@ -85,8 +87,8 @@ STANDARD_EMOTES: Dict[str, Dict[str, str]] = {
         "targeted": "waves at"
     },
     "greet": {
-        "self": "greet everyone",
-        "other": "greets everyone",
+        "self": "greet",
+        "other": "greets",
         "targeted": "greets"
     },
     "blush": {
@@ -105,9 +107,9 @@ STANDARD_EMOTES: Dict[str, Dict[str, str]] = {
         "targeted": "shrugs at"
     },
     "clap": {
-        "self": "clap",
-        "other": "claps",
-        "targeted": "claps for"
+        "self": "clap {their} hands",
+        "other": "claps {their} hands",
+        "targeted": "claps {their} hands for"
     },
     "applaud": {
         "self": "applaud",
@@ -194,37 +196,36 @@ STANDARD_EMOTES: Dict[str, Dict[str, str]] = {
     
     # Actions
     "poke": {
-        "self": "poke",
-        "other": "pokes",
+        "self": "poke {them} with {their} finger",
+        "other": "pokes {them} with {their} finger",
         "targeted": "pokes"
     },
     "hipcheck": {
-        "self": "give a friendly hipcheck to",
-        "other": "gives a friendly hipcheck to",
+        "self": "give {them} a friendly hipcheck",
+        "other": "gives {them} a friendly hipcheck",
         "targeted": "gives a friendly hipcheck to"
     },
     "shouldercheck": {
-        "self": "shouldercheck harshly on the way by",
-        "other": "shoulderchecks harshly on the way by",
-        "targeted": "shoulderchecks harshly on the way by"
+        "self": "shouldercheck {them} harshly on the way by",
+        "other": "shoulderchecks {them} harshly on the way by",
+        "targeted": "shoulderchecks"
     },
     "point": {
-        "self": "point",
-        "other": "points",
-        "targeted": "points at",
-        "directional": "points to the {direction}"
+        "self": "point {their} finger",
+        "other": "points {their} finger",
+        "targeted": "points at"
     },
     "bounce": {
-        "self": "bounce around like a fucking idiot",
-        "other": "bounces around like a fucking idiot"
+        "self": "bounce around excitedly",
+        "other": "bounces around excitedly"
     },
     "hmm": {
-        "self": "hum thoughtfully",
-        "other": "hums thoughtfully"
+        "self": "hum thoughtfully to {themselves}",
+        "other": "hums thoughtfully to {themselves}"
     },
     "?": {
-        "self": "look curious",
-        "other": "looks curious",
+        "self": "tilt {their} head curiously",
+        "other": "tilts {their} head curiously",
         "targeted": "looks curiously at"
     },
     "glare": {
@@ -233,8 +234,8 @@ STANDARD_EMOTES: Dict[str, Dict[str, str]] = {
         "targeted": "glares at"
     },
     "yawn": {
-        "self": "yawn",
-        "other": "yawns",
+        "self": "cover {their} mouth and yawn",
+        "other": "covers {their} mouth and yawns",
         "targeted": "yawns at"
     },
     "beam": {
@@ -243,18 +244,18 @@ STANDARD_EMOTES: Dict[str, Dict[str, str]] = {
         "targeted": "beams brightly at"
     },
     "brow": {
-        "self": "arch an eyebrow",
-        "other": "arches an eyebrow",
-        "targeted": "arches an eyebrow at"
+        "self": "arch {their} eyebrow",
+        "other": "arches {their} eyebrow",
+        "targeted": "arches {their} eyebrow at"
     },
     "nod": {
-        "self": "nod",
-        "other": "nods",
+        "self": "nod {their} head",
+        "other": "nods {their} head",
         "targeted": "nods at"
     },
     "agree": {
-        "self": "agree",
-        "other": "agrees",
+        "self": "nod {their} head in agreement",
+        "other": "nods {their} head in agreement",
         "targeted": "agrees with"
     },
     
@@ -269,21 +270,21 @@ STANDARD_EMOTES: Dict[str, Dict[str, str]] = {
         "other": "beats {their} head against the nearest wall"
     },
     "tired": {
-        "self": "am tired",
-        "other": "is tired",
-        "targeted": "makes {target} tired"
+        "self": "rub {their} eyes tiredly",
+        "other": "rubs {their} eyes tiredly",
+        "targeted": "looks tiredly at"
     },
     
     # Gestures
     "tup": {
         "self": "give a thumbs up",
         "other": "gives a thumbs up",
-        "targeted": "gives {target} a thumbs up"
+        "targeted": "gives a thumbs up to"
     },
     "tdown": {
         "self": "give a thumbs down",
         "other": "gives a thumbs down",
-        "targeted": "gives {target} a thumbs down"
+        "targeted": "gives a thumbs down to"
     },
     "tongue": {
         "self": "stick out {their} tongue",
@@ -291,16 +292,73 @@ STANDARD_EMOTES: Dict[str, Dict[str, str]] = {
         "targeted": "sticks out {their} tongue at"
     },
     "shh": {
-        "self": "shush",
-        "other": "shushes",
+        "self": "put {their} finger to {their} lips",
+        "other": "puts {their} finger to {their} lips",
         "targeted": "shushes"
     },
     "ack": {
         "self": "ack",
-        "other": "acks"
+        "other": "acks",
+        "targeted": "acks at"
     }
 }
 
+def create_emote_command(key, emote_data):
+    """
+    Create a command class for an emote.
+    
+    Args:
+        key (str): The emote key/command name
+        emote_data (dict): The emote data containing 'self', 'other', and optionally 'targeted' forms
+        
+    Returns:
+        type: A new command class for the emote
+    """
+    class_name = f"Cmd{key.capitalize()}"
+    
+    # Create docstring
+    if 'targeted' in emote_data:
+        doc = f"""
+        {key.capitalize()} emote command.
+        
+        Usage:
+          {key} [<target>]
+        """
+    else:
+        doc = f"""
+        {key.capitalize()} emote command.
+        
+        Usage:
+          {key}
+        """
+    
+    # Create the command class
+    cmd_class = type(
+        class_name,
+        (EmoteCommandBase,),
+        {
+            '__doc__': doc,
+            'key': key,
+            'emote_text': emote_data['other'],
+            'self_emote': emote_data.get('self', emote_data['other']),
+            'targeted_emote': emote_data.get('targeted', None)
+        }
+    )
+    
+    return cmd_class
+
+def register_standard_emotes(cmdset):
+    """
+    Register all standard emotes as commands.
+    
+    Args:
+        cmdset: The command set to add the emotes to
+    """
+    for key, data in STANDARD_EMOTES.items():
+        cmd_class = create_emote_command(key, data)
+        cmdset.add(cmd_class())
+
+# Update CmdEmoteList to use the same registration system
 class CmdEmoteList(Command):
     """
     List all available automatic emotes.
@@ -352,6 +410,9 @@ class CmdEmoteList(Command):
         if category:
             self.caller.msg(f"|y{category.title()} emotes:|n")
         self.caller.msg(table)
+
+# Export the registration function
+__all__ = ['register_standard_emotes', 'CmdEmoteList']
 
 class CmdEmote(Command):
     """

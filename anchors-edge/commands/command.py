@@ -327,32 +327,54 @@ class CmdSay(default_cmds.MuxCommand):
 
             # Send personalized messages to each observer
             for observer in caller.location.contents:
-                if hasattr(observer, 'msg'):
-                    if observer == caller:
-                        # Message for the speaker
-                        target_list = ", ".join(t.name if caller.knows_character(t) else get_brief_description(t) for t in targets)
-                        observer.msg(f'You {action_text_self} to {target_list}, "{message}"')
-                    elif observer in targets:
-                        # Message for the target(s)
-                        if len(targets) > 1:
-                            others = []
-                            for t in targets:
-                                if t != observer:
-                                    if observer.knows_character(t):
-                                        others.append(t.name)
-                                    else:
-                                        others.append(get_brief_description(t))
-                            if others:
-                                others_str = f" and {', '.join(others)}"
+                if not hasattr(observer, 'msg'):
+                    continue
+
+                # Check if observer is a character that can know other characters
+                is_character = hasattr(observer, 'knows_character')
+                
+                if observer == caller:
+                    # Message for the speaker
+                    target_list = []
+                    for t in targets:
+                        if hasattr(t, 'name'):  # Make sure target has a name
+                            if hasattr(caller, 'knows_character') and caller.knows_character(t):
+                                target_list.append(t.name)
                             else:
-                                others_str = ""
-                            observer.msg(f'{caller.name if observer.knows_character(caller) else get_brief_description(caller)} {action_text_others} to you{others_str}, "{message}"')
+                                target_list.append(get_brief_description(t))
+                    target_str = ", ".join(target_list)
+                    observer.msg(f'You {action_text_self} to {target_str}, "{message}"')
+                elif observer in targets:
+                    # Message for the target(s)
+                    if len(targets) > 1:
+                        others = []
+                        for t in targets:
+                            if t != observer and hasattr(t, 'name'):
+                                if is_character and observer.knows_character(t):
+                                    others.append(t.name)
+                                else:
+                                    others.append(get_brief_description(t))
+                        if others:
+                            others_str = f" and {', '.join(others)}"
                         else:
-                            observer.msg(f'{caller.name if observer.knows_character(caller) else get_brief_description(caller)} {action_text_others} to you, "{message}"')
+                            others_str = ""
+                        caller_display = caller.name if (is_character and observer.knows_character(caller)) else get_brief_description(caller)
+                        observer.msg(f'{caller_display} {action_text_others} to you{others_str}, "{message}"')
                     else:
-                        # Message for other observers
-                        target_list = ", ".join(t.name if observer.knows_character(t) else get_brief_description(t) for t in targets)
-                        observer.msg(f'{caller.name if observer.knows_character(caller) else get_brief_description(caller)} {action_text_others} to {target_list}, "{message}"')
+                        caller_display = caller.name if (is_character and observer.knows_character(caller)) else get_brief_description(caller)
+                        observer.msg(f'{caller_display} {action_text_others} to you, "{message}"')
+                else:
+                    # Message for other observers
+                    target_list = []
+                    for t in targets:
+                        if hasattr(t, 'name'):  # Make sure target has a name
+                            if is_character and observer.knows_character(t):
+                                target_list.append(t.name)
+                            else:
+                                target_list.append(get_brief_description(t))
+                    target_str = ", ".join(target_list)
+                    caller_display = caller.name if (is_character and observer.knows_character(caller)) else get_brief_description(caller)
+                    observer.msg(f'{caller_display} {action_text_others} to {target_str}, "{message}"')
 
             # Handle NPC responses
             for target in targets:

@@ -23,22 +23,34 @@ def send_to_discord(message, error=None):
     try:
         # Create an embed for better formatting
         embed = {
-            "title": "Admin Alert" if not error else "Error Alert",
-            "description": message,
+            "title": "Error Alert",
+            "description": f"{message}\n\n{traceback.format_exc() if error else ''}",
             "color": 0xFF0000,  # Red color for alerts
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
+            "fields": []
         }
         
-        # If there's an error, add the traceback
+        # Add error details if present
         if error:
-            embed["fields"] = [{
-                "name": "Error Details",
+            embed["fields"].append({
+                "name": "Error Type",
+                "value": f"`{type(error).__name__}`",
+                "inline": True
+            })
+            embed["fields"].append({
+                "name": "Error Message",
+                "value": f"```{str(error)}```",
+                "inline": True
+            })
+            embed["fields"].append({
+                "name": "Full Traceback",
                 "value": f"```python\n{traceback.format_exc()[:1000]}```"  # Limit to 1000 chars
-            }]
+            })
         
-        # Prepare the payload
+        # Prepare the payload with @here mention in the embed
         payload = {
-            "embeds": [embed]
+            "embeds": [embed],
+            "username": "Anchors Edge Error Bot"
         }
         
         # Send to Discord
@@ -91,10 +103,9 @@ def handle_error(obj, err, unlogged=False):
         if unlogged:
             obj.msg("|rAn error occurred. Please try again or contact staff if the problem persists.|n")
         else:
-            obj.msg("|rAn error occurred. The staff has been notified.|n")
+            obj.msg("|rAn error occurred starting character creation. Please try again or contact staff if the problem persists.|n")
         
-    # If this is a serious error, also notify staff/admins
-    if not isinstance(err, (TypeError, ValueError, AttributeError)):
-        notify_admins(f"Serious command error: {err}", error=err)
+    # Always notify staff/admins for serious errors
+    notify_admins(f"Command error in {obj.__class__.__name__}: {err}", error=err)
         
     return True  # Prevents the default error handler from running

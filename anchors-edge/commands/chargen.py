@@ -1142,10 +1142,9 @@ class CmdCreateCharacter(Command):
                    node_formatter=node_formatter,
                    options_separator="")
         except Exception as err:
-            # Send friendly message to user
-            self.caller.msg("|rAn error occurred starting character creation. Please try again.|n")
-            # Log the error through our error handler
+            # Import at top to avoid circular imports
             from utils.error_handler import handle_error
+            # Let the error handler handle both the user message and Discord notification
             handle_error(self.caller, err)
   
 def node_age_verification(caller):

@@ -10,6 +10,7 @@ class EmoteCommandBase(Command):
     """Base class for simple emote commands"""
     locks = "cmd:all()"
     help_category = "Social"
+    auto_help = False  # This will hide all social commands from help
     
     def get_pronouns(self, character):
         """
@@ -757,21 +758,6 @@ class CmdHmm(EmoteCommandBase):
     key = "hmm"
     emote_text = "hums thoughtfully to {themselves}"
 
-class CmdQuestion(EmoteCommandBase):
-    """
-    Tilt head curiously.
-    
-    Usage:
-      ? [<person>] [<modifier>]
-      
-    Examples:
-      ?
-      ? Gad
-      ? curiously
-      ? Gad with interest
-    """
-    key = "?"
-    emote_text = "tilts {their} head curiously"
 
 class CmdYawn(EmoteCommandBase):
     """
@@ -906,7 +892,6 @@ def add_social_commands(cmdset):
     cmdset.add(CmdShouldercheck())  # Added
     cmdset.add(CmdBounce())  # Added
     cmdset.add(CmdHmm())  # Added
-    # cmdset.add(CmdQuestion())  # Added
     cmdset.add(CmdYawn())  # Added
     cmdset.add(CmdAgree())  # Added
     cmdset.add(CmdFacepalm())  # Added

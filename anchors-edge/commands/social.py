@@ -112,26 +112,27 @@ class EmoteCommandBase(Command):
                 preposition = words[0].lower()
                 args = " ".join(words[1:])  # Remove preposition from args
             
-            # First try to find a target in the room
-            potential_target = self.caller.search(args, location=self.caller.location, quiet=True)
-            if potential_target:
-                # If we found a target, the whole remaining args was a target
-                targets = [potential_target]
-                modifier = ""
-            else:
-                # No direct target found, split on first space to check for target + modifier
-                parts = args.split(None, 1)
-                if parts:
-                    first_word = parts[0]
-                    # Try to find target with just the first word
-                    potential_target = self.caller.search(first_word, location=self.caller.location, quiet=True)
-                    if potential_target:
-                        # First word was a target, rest is modifier
-                        targets = [potential_target]
-                        modifier = parts[1] if len(parts) > 1 else ""
+            # Split remaining args into potential target and modifier
+            parts = args.split(None, 1)
+            if parts:
+                target_string = parts[0]
+                modifier = parts[1] if len(parts) > 1 else ""
+                
+                # Try to find targets
+                found_targets, failed_targets = self.caller.find_targets(target_string)
+                
+                if failed_targets:
+                    if len(failed_targets) == len(target_string.split(",")):
+                        self.caller.msg(f"Could not find anyone matching: {', '.join(failed_targets)}")
+                        return
                     else:
-                        # No target found, treat everything as modifier
-                        modifier = args
+                        self.caller.msg(f"Warning: Could not find: {', '.join(failed_targets)}")
+                
+                targets.extend(found_targets)
+                
+                # If no targets found and we have args, treat everything as modifier
+                if not targets and args:
+                    modifier = args
 
         location = self.caller.location
         if not location:

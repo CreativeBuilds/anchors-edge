@@ -97,6 +97,7 @@ class EmoteCommandBase(Command):
         return conjugated
 
     def func(self):
+        """Handle the emote command."""
         # Parse target from args
         targets = []
         modifier = ""
@@ -104,47 +105,26 @@ class EmoteCommandBase(Command):
         if self.args:
             args = self.args.strip()
             
-            # First try to find targets
-            search_terms = []
-            
             # Split on first space to separate potential targets from modifier
             parts = args.split(None, 1)
             if parts:
-                # Split potential targets by commas
-                potential_targets = parts[0].split(',')
-                search_terms = [term.strip().lower() for term in potential_targets]
+                # First part could be targets
+                target_string = parts[0]
                 if len(parts) > 1:
                     modifier = parts[1].strip()
-            
-            # Search for characters in room for each search term
-            for search_term in search_terms:
-                matches = []
-                for obj in self.caller.location.contents:
-                    if (obj != self.caller and 
-                        hasattr(obj, 'has_account') and 
-                        obj.has_account):
-                        
-                        # If we know them, match against their name
-                        if self.caller.knows_character(obj) and search_term in obj.name.lower():
-                            matches.append((obj, obj))
-                        # Always try matching against description too
-                        elif search_term in get_brief_description(obj).lower():
-                            matches.append((obj, obj))
                 
-                # Handle matches for this search term
-                if len(matches) == 1:
-                    targets.append(matches[0][1])  # Use the actual object
-                elif len(matches) > 1:
-                    # Multiple matches found for this term
-                    self.caller.msg(f"Multiple characters match '{search_term}'. Please be more specific:")
-                    for char, _ in matches:
-                        if self.caller.knows_character(char):
-                            display = char.name
-                        else:
-                            display = get_brief_description(char)
-                        self.caller.msg(f"- {display}")
-                    return
-            
+                # Use the character's find_targets method
+                found_targets, failed_targets = self.caller.find_targets(target_string)
+                
+                if failed_targets:
+                    if len(failed_targets) == len(target_string.split(",")):
+                        self.caller.msg(f"Could not find anyone matching: {', '.join(failed_targets)}")
+                        return
+                    else:
+                        self.caller.msg(f"Warning: Could not find: {', '.join(failed_targets)}")
+                
+                targets.extend(found_targets)
+                
             # If no targets found, treat entire args as modifier
             if not targets and args:
                 modifier = args

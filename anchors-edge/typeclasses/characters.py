@@ -761,6 +761,71 @@ class Character(ObjectParent, DefaultCharacter):
         self.clear_rstatus()
         return super().at_pre_move(destination, **kwargs)
 
+    def find_targets(self, target_string, location=None, quiet=False):
+        """
+        Find targets by name or description.
+        
+        Args:
+            target_string (str): String containing target names/descriptions separated by commas
+            location (Object, optional): Location to search in. Defaults to caller's location.
+            quiet (bool, optional): Whether to suppress error messages. Defaults to False.
+            
+        Returns:
+            tuple: (list of found targets, list of failed target strings)
+        """
+        if not target_string:
+            return [], []
+            
+        # Use current location if none provided
+        location = location or self.location
+        if not location:
+            return [], []
+            
+        # Split target string by commas
+        target_strings = [t.strip() for t in target_string.split(",")]
+        targets = []
+        failed_targets = []
+        
+        for search_term in target_strings:
+            found = False
+            # First try exact name match for characters we know
+            for obj in location.contents:
+                if (obj != self and 
+                    hasattr(obj, 'has_account') and 
+                    obj.has_account):
+                    
+                    # If we know them, match against their name
+                    if (self.knows_character(obj) and 
+                        search_term.lower() in obj.name.lower()):
+                        targets.append(obj)
+                        found = True
+                        break
+                    # Always try matching against description too
+                    elif search_term.lower() in get_brief_description(obj).lower():
+                        targets.append(obj)
+                        found = True
+                        break
+                        
+            # If no match found through name/description, try standard search
+            if not found:
+                result = self.search(search_term, location=location, quiet=True)
+                if result:
+                    if isinstance(result, list):
+                        if len(result) == 1:
+                            targets.append(result[0])
+                            found = True
+                        elif not quiet:
+                            self.msg(f"Multiple matches for '{search_term}'. Please be more specific.")
+                            return [], []
+                    else:
+                        targets.append(result)
+                        found = True
+                        
+            if not found:
+                failed_targets.append(search_term)
+                
+        return targets, failed_targets
+
 class NPC(Character):
     """Base NPC class with conversation memory"""
     def at_object_creation(self):

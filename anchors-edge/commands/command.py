@@ -143,7 +143,7 @@ class CmdRegenRoom(MuxCommand):
         
         caller.msg(f"|GForced regeneration of descriptions for {target.key}.|n")
 
-class CmdSay(default_cmds.MuxCommand):
+class SayCommand(default_cmds.MuxCommand):
     """
     Speak in the room or to specific people.
 
@@ -268,8 +268,7 @@ class CmdSay(default_cmds.MuxCommand):
             try:
                 _, target_and_message = args.split(" ", 1)
                 targets_str, message = target_and_message.split(" ", 1)
-                target_names = [t.strip() for t in targets_str.split(",")]
-                return target_names, message
+                return targets_str, message
             except ValueError:
                 return None, None
 
@@ -280,12 +279,12 @@ class CmdSay(default_cmds.MuxCommand):
                 # Try to find the target in the room
                 potential_target = self.caller.search(words[0], location=self.caller.location, quiet=True)
                 if potential_target:
-                    return [words[0]], " ".join(words[1:])
+                    return words[0], " ".join(words[1:])
         except Exception:
             pass
 
         # If no target pattern is matched, treat entire input as message
-        return [], args
+        return "", args
 
     def func(self):
         """Implements the command"""
@@ -296,10 +295,10 @@ class CmdSay(default_cmds.MuxCommand):
             return
 
         # Parse the input
-        target_names, message = self.parse_targets_and_message(self.args)
+        target_string, message = self.parse_targets_and_message(self.args)
         
         # Handle incomplete or invalid "say to" command
-        if target_names is None:
+        if target_string is None:
             caller.msg("Usage: say <message> OR say to <person> <message>")
             return
 
@@ -308,27 +307,12 @@ class CmdSay(default_cmds.MuxCommand):
         action_text_others = self.get_drunk_action_text(intoxication_level, is_self=False)
         action_text_self = self.get_drunk_action_text(intoxication_level, is_self=True)
 
-        # If we have targets, handle targeted message
-        if target_names:
-            targets = []
-            failed_targets = []
-
-            for target_name in target_names:
-                target = caller.search(target_name, location=caller.location, quiet=True)
-                if target:
-                    if isinstance(target, list):
-                        if len(target) == 1:
-                            targets.append(target[0])
-                        else:
-                            caller.msg(f"Multiple matches for '{target_name}'. Please be more specific.")
-                            return
-                    else:
-                        targets.append(target)
-                else:
-                    failed_targets.append(target_name)
-
+        # If we have a target string, handle targeted message
+        if target_string:
+            targets, failed_targets = caller.find_targets(target_string)
+            
             if failed_targets:
-                if len(failed_targets) == len(target_names):
+                if len(failed_targets) == len(target_string.split(",")):
                     caller.msg(f"Could not find anyone matching: {', '.join(failed_targets)}")
                     return
                 else:
@@ -346,23 +330,29 @@ class CmdSay(default_cmds.MuxCommand):
                 if hasattr(observer, 'msg'):
                     if observer == caller:
                         # Message for the speaker
-                        target_list = ", ".join(t.name for t in targets)
+                        target_list = ", ".join(t.name if caller.knows_character(t) else get_brief_description(t) for t in targets)
                         observer.msg(f'You {action_text_self} to {target_list}, "{message}"')
                     elif observer in targets:
                         # Message for the target(s)
                         if len(targets) > 1:
-                            others = [t.name for t in targets if t != observer]
+                            others = []
+                            for t in targets:
+                                if t != observer:
+                                    if observer.knows_character(t):
+                                        others.append(t.name)
+                                    else:
+                                        others.append(get_brief_description(t))
                             if others:
                                 others_str = f" and {', '.join(others)}"
                             else:
                                 others_str = ""
-                            observer.msg(f'{caller.name} {action_text_others} to you{others_str}, "{message}"')
+                            observer.msg(f'{caller.name if observer.knows_character(caller) else get_brief_description(caller)} {action_text_others} to you{others_str}, "{message}"')
                         else:
-                            observer.msg(f'{caller.name} {action_text_others} to you, "{message}"')
+                            observer.msg(f'{caller.name if observer.knows_character(caller) else get_brief_description(caller)} {action_text_others} to you, "{message}"')
                     else:
                         # Message for other observers
-                        target_list = ", ".join(t.name for t in targets)
-                        observer.msg(f'{caller.name} {action_text_others} to {target_list}, "{message}"')
+                        target_list = ", ".join(t.name if observer.knows_character(t) else get_brief_description(t) for t in targets)
+                        observer.msg(f'{caller.name if observer.knows_character(caller) else get_brief_description(caller)} {action_text_others} to {target_list}, "{message}"')
 
             # Handle NPC responses
             for target in targets:

@@ -240,7 +240,7 @@ class CmdSay(default_cmds.MuxCommand):
 
         return message  # Return original message if API call fails
 
-    def get_drunk_action_text(self, intoxication_level, is_self=False, message=""):
+    def get_drunk_action_text(self, intoxication_level, is_self=False, message="", has_targets=False):
         """
         Get appropriate action text based on intoxication level and message punctuation.
         
@@ -248,17 +248,18 @@ class CmdSay(default_cmds.MuxCommand):
             intoxication_level (int): The speaker's intoxication level
             is_self (bool): Whether this is for the speaker's own message
             message (str): The message being spoken, used to determine speech type
+            has_targets (bool): Whether there are targets in the message
         """
         # Determine base verb based on message ending
         if message.rstrip().endswith('!'):
             base_verb = "exclaim" if is_self else "exclaims"
-            needs_to = True
+            needs_to = has_targets  # Exclamations don't need "to"
         elif message.rstrip().endswith('?'):
             base_verb = "ask" if is_self else "asks"
-            needs_to = False
+            needs_to = False  # Questions don't need "to"
         else:
             base_verb = "say" if is_self else "says"
-            needs_to = True
+            needs_to = has_targets  # Only add "to" if there are targets
 
         # Add drunk modifiers based on intoxication
         if intoxication_level <= 1:

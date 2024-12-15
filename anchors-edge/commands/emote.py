@@ -367,6 +367,26 @@ class CmdEmote(Command):
     aliases = ["pose", ":"]
     locks = "cmd:all()"
 
+    def format_emote_message(self, caller, message):
+        """
+        Format emote messages for all observers.
+        
+        Args:
+            caller: The character performing the emote
+            message: The emote message
+            
+        Returns:
+            tuple: (self_message, observer_message)
+            where observer_message is a lambda that takes an observer
+        """
+        # Message for the emoting character
+        self_message = format_sentence(f"You{' ' if not message.startswith(' ') else ''}{message}")
+
+        # Message for other observers - will be formatted per-observer
+        observer_message = lambda observer: format_sentence(f"{caller.get_display_name(looker=observer)}{' ' if not message.startswith(' ') else ''}{message}")
+
+        return self_message, observer_message
+
     def func(self):
         """Hook function"""
         if not self.args:

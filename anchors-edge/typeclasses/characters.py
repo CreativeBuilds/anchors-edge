@@ -864,30 +864,33 @@ class Character(ObjectParent, DefaultCharacter):
             found = False
             search_term = search_term.lower()
             
-            # First try exact or partial name match for characters we know
+            # First try exact or partial name match for all characters
             for obj in location.contents:
                 if (obj != self and 
                     inherits_from(obj, "typeclasses.characters.Character")):
                     
-                    # If we know them, try matching against their name
-                    if self.knows_character(obj):
-                        if search_term in obj.name.lower():
-                            targets.append(obj)
-                            found = True
-                            break
+                    # Get the visible name (actual name if known, description if not)
+                    visible_name = obj.name if self.knows_character(obj) else get_brief_description(obj)
                     
-                    # Try matching against description
-                    desc = get_brief_description(obj).lower()
-                    # Remove articles for matching
-                    desc_words = desc.split()
-                    if desc_words[0] in ['a', 'an', 'the']:
-                        desc = ' '.join(desc_words[1:])
-                    
-                    # Check for partial matches in description
-                    if search_term in desc:
+                    # Try matching against visible name
+                    if search_term in visible_name.lower():
                         targets.append(obj)
                         found = True
                         break
+                    
+                    # If no match and we don't know them, try matching against description
+                    if not found and not self.knows_character(obj):
+                        desc = get_brief_description(obj).lower()
+                        # Remove articles for matching
+                        desc_words = desc.split()
+                        if desc_words[0] in ['a', 'an', 'the']:
+                            desc = ' '.join(desc_words[1:])
+                        
+                        # Check for partial matches in description
+                        if search_term in desc:
+                            targets.append(obj)
+                            found = True
+                            break
             
             # If no match found through name/description, try standard search
             if not found:

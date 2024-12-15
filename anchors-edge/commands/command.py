@@ -410,19 +410,10 @@ class CmdSay(default_cmds.MuxCommand):
 
         else:
             # Regular untargeted speech
-            if hasattr(self, 'is_emote') and self.is_emote:
-                # For emotes, use "You" for self-view
-                self_message = format_sentence(f'You {message}', no_period=True)
-            else:
-                self_message = format_sentence(f'You {action_text_self}, "{format_sentence(message)}"', no_period=True)
-
+            self_message = format_sentence(f'You {action_text_self}, "{format_sentence(message)}"', no_period=True)
             # Use get_display_name to handle knowledge level for observers
             # This will be formatted per-observer in msg_contents
-            if hasattr(self, 'is_emote') and self.is_emote:
-                # For emotes, format the message directly
-                observer_message = lambda observer: format_sentence(f'{caller.get_display_name(looker=observer)} {message}', no_period=True)
-            else:
-                observer_message = lambda observer: format_sentence(f'{caller.get_display_name(looker=observer)} {action_text_others}, "{format_sentence(message)}"', no_period=True)
+            observer_message = lambda observer: format_sentence(f'{caller.get_display_name(looker=observer)} {action_text_others}, "{format_sentence(message)}"', no_period=True)
 
         return self_message, target_messages, observer_message
 
@@ -1168,9 +1159,9 @@ class CmdLook(default_cmds.CmdLook):
                 
         self.msg(f"You don't see anything matching '{search_term}' here.")
 
-class EmoteCommand(CmdSay):
+class EmoteCommand(default_cmds.MuxCommand):
     """
-    Express an emotion or action.
+    Simple emote command for visible actions.
 
     Usage:
       emote <action>
@@ -1179,34 +1170,46 @@ class EmoteCommand(CmdSay):
 
     Example:
       emote waves.
-      emote grins mischievously.
-      : jumps up and down with excitement!
+      emote scratches their head in confusion.
+      : grins mischievously.
     """
-
     key = "emote"
     aliases = ["pose", ":"]
     locks = "cmd:all()"
-    help_category = "Communication"
-    is_emote = True  # Flag to indicate this is an emote command
+
+    def format_emote_message(self, caller, message):
+        """
+        Format emote messages for all observers.
+        
+        Args:
+            caller: The character performing the emote
+            message: The emote message
+            
+        Returns:
+            tuple: (self_message, observer_message)
+            where observer_message is a lambda that takes an observer
+        """
+        # Message for the emoting character
+        self_message = f"You {message}"
+
+        # Message for other observers - will be formatted per-observer
+        observer_message = lambda observer: f"{caller.get_display_name(looker=observer)} {message}"
+
+        return self_message, observer_message
 
     def func(self):
-        """Implements the command"""
-        caller = self.caller
-
+        """Hook function"""
         if not self.args:
-            caller.msg("What do you want to emote?")
+            self.caller.msg("What do you want to do?")
             return
 
-        # Format all messages
-        self_message, target_messages, observer_message = self.format_speech_messages(caller, self.args.strip())
+        # Format the emote messages
+        self_message, observer_message = self.format_emote_message(self.caller, self.args)
 
-        # Send messages
-        caller.msg(self_message)
-        
-        # Send message to other observers
-        if observer_message:
-            exclude = [caller]
-            # For each observer, format the message with their specific view
-            for observer in caller.location.contents:
-                if observer not in exclude and hasattr(observer, 'msg'):
-                    observer.msg(observer_message(observer))
+        # Send message to the character performing the emote
+        self.caller.msg(self_message)
+
+        # Send messages to other observers
+        for observer in self.caller.location.contents:
+            if observer != self.caller and hasattr(observer, 'msg'):
+                observer.msg(observer_message(observer))

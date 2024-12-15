@@ -3,7 +3,68 @@ Common error handling utilities for command sets.
 """
 
 from evennia import logger
-from evennia.utils.utils import notify_admin
+from evennia.accounts.models import AccountDB
+from evennia.utils import logger as evennia_logger
+import aiohttp
+import asyncio
+import traceback
+from datetime import datetime
+
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1317957206561259521/PTufBfx3veJoAmCq22B0qCJ_3k6ZJlhbyhNRjGLQqzqTt9I7aGMx7978ddzQAEoeLVvt"
+
+async def send_to_discord(message, error=None):
+    """
+    Send a message to Discord via webhook.
+    
+    Args:
+        message (str): The message to send
+        error (Exception, optional): The error object if this is an error message
+    """
+    try:
+        # Create an embed for better formatting
+        embed = {
+            "title": "Admin Alert" if not error else "Error Alert",
+            "description": message,
+            "color": 0xFF0000,  # Red color for alerts
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+        # If there's an error, add the traceback
+        if error:
+            embed["fields"] = [{
+                "name": "Error Details",
+                "value": f"```python\n{traceback.format_exc()[:1000]}```"  # Limit to 1000 chars
+            }]
+        
+        # Prepare the payload
+        payload = {
+            "embeds": [embed]
+        }
+        
+        # Send to Discord
+        async with aiohttp.ClientSession() as session:
+            async with session.post(DISCORD_WEBHOOK_URL, json=payload) as response:
+                if response.status != 204:
+                    evennia_logger.log_err(f"Failed to send Discord webhook: {await response.text()}")
+                    
+    except Exception as e:
+        evennia_logger.log_err(f"Error sending Discord webhook: {e}")
+
+def notify_admins(message, error=None):
+    """
+    Send a message to all online admin accounts and Discord.
+    
+    Args:
+        message (str): The message to send
+        error (Exception, optional): The error object if this is an error message
+    """
+    # Get all admin accounts
+    for account in AccountDB.objects.filter(is_superuser=True):
+        if account.sessions.count() > 0:  # Only message online admins
+            account.msg(f"|r[Admin Alert]|n {message}")
+    
+    # Send to Discord asynchronously
+    asyncio.create_task(send_to_discord(message, error))
 
 def handle_error(obj, err, unlogged=False):
     """
@@ -18,7 +79,7 @@ def handle_error(obj, err, unlogged=False):
         bool: True to prevent default error handler from running
     """
     # Log the actual error for staff/devs
-    logger.log_err(f"Command error: {err}")
+    evennia_logger.log_err(f"Command error: {err}")
     
     # Send a friendly message to the user
     if hasattr(obj, 'msg'):
@@ -29,6 +90,6 @@ def handle_error(obj, err, unlogged=False):
         
     # If this is a serious error, also notify staff/admins
     if not isinstance(err, (TypeError, ValueError, AttributeError)):
-        notify_admin(f"Serious command error: {err}")
+        notify_admins(f"Serious command error: {err}", error=err)
         
-    return True  # Prevents the default error handler from running 
+    return True  # Prevents the default error handler from running

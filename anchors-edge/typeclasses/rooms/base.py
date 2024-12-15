@@ -8,6 +8,7 @@ from datetime import datetime
 import pytz
 from evennia.scripts.models import ScriptDB
 from textwrap import fill, TextWrapper
+from utils.text_formatting import format_sentence
 
 class WeatherAwareRoom(DefaultRoom):
     """Base class for rooms that are affected by weather."""
@@ -120,12 +121,16 @@ class WeatherAwareRoom(DefaultRoom):
         # Only add the "You see:" section if there are other characters present
         if characters:
             full_text += f"|/|/|wYou see:|n"
-            char_list = []
+            # Add each character on a new line with their status
             for char in characters:
-                char_list.append(f"  |c{char.get_display_name(looker)}|n")
-            # Wrap the character list
-            char_text = self.wrap_text(", ".join(char_list))
-            full_text += f"|/{char_text}"
+                display_name = char.get_display_name(looker)
+                # Get roleplay status if available
+                rp_status = ""
+                if hasattr(char.db, 'rp_status') and char.db.rp_status:
+                    rp_status = f" ({char.db.rp_status})"
+                # Format the complete line
+                char_line = format_sentence(f"{display_name}{rp_status}")
+                full_text += f"|/  |c{char_line}|n"
         
         return full_text
         

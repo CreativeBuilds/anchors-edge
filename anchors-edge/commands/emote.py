@@ -32,9 +32,9 @@ def get_name_or_description(viewer, character) -> str:
     Returns:
         str: Either the name or description based on familiarity
     """
-    # Skip description for self
+    # Always return name for self
     if viewer == character:
-        return "you"
+        return character.name
     
     # Check if viewer knows the character using existing recognition system
     if hasattr(viewer, "knows_character") and viewer.knows_character(character):
@@ -379,8 +379,8 @@ class CmdEmote(Command):
             tuple: (self_message, observer_message)
             where observer_message is a lambda that takes an observer
         """
-        # Message for the emoting character
-        self_message = format_sentence(f"You{' ' if not message.startswith(' ') else ''}{message}")
+        # Message for the emoting character - use their name instead of "You"
+        self_message = format_sentence(f"{caller.name}{' ' if not message.startswith(' ') else ''}{message}")
 
         # Message for other observers - will be formatted per-observer
         observer_message = lambda observer: format_sentence(f"{caller.get_display_name(looker=observer)}{' ' if not message.startswith(' ') else ''}{message}")

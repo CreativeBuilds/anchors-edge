@@ -112,24 +112,29 @@ class WeatherAwareRoom(DefaultRoom):
             exits = self.wrap_text(f"Exits: {exits}")
             full_text += f"|/|/{exits}"
         
-        # Get only characters (excluding the looker)
+        # Get all characters
         characters = [obj for obj in self.contents 
                      if obj.is_typeclass('typeclasses.characters.Character') 
-                     and obj != looker 
                      and obj.access(looker, "view")]
         
-        # Only add the "You see:" section if there are other characters present
+        # Only add the "You see:" section if there are characters present
         if characters:
             full_text += f"|/|/|wYou see:|n"
             # Add each character on a new line with their status
             for char in characters:
-                display_name = char.get_display_name(looker)
+                # If this is the looker, show their name
+                if char == looker:
+                    display_name = char.name
+                else:
+                    display_name = char.get_display_name(looker)
+                    
                 # Get roleplay status if available
                 rp_status = ""
-                if hasattr(char.db, 'rp_status') and char.db.rp_status:
-                    rp_status = f" ({char.db.rp_status})"
+                if hasattr(char.db, 'rstatus') and char.db.rstatus:
+                    rp_status = f" ({char.db.rstatus})"
+                    
                 # Format the complete line
-                char_line = format_sentence(f"{display_name}{rp_status}")
+                char_line = f"{display_name}{rp_status}"
                 full_text += f"|/  |c{char_line}|n"
         
         return full_text

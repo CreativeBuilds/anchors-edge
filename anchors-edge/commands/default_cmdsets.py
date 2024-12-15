@@ -38,7 +38,7 @@ class EmoteCmdSet(CmdSet):
     This cmdset contains all the standard emote commands.
     """
     key = "EmoteCmdSet"
-    priority = 1  # Higher than default (0)
+    priority = -1  # Lower than default (0)
 
     def at_cmdset_creation(self):
         """
@@ -88,8 +88,10 @@ class CharacterCmdSet(DefaultCharacterCmdSet):
         # Add social commands
         # add_social_commands(self)
         
-        # Add the emote cmdset
-        self.add(EmoteCmdSet)
+        # Add the emote cmdset (create an instance)
+        emote_cmdset = EmoteCmdSet()
+        emote_cmdset.mergetype = "Union"  # Ensure it merges properly
+        self.add(emote_cmdset)
 
 
 class AccountCmdSet(DefaultAccountCmdSet):

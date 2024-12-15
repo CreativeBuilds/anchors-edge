@@ -29,6 +29,7 @@ from commands.emote import CmdEmote, CmdPmote, CmdOmote, CmdTmote, CmdEmoteList,
 from commands.unloggedin import CmdUnloggedinLook
 from commands.social import add_social_commands
 from commands.roleplay import CmdRoleplayStatus, CmdOptionalStatus
+from utils.error_handler import handle_error
 
 
 class CharacterCmdSet(DefaultCharacterCmdSet):
@@ -44,6 +45,9 @@ class CharacterCmdSet(DefaultCharacterCmdSet):
         """
         Populates the cmdset
         """
+        # Set error handling for all commands in this cmdset
+        self.error_handler = lambda obj, err: handle_error(obj, err)
+        
         super().at_cmdset_creation()
         #
         # any commands you add below will overload the default ones.
@@ -86,6 +90,9 @@ class AccountCmdSet(DefaultAccountCmdSet):
         """
         Populates the cmdset
         """
+        # Set error handling for all commands in this cmdset
+        self.error_handler = lambda obj, err: handle_error(obj, err)
+        
         super().at_cmdset_creation()
         
         # Character selection commands
@@ -96,7 +103,6 @@ class AccountCmdSet(DefaultAccountCmdSet):
         self.add(CmdChangelog())
         self.add(CmdQuit())
         self.add(CmdWho())
-        
         
         # Admin commands
         self.add(CmdCleanupAccounts())
@@ -118,6 +124,9 @@ class UnloggedinCmdSet(DefaultUnloggedinCmdSet):
         """
         Populates the cmdset
         """
+        # Set error handling for all commands in this cmdset
+        self.error_handler = lambda obj, err: handle_error(obj, err, unlogged=True)
+        
         super().at_cmdset_creation()
         # Add our custom unloggedin look command
         self.add(CmdUnloggedinLook())
@@ -136,4 +145,7 @@ class SessionCmdSet(DefaultSessionCmdSet):
         This is the only method defined in a cmdset, called during
         its creation. It should populate the set with command instances.
         """
+        # Set error handling for all commands in this cmdset
+        self.error_handler = lambda obj, err: handle_error(obj, err)
+        
         super().at_cmdset_creation()

@@ -253,7 +253,7 @@ class CmdSay(default_cmds.MuxCommand):
         # Determine base verb based on message ending
         if message.rstrip().endswith('!'):
             base_verb = "exclaim" if is_self else "exclaims"
-            needs_to = has_targets  # Exclamations don't need "to"
+            needs_to = has_targets
         elif message.rstrip().endswith('?'):
             base_verb = "ask" if is_self else "asks"
             needs_to = False  # Questions don't need "to"

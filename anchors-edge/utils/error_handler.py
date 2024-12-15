@@ -51,7 +51,7 @@ def send_to_discord(message, error=None, traceback=None):
         
         # Prepare the payload
         payload = {
-            "content": "@here New error reported!",  # Add @here mention
+            "content": "[ @CreativeBuilds | @Borst ] New error reported!",  # Add @here mention
             "embeds": [embed],
             "username": "Anchors Edge Error Bot"
         }

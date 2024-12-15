@@ -428,7 +428,7 @@ class CmdLongIntro(Command):
             return
         
         # Check if target already has knowledge level of FRIEND
-        if target.db.known_by.get(self.caller.id, KnowledgeLevel.NONE) == KnowledgeLevel.FRIEND:
+        if target.db.known_by.get(self.caller.id, KnowledgeLevel.STRANGER) == KnowledgeLevel.FRIEND:
             self.caller.msg(f"You've already formally introduced yourself to {target.name}.")
             return
             

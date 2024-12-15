@@ -12,7 +12,7 @@ from typeclasses.relationships import (
     get_basic_description,
     get_full_description
 )
-from commands.social import EmoteCommandBase
+from commands.base_social import EmoteCommandBase
 
 
 # Helper functions

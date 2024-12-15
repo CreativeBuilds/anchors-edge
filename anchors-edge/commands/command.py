@@ -164,174 +164,84 @@ class CmdSay(default_cmds.MuxCommand):
     locks = "cmd:all()"
     help_category = "Communication"
 
-    def modify_drunk_speech(self, message, intoxication_level):
-        """Modify speech based on intoxication level using AI"""
-        OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-        if not OPENROUTER_API_KEY:
-            return message
-
-        # Only modify speech if character is noticeably drunk or more
-        if intoxication_level <= 1:  # Skip if sober or just tipsy
-            return message
-
-        url = "https://openrouter.ai/api/v1/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": "http://localhost:4001",
-            "X-Title": "Anchors Edge MUD"
-        }
-
-        # Adjust prompt based on intoxication level
-        if intoxication_level == 2:
-            instructions = (
-                "Convert this message to show mild intoxication by adding slight slurs "
-                "and occasional word stumbles. Keep the message the same length and meaning. "
-                "Don't add extra words or context."
-                "Example: 'How's it going?' becomes 'Howsh it goin?'"
-            )
-        elif intoxication_level == 3:
-            instructions = (
-                "Convert this message to show moderate intoxication with more pronounced slurring "
-                "and word confusion. Keep the message the same length and meaning. "
-                "Don't add extra words or context."
-                "Example: 'how's it going?'  becomes 'howsh it goinn? *hic*'"
-            )
-        else:
-            instructions = (
-                "Convert this message to show heavy intoxication with strong slurring "
-                "and word confusion. Keep the message the same length and meaning. "
-                "Don't add extra words or context."
-                "Example: 'how's it going?' becomes 'howsh et gooinnn?'"
-            )
-
-        data = {
-            "model": "x-ai/grok-vision-beta",
-            "messages": [
-                {
-                    "role": "user", 
-                    "content": (
-                        f"Convert exactly: '{message}'|/"
-                        f"To drunk speech. {instructions}|/"
-                        "Rules:|/"
-                        "1. Keep exactly the same length and meaning|/"
-                        "2. Don't add any new words or context|/"
-                        "3. Only modify pronunciation and spelling|/"
-                        "4. Return only the modified text"
-                    )
-                }
-            ],
-            "temperature": 0.4,
-            "max_tokens": 256
-        }
-
-        try:
-            response = requests.post(url, headers=headers, json=data)
-            if response.status_code == 200:
-                drunk_message = response.json()['choices'][0]['message']['content'].strip()
-                # Clean up any quotes or extra spaces
-                drunk_message = drunk_message.strip("'\"").strip()
-                # Add occasional hiccups based on intoxication
-                if intoxication_level >= 3 and len(message) > 10:
-                    drunk_message = drunk_message.replace(". ", ". *hic* ")
-                return drunk_message
-        except Exception as e:
-            print(f"Error modifying drunk speech: {e}")
-
-        return message  # Return original message if API call fails
-
-    def get_drunk_action_text(self, intoxication_level, is_self=False, message=""):
+    def format_speech_messages(self, caller, message, targets=None, action_prefix=""):
         """
-        Get appropriate action text based on intoxication level and message punctuation.
+        Format speech messages for all observers.
         
         Args:
-            intoxication_level (int): The speaker's intoxication level
-            is_self (bool): Whether this is for the speaker's own message
-            message (str): The message being spoken, used to determine speech type
-        """
-        # Determine base verb based on message ending
-        if message.rstrip().endswith('!'):
-            base_verb = "exclaim" if is_self else "exclaims"
-            needs_to = True
-        elif message.rstrip().endswith('?'):
-            base_verb = "ask" if is_self else "asks"
-            needs_to = False
-        else:
-            base_verb = "say" if is_self else "says"
-            needs_to = True
-
-        # Add drunk modifiers based on intoxication
-        if intoxication_level <= 1:
-            verb = base_verb
-        elif intoxication_level == 2:
-            verb = f"slurringly {base_verb}"
-        elif intoxication_level == 3:
-            verb = f"drunkenly {base_verb}"
-        else:
-            verb = f"very drunkenly {base_verb}"
-
-        # Add "to" if needed
-        if needs_to:
-            verb = f"{verb} to"
-
-        return verb
-
-    def parse_targets_and_message(self, args):
-        """Parse input to extract targets and message."""
-        # Handle empty input
-        if not args:
-            return [], ""
-
-        args = args.strip()
-
-        # Handle incomplete "say to" command
-        if args.lower() == "to":
-            return None, None
-
-        # Handle "say to <target> <message>"
-        if args.lower().startswith("to "):
-            try:
-                _, target_and_message = args.split(" ", 1)
-            except ValueError:
-                return None, None
-        else:
-            target_and_message = args
-
-        # Look for the first space that's not part of a comma-separated list
-        target_end = -1
-        in_target_list = True
-        for i, char in enumerate(target_and_message):
-            if char == ',':
-                continue
-            if char == ' ' and (i == 0 or target_and_message[i-1] not in ','):
-                # Check if this space is followed by punctuation (like "!")
-                if (i + 1 < len(target_and_message) and 
-                    target_and_message[i + 1] in '!?.'):
-                    continue
-                target_end = i
-                break
-
-        if target_end != -1:
-            target_string = target_and_message[:target_end].strip()
-            message = target_and_message[target_end:].strip()
+            caller: The character speaking
+            message: The message being spoken
+            targets: Optional list of specific targets
+            action_prefix: Optional prefix to add to the action (e.g., "loudly")
             
-            # If we started with "to", verify we got both parts
-            if args.lower().startswith("to ") and not message:
-                return None, None
-                
-            # Try to find at least one target
-            targets, failed = self.caller.find_targets(target_string, location=self.caller.location, quiet=True)
-            if targets:
-                return target_string, message
-        
-        # If no target pattern is matched, treat entire input as message
-        return "", args
+        Returns:
+            tuple: (self_message, target_messages, observer_message)
+            where target_messages is a dict mapping targets to their messages
+        """
+        # Get intoxication level and action text
+        intoxication_level = caller.get_intoxication_level() if hasattr(caller, 'get_intoxication_level') else 0
+        action_text_others = self.get_drunk_action_text(intoxication_level, is_self=False, message=message)
+        action_text_self = self.get_drunk_action_text(intoxication_level, is_self=True, message=message)
 
-    def capitalize_first_letter(self, msg):
-        """Ensure the first letter of a message is capitalized."""
-        if not msg:
-            return msg
-        return msg[0].upper() + msg[1:]
+        # Add any prefix to the action text
+        if action_prefix:
+            action_text_others = f"{action_prefix} {action_text_others}"
+            action_text_self = f"{action_prefix} {action_text_self}"
+
+        # Capitalize and format the message
+        message = self.capitalize_first_letter(message)
+
+        # Modify speech if drunk
+        if intoxication_level > 1:
+            message = self.modify_drunk_speech(message, intoxication_level)
+            message = self.capitalize_first_letter(message)
+
+        # Format messages for different observers
+        target_messages = {}
+        observer_message = None
+
+        if targets:
+            # Format target string for speaker
+            if len(targets) > 1:
+                target_str = f"{', '.join(t.name if (hasattr(caller, 'knows_character') and caller.knows_character(t)) else get_brief_description(t) for t in targets[:-1])} and {targets[-1].name if (hasattr(caller, 'knows_character') and caller.knows_character(targets[-1])) else get_brief_description(targets[-1])}"
+            else:
+                target_str = targets[0].name if (hasattr(caller, 'knows_character') and caller.knows_character(targets[0])) else get_brief_description(targets[0])
+
+            # Message for the speaker
+            connector = " " if action_text_self.endswith(" to") else " "
+            self_message = format_sentence(f'You {action_text_self}{connector}{target_str}, "{format_sentence(message)}"', no_period=True)
+
+            # Format messages for targets
+            for target in targets:
+                other_targets = [t for t in targets if t != target]
+                if other_targets:
+                    if len(other_targets) > 1:
+                        others_str = f", {', '.join(t.name if (hasattr(target, 'knows_character') and target.knows_character(t)) else get_brief_description(t) for t in other_targets[:-1])} and {other_targets[-1].name if (hasattr(target, 'knows_character') and target.knows_character(other_targets[-1])) else get_brief_description(other_targets[-1])}"
+                    else:
+                        others_str = f" and {other_targets[0].name if (hasattr(target, 'knows_character') and target.knows_character(other_targets[0])) else get_brief_description(other_targets[0])}"
+                else:
+                    others_str = ""
+
+                # Get caller display name based on whether target knows them
+                if hasattr(target, 'knows_character'):
+                    caller_display = caller.name if target.knows_character(caller) else get_brief_description(caller)
+                else:
+                    caller_display = get_brief_description(caller)
+
+                connector = " " if action_text_others.endswith(" to") else " "
+                target_messages[target] = format_sentence(f'{caller_display} {action_text_others}{connector}you{others_str}, "{format_sentence(message)}"', no_period=True)
+
+            # Message for other observers
+            caller_display = caller.name  # Default to name for room message
+            connector = " " if action_text_others.endswith(" to") else " "
+            observer_message = format_sentence(f'{caller_display} {action_text_others}{connector}{target_str}, "{format_sentence(message)}"', no_period=True)
+
+        else:
+            # Regular untargeted speech
+            self_message = format_sentence(f'You {action_text_self}, "{format_sentence(message)}"', no_period=True)
+            observer_message = format_sentence(f'{caller.name} {action_text_others}, "{format_sentence(message)}"', no_period=True)
+
+        return self_message, target_messages, observer_message
 
     def func(self):
         """Implements the command"""
@@ -349,113 +259,116 @@ class CmdSay(default_cmds.MuxCommand):
             caller.msg("Usage: say <message> OR say to <person> <message>")
             return
 
-        # Get intoxication level and action text
-        intoxication_level = caller.get_intoxication_level() if hasattr(caller, 'get_intoxication_level') else 0
-        action_text_others = self.get_drunk_action_text(intoxication_level, is_self=False, message=message)
-        action_text_self = self.get_drunk_action_text(intoxication_level, is_self=True, message=message)
-
-        # Capitalize and format the message
-        message = self.capitalize_first_letter(message)
-
-        # If we have a target string, handle targeted message
+        # Get targets if specified
+        targets = None
         if target_string:
             targets, failed_targets = caller.find_targets(target_string)
-            
             if failed_targets:
                 if len(failed_targets) == len(target_string.split(",")):
                     caller.msg(f"Could not find anyone matching: {', '.join(failed_targets)}")
                     return
                 else:
                     caller.msg(f"Warning: Could not find: {', '.join(failed_targets)}")
-
             if not targets:
                 return
 
-            # Modify speech if drunk
-            if intoxication_level > 1:
-                message = self.modify_drunk_speech(message, intoxication_level)
-                message = self.capitalize_first_letter(message)  # Re-capitalize after drunk modification
+        # Format all messages
+        self_message, target_messages, observer_message = self.format_speech_messages(caller, message, targets)
 
-            # Send personalized messages to each observer
-            for observer in caller.location.contents:
-                if not hasattr(observer, 'msg'):
-                    continue
+        # Send messages
+        caller.msg(self_message)
+        
+        # Send messages to targets
+        for target, msg in target_messages.items():
+            target.msg(msg)
 
-                # Check if observer is a character that can know other characters
-                is_character = hasattr(observer, 'knows_character')
+        # Send message to other observers
+        if observer_message:
+            exclude = [caller] + (list(target_messages.keys()) if target_messages else [])
+            caller.location.msg_contents(observer_message, exclude=exclude)
 
-                if observer == caller:
-                    # Message for the speaker
-                    if len(targets) > 1:
-                        target_str = f"{', '.join(t.name if (hasattr(observer, 'knows_character') and observer.knows_character(t)) else get_brief_description(t) for t in targets[:-1])} and {targets[-1].name if (hasattr(observer, 'knows_character') and observer.knows_character(targets[-1])) else get_brief_description(targets[-1])}"
-                    else:
-                        target_str = targets[0].name if (hasattr(observer, 'knows_character') and observer.knows_character(targets[0])) else get_brief_description(targets[0])
-                    # Check if action text already includes "to"
-                    connector = " " if action_text_self.endswith(" to") else " "
-                    msg = format_sentence(f'You {action_text_self}{connector}{target_str}, "{format_sentence(message)}"', no_period=True)
-                    observer.msg(msg)
-                elif observer in targets:
-                    # Message for the target(s)
-                    if len(targets) > 1:
-                        # Get list of other targets (excluding the current observer)
-                        other_targets = [t for t in targets if t != observer]
-                        if len(other_targets) > 1:
-                            others_str = f", {', '.join(t.name if (hasattr(observer, 'knows_character') and observer.knows_character(t)) else get_brief_description(t) for t in other_targets[:-1])} and {other_targets[-1].name if (hasattr(observer, 'knows_character') and observer.knows_character(other_targets[-1])) else get_brief_description(other_targets[-1])}" if other_targets else ""
-                        else:
-                            others_str = f" and {other_targets[0].name if (hasattr(observer, 'knows_character') and observer.knows_character(other_targets[0])) else get_brief_description(other_targets[0])}" if other_targets else ""
-                        # Get caller display name based on whether observer is a character
-                        if is_character:
-                            caller_display = caller.name if observer.knows_character(caller) else get_brief_description(caller)
-                        else:
-                            caller_display = get_brief_description(caller)
-                        # Check if action text already includes "to"
-                        connector = " " if action_text_others.endswith(" to") else " "
-                        msg = format_sentence(f'{caller_display} {action_text_others}{connector}you{others_str}, "{format_sentence(message)}"', no_period=True)
-                        observer.msg(msg)
-                    else:
-                        # Get caller display name based on whether observer is a character
-                        if is_character:
-                            caller_display = caller.name if observer.knows_character(caller) else get_brief_description(caller)
-                        else:
-                            caller_display = get_brief_description(caller)
-                        # Check if action text already includes "to"
-                        connector = " " if action_text_others.endswith(" to") else " "
-                        msg = format_sentence(f'{caller_display} {action_text_others}{connector}you, "{format_sentence(message)}"', no_period=True)
-                        observer.msg(msg)
-                else:
-                    # Message for other observers
-                    if len(targets) > 1:
-                        target_str = f"{', '.join(t.name if (hasattr(observer, 'knows_character') and observer.knows_character(t)) else get_brief_description(t) for t in targets[:-1])} and {targets[-1].name if (hasattr(observer, 'knows_character') and observer.knows_character(targets[-1])) else get_brief_description(targets[-1])}"
-                    else:
-                        target_str = targets[0].name if (hasattr(observer, 'knows_character') and observer.knows_character(targets[0])) else get_brief_description(targets[0])
-                    # Get caller display name based on whether observer is a character
-                    if is_character:
-                        caller_display = caller.name if observer.knows_character(caller) else get_brief_description(caller)
-                    else:
-                        caller_display = get_brief_description(caller)
-                    # Check if action text already includes "to"
-                    connector = " " if action_text_others.endswith(" to") else " "
-                    msg = format_sentence(f'{caller_display} {action_text_others}{connector}{target_str}, "{format_sentence(message)}"', no_period=True)
-                    observer.msg(msg)
-
-            # Handle NPC responses
+        # Handle NPC responses
+        if targets:
             for target in targets:
                 if hasattr(target, 'db') and hasattr(target.db, 'is_npc') and target.db.is_npc:
                     response = target.handle_conversation(caller, message)
                     caller.location.msg_contents(format_sentence(response.strip(), no_period=True))
 
-        else:
-            # Regular say command
-            # Modify speech if drunk
-            if intoxication_level > 1:
-                message = self.modify_drunk_speech(message, intoxication_level)
-                message = self.capitalize_first_letter(message)  # Re-capitalize after drunk modification
+class CmdLsay(CmdSay):
+    """
+    Speak loudly in the room or to specific people.
 
-            # Use drunk action text in both messages
-            room_message = format_sentence(f'{caller.name} {action_text_others}, "{format_sentence(message)}"', no_period=True)
-            caller.location.msg_contents(room_message, exclude=[caller])
-            self_message = format_sentence(f'You {action_text_self}, "{format_sentence(message)}"', no_period=True)
-            caller.msg(self_message)
+    Usage:
+      lsay <message>
+      lsay to <person1>[,person2,person3...] <message>
+      lsay <person> <message>
+
+    Something in between say and yell. You might need it for 
+    subtle effect maybe. It simply shows you saying something 
+    loudly.
+
+    Example:  
+      lsay Excuse me, but I do not like steak.
+      You say loudly, "Excuse me, but I do not like steak."
+    """
+
+    key = "lsay"
+    aliases = ['"']
+    locks = "cmd:all()"
+    help_category = "Communication"
+
+    def func(self):
+        """Implements the command"""
+        caller = self.caller
+
+        if not self.args:
+            caller.msg("Say what?")
+            return
+
+        # Parse the input
+        target_string, message = self.parse_targets_and_message(self.args)
+        
+        # Handle incomplete or invalid "say to" command
+        if target_string is None:
+            caller.msg("Usage: lsay <message> OR lsay to <person> <message>")
+            return
+
+        # Get targets if specified
+        targets = None
+        if target_string:
+            targets, failed_targets = caller.find_targets(target_string)
+            if failed_targets:
+                if len(failed_targets) == len(target_string.split(",")):
+                    caller.msg(f"Could not find anyone matching: {', '.join(failed_targets)}")
+                    return
+                else:
+                    caller.msg(f"Warning: Could not find: {', '.join(failed_targets)}")
+            if not targets:
+                return
+
+        # Format all messages with "loudly" prefix
+        self_message, target_messages, observer_message = self.format_speech_messages(
+            caller, message, targets, action_prefix="loudly"
+        )
+
+        # Send messages
+        caller.msg(self_message)
+        
+        # Send messages to targets
+        for target, msg in target_messages.items():
+            target.msg(msg)
+
+        # Send message to other observers
+        if observer_message:
+            exclude = [caller] + (list(target_messages.keys()) if target_messages else [])
+            caller.location.msg_contents(observer_message, exclude=exclude)
+
+        # Handle NPC responses
+        if targets:
+            for target in targets:
+                if hasattr(target, 'db') and hasattr(target.db, 'is_npc') and target.db.is_npc:
+                    response = target.handle_conversation(caller, message)
+                    caller.location.msg_contents(format_sentence(response.strip(), no_period=True))
 
 class CmdInventory(default_cmds.CmdInventory):
     """

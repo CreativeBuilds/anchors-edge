@@ -240,16 +240,41 @@ class CmdSay(default_cmds.MuxCommand):
 
         return message  # Return original message if API call fails
 
-    def get_drunk_action_text(self, intoxication_level, is_self=False):
-        """Get appropriate action text based on intoxication level"""
-        if intoxication_level <= 1:
-            return "say" if is_self else "says"
-        elif intoxication_level == 2:
-            return "slur" if is_self else "slurs"
-        elif intoxication_level == 3:
-            return "drunkenly say" if is_self else "drunkenly says"
+    def get_drunk_action_text(self, intoxication_level, is_self=False, message=""):
+        """
+        Get appropriate action text based on intoxication level and message punctuation.
+        
+        Args:
+            intoxication_level (int): The speaker's intoxication level
+            is_self (bool): Whether this is for the speaker's own message
+            message (str): The message being spoken, used to determine speech type
+        """
+        # Determine base verb based on message ending
+        if message.rstrip().endswith('!'):
+            base_verb = "exclaim" if is_self else "exclaims"
+        elif message.rstrip().endswith('?'):
+            base_verb = "ask" if is_self else "asks"
         else:
-            return "very drunkenly slur" if is_self else "very drunkenly slurs"
+            base_verb = "say" if is_self else "says"
+
+        # Add drunk modifiers based on intoxication
+        if intoxication_level <= 1:
+            return base_verb
+        elif intoxication_level == 2:
+            if is_self:
+                return f"slurringly {base_verb}"
+            else:
+                return f"slurringly {base_verb}"
+        elif intoxication_level == 3:
+            if is_self:
+                return f"drunkenly {base_verb}"
+            else:
+                return f"drunkenly {base_verb}"
+        else:
+            if is_self:
+                return f"very drunkenly {base_verb}"
+            else:
+                return f"very drunkenly {base_verb}"
 
     def parse_targets_and_message(self, args):
         """Parse input to extract targets and message."""
@@ -304,8 +329,8 @@ class CmdSay(default_cmds.MuxCommand):
 
         # Get intoxication level and action text
         intoxication_level = caller.get_intoxication_level() if hasattr(caller, 'get_intoxication_level') else 0
-        action_text_others = self.get_drunk_action_text(intoxication_level, is_self=False)
-        action_text_self = self.get_drunk_action_text(intoxication_level, is_self=True)
+        action_text_others = self.get_drunk_action_text(intoxication_level, is_self=False, message=message)
+        action_text_self = self.get_drunk_action_text(intoxication_level, is_self=True, message=message)
 
         # If we have a target string, handle targeted message
         if target_string:

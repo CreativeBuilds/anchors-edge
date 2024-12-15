@@ -101,34 +101,38 @@ class EmoteCommandBase(Command):
         # Parse target from args
         targets = []
         modifier = ""
+        preposition = "at"  # Default preposition
         
         if self.args:
             args = self.args.strip()
             
-            # Split on first space to separate potential targets from modifier
-            parts = args.split(None, 1)
-            if parts:
-                # First part could be targets
-                target_string = parts[0]
-                if len(parts) > 1:
-                    modifier = parts[1].strip()
-                
-                # Use the character's find_targets method
-                found_targets, failed_targets = self.caller.find_targets(target_string)
-                
-                if failed_targets:
-                    if len(failed_targets) == len(target_string.split(",")):
-                        self.caller.msg(f"Could not find anyone matching: {', '.join(failed_targets)}")
-                        return
+            # Check for prepositions first
+            words = args.split()
+            if len(words) >= 2 and words[0].lower() in ["at", "with", "to"]:
+                preposition = words[0].lower()
+                args = " ".join(words[1:])  # Remove preposition from args
+            
+            # First try to find a target in the room
+            potential_target = self.caller.search(args, location=self.caller.location, quiet=True)
+            if potential_target:
+                # If we found a target, the whole remaining args was a target
+                targets = [potential_target]
+                modifier = ""
+            else:
+                # No direct target found, split on first space to check for target + modifier
+                parts = args.split(None, 1)
+                if parts:
+                    first_word = parts[0]
+                    # Try to find target with just the first word
+                    potential_target = self.caller.search(first_word, location=self.caller.location, quiet=True)
+                    if potential_target:
+                        # First word was a target, rest is modifier
+                        targets = [potential_target]
+                        modifier = parts[1] if len(parts) > 1 else ""
                     else:
-                        self.caller.msg(f"Warning: Could not find: {', '.join(failed_targets)}")
-                
-                targets.extend(found_targets)
-                
-            # If no targets found, treat entire args as modifier
-            if not targets and args:
-                modifier = args
-        
+                        # No target found, treat everything as modifier
+                        modifier = args
+
         location = self.caller.location
         if not location:
             return
@@ -180,11 +184,11 @@ class EmoteCommandBase(Command):
                     
                     # Build final message
                     if observer == self.caller:
-                        msg = f"You {self.format_emote_text(is_self=True)} at {targets_str}"
+                        msg = f"You {self.format_emote_text(is_self=True)} {preposition} {targets_str}"
                     elif is_observer_target:
-                        msg = f"{caller_name} {self.format_emote_text(char=self.caller)} at {targets_str}"
+                        msg = f"{caller_name} {self.format_emote_text(char=self.caller)} {preposition} {targets_str}"
                     else:
-                        msg = f"{caller_name} {self.format_emote_text(char=self.caller)} at {targets_str}"
+                        msg = f"{caller_name} {self.format_emote_text(char=self.caller)} {preposition} {targets_str}"
                 else:
                     # Non-targeted emote
                     if observer == self.caller:

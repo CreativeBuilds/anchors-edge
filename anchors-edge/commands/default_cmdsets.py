@@ -7,31 +7,23 @@ and merged onto entities at runtime.
 
 To create new commands to populate the cmdset, see
 `commands/command.py`.
+
+This module wraps the default command sets of Evennia; overloads them
+to add/remove commands from the default lineup. You can create your
+own cmdsets by inheriting from them or directly from `evennia.CmdSet`.
+
 """
 
-from evennia.commands.default.cmdset_character import CharacterCmdSet as DefaultCharacterCmdSet
-from evennia.commands.default.cmdset_account import AccountCmdSet as DefaultAccountCmdSet
-from evennia.commands.default.cmdset_session import SessionCmdSet as DefaultSessionCmdSet
-from evennia.commands.default.cmdset_unloggedin import UnloggedinCmdSet as DefaultUnloggedinCmdSet
-
-from commands.build_world import CmdBuildWorld
-from commands.character import (
-    CmdCharList, CmdCharSelect, CmdSignout,
-    CmdIntro, CmdLongIntro, CmdQuit
+from evennia import default_cmds
+from commands.command import (
+    CmdDescribeSelf, BriefCommand, CmdRegenRoom,
+    CmdSay, CmdLsay, CmdInventory, GiveCommand,
+    CmdEat, CmdDrink, CmdChug, SmellCommand,
+    TasteCommand, CmdIdentify, CmdWho, CmdLook,
+    EmoteCommand
 )
-from commands.chargen import CmdCreateCharacter
-from commands.admin import (
-    CmdCleanupAccounts, CmdResetAccount, CmdDebugCharacter,
-    CmdLastWipe, CmdChangelog, CmdResetWorld
-)
-from commands.command import CmdWho, CmdLook, CmdSay, CmdLsay
-from commands.emote import CmdEmote, CmdPmote, CmdOmote, CmdTmote, CmdEmoteList
-from commands.unloggedin import CmdUnloggedinLook
-from commands.social import add_social_commands
-from commands.roleplay import CmdRoleplayStatus, CmdOptionalStatus
 
-
-class CharacterCmdSet(DefaultCharacterCmdSet):
+class CharacterCmdSet(default_cmds.CharacterCmdSet):
     """
     The `CharacterCmdSet` contains general in-game commands like `look`,
     `get`, etc available on in-game Character objects. It is merged with
@@ -48,28 +40,27 @@ class CharacterCmdSet(DefaultCharacterCmdSet):
         #
         # any commands you add below will overload the default ones.
         #
-        self.add(CmdBuildWorld())
-        # Add intro commands
-        self.add(CmdIntro())
-        self.add(CmdLongIntro())
-        self.add(CmdQuit())
-        self.add(CmdWho())
-        # Add the emote commands
-        self.add(CmdEmote())
-        self.add(CmdPmote())
-        self.add(CmdOmote())
-        self.add(CmdTmote())
-        self.add(CmdEmoteList())
-        self.add(CmdLook())
+        self.add(CmdDescribeSelf())
+        self.add(BriefCommand())
+        self.add(CmdRegenRoom())
         self.add(CmdSay())
         self.add(CmdLsay())
-        # Add roleplay status commands
-        self.add(CmdRoleplayStatus())
-        self.add(CmdOptionalStatus())
-        add_social_commands(self)
+        self.add(CmdInventory())
+        self.add(GiveCommand())
+        self.add(CmdEat())
+        self.add(CmdDrink())
+        self.add(CmdChug())
+        self.add(SmellCommand())
+        self.add(TasteCommand())
+        self.add(CmdIdentify())
+        self.add(CmdWho())
+        self.add(CmdLook())
+        # Replace the default emote command with our custom one
+        self.remove("emote")  # Remove by command key
+        self.add(EmoteCommand())
 
 
-class AccountCmdSet(DefaultAccountCmdSet):
+class AccountCmdSet(default_cmds.AccountCmdSet):
     """
     This is the cmdset available to the Account at all times. It is
     combined with the `CharacterCmdSet` when the Account puppets a
@@ -103,7 +94,7 @@ class AccountCmdSet(DefaultAccountCmdSet):
         self.add(CmdResetWorld())
 
 
-class UnloggedinCmdSet(DefaultUnloggedinCmdSet):
+class UnloggedinCmdSet(default_cmds.UnloggedinCmdSet):
     """
     Command set available to the Session before being logged in.  This
     holds commands like creating a new account, logging in, etc.
@@ -120,7 +111,7 @@ class UnloggedinCmdSet(DefaultUnloggedinCmdSet):
         self.add(CmdUnloggedinLook())
 
 
-class SessionCmdSet(DefaultSessionCmdSet):
+class SessionCmdSet(default_cmds.SessionCmdSet):
     """
     This cmdset is made available on Session level once logged in. It
     is empty by default.

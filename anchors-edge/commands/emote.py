@@ -351,152 +351,35 @@ class CmdEmoteList(Command):
 
 class CmdEmote(Command):
     """
-    Perform an emote/pose.
-    
+    Simple emote command for visible actions.
+
     Usage:
-      emote <text>
-      ;<text>
-      emote <emote> <target1> [target2...]
-    
-    Examples:
-      emote stretches out, relaxing in their chair.
-      ;stretches out, relaxing in their chair.
-      emote smile
-      emote wave Bob Jane    (waves to both Bob and Jane)
-      
-    Channel usage:
-      chat ;waves hello
-      chat ;smile
+      emote <action>
+      pose <action>
+      : <action>
+
+    Example:
+      emote waves.
+      emote scratches their head in confusion.
+      : grins mischievously.
     """
     key = "emote"
-    aliases = [";"]
+    aliases = ["pose", ":"]
     locks = "cmd:all()"
-    
-    def create_message(self, base_msg: str, targets: List = None, viewer = None) -> str:
-        """
-        Creates a message with proper name/description substitutions.
-        
-        Args:
-            base_msg: The base message text
-            targets: Optional list of target objects
-            viewer: The character who will see this message
-        """
-        message = base_msg
-        
-        # Replace the emoting character's name
-        if viewer:
-            actor_name = get_name_or_description(viewer, self.caller)
-            message = message.replace(self.caller.name, actor_name)
-        
-        # Replace target names if any
-        if targets:
-            for target in targets:
-                if viewer:
-                    target_name = get_name_or_description(viewer, target)
-                    message = message.replace(target.name, target_name)
-        
-        return format_sentence(message)
-    
+
     def func(self):
+        """Hook function"""
         if not self.args:
-            self.caller.msg("What do you want to emote?")
+            self.caller.msg("What do you want to do?")
             return
-        
-        args = self.args.strip()
-        words = args.split()
-        emote_word = words[0].lower()
-        potential_targets = words[1:] if len(words) > 1 else []
-        
-        # Handle automatic emotes
-        if emote_word in STANDARD_EMOTES:
-            emote_data = STANDARD_EMOTES[emote_word]
-            
-            # Check if this emote supports directional variants
-            has_directional = "directional" in emote_data
-            
-            if potential_targets:
-                # First try to find targets as objects
-                valid_targets = []
-                for target_name in potential_targets:
-                    target = self.caller.search(target_name)
-                    if target:
-                        valid_targets.append(target)
-                
-                if valid_targets:
-                    # Handle normal targeted emote
-                    base_msg = f"{self.caller.name} {emote_data['targeted']}"
-                    
-                    # Send personalized messages to each observer
-                    for observer in self.caller.location.contents:
-                        if hasattr(observer, 'msg'):  # Ensure it's a messageable object
-                            personalized_msg = self.create_message(
-                                base_msg, 
-                                valid_targets,
-                                observer
-                            )
-                            if observer != self.caller:
-                                observer.msg(personalized_msg)
-                    
-                    # Message for the caller
-                    caller_msg = self.create_message(base_msg, valid_targets, self.caller)
-                    self.caller.msg(caller_msg)
-                    return
-                
-                elif has_directional and len(potential_targets) == 1:
-                    # Try to handle as a directional emote
-                    direction = potential_targets[0].lower()
-                    if direction in ["north", "south", "east", "west"]:
-                        base_msg = f"{self.caller.name} {emote_data['directional'].format(direction=direction)}"
-                        
-                        # Send to room
-                        for observer in self.caller.location.contents:
-                            if hasattr(observer, 'msg'):
-                                personalized_msg = self.create_message(base_msg, viewer=observer)
-                                observer.msg(personalized_msg)
-                        return
-            
-            # Non-targeted automatic emote
-            base_msg = f"{self.caller.name} {emote_data['other']}"
-            
-            # Handle channel emotes
-            if hasattr(self, "channel"):
-                # For channels, we might want to keep names visible
-                self.channel.msg(base_msg)
-                return
-            
-            # Send personalized messages to each observer
-            for observer in self.caller.location.contents:
-                if hasattr(observer, 'msg'):
-                    # Get appropriate name based on knowledge
-                    actor_name = get_name_or_description(observer, self.caller)
-                    personalized_msg = base_msg.replace(self.caller.name, actor_name)
-                    
-                    if observer != self.caller:
-                        observer.msg(format_sentence(personalized_msg))
-            
-            # Message for the caller (always sees their own name)
-            self.caller.msg(format_sentence(base_msg))
-            return
-        
-        # Handle regular emotes
-        base_msg = f"{self.caller.name} {args}"
-        
-        if hasattr(self, "channel"):
-            self.channel.msg(base_msg)
-            return
-        
-        # Send personalized messages to each observer
+
+        # Message for the emoting character
+        self.caller.msg(f"You {self.args}")
+
+        # Send personalized messages to other observers
         for observer in self.caller.location.contents:
-            if hasattr(observer, 'msg'):
-                # Get appropriate name based on knowledge
-                actor_name = get_name_or_description(observer, self.caller)
-                personalized_msg = base_msg.replace(self.caller.name, actor_name)
-                
-                if observer != self.caller:
-                    observer.msg(format_sentence(personalized_msg))
-        
-        # Message for the caller (always sees their own name)
-        self.caller.msg(format_sentence(base_msg))
+            if observer != self.caller and hasattr(observer, 'msg'):
+                observer.msg(f"{self.caller.get_display_name(looker=observer)} {self.args}")
 
 class CmdPmote(Command):
     """

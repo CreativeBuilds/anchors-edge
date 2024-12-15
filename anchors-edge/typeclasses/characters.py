@@ -730,8 +730,24 @@ class Character(ObjectParent, DefaultCharacter):
         if status:
             if len(status) > 50:  # Max length check
                 return False, "Status description cannot exceed 50 characters."
-            self.db.rstatus = status
-            return True, f"Your roleplay status has been set to: {status}"
+                
+            # Only allow safe characters for text display
+            allowed_chars = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_,.!? '-")
+            sanitized_status = ''.join(char for char in status if char in allowed_chars)
+            
+            # Remove multiple consecutive spaces
+            sanitized_status = ' '.join(sanitized_status.split())
+            
+            # Strip leading/trailing whitespace
+            sanitized_status = sanitized_status.strip()
+            
+            # If the status was modified during sanitization, inform the user
+            if sanitized_status != status:
+                self.db.rstatus = sanitized_status
+                return True, f"Your roleplay status has been set to: {sanitized_status} (invalid characters were removed)"
+            else:
+                self.db.rstatus = status
+                return True, f"Your roleplay status has been set to: {status}"
         else:
             self.db.rstatus = None
             return True, "Your roleplay status has been cleared."

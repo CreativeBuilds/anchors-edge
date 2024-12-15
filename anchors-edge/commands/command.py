@@ -387,8 +387,8 @@ class CmdSay(default_cmds.MuxCommand):
                 if observer == caller:
                     # Message for the speaker
                     target_str = caller.format_target_list(targets, observer=caller)
-                    msg = f'You {action_text_self} to {target_str}, "{format_sentence(message)}"'
-                    observer.msg(format_sentence(msg, no_period=True))
+                    msg = format_sentence(f'You {action_text_self} to {target_str}, "{format_sentence(message)}"', no_period=True)
+                    observer.msg(msg)
                 elif observer in targets:
                     # Message for the target(s)
                     if len(targets) > 1:
@@ -400,16 +400,16 @@ class CmdSay(default_cmds.MuxCommand):
                             caller_display = caller.name if observer.knows_character(caller) else get_brief_description(caller)
                         else:
                             caller_display = get_brief_description(caller)
-                        msg = f'{caller_display} {action_text_others} to you{others_str}, "{format_sentence(message)}"'
-                        observer.msg(format_sentence(msg, no_period=True))
+                        msg = format_sentence(f'{caller_display} {action_text_others} to you{others_str}, "{format_sentence(message)}"', no_period=True)
+                        observer.msg(msg)
                     else:
                         # Get caller display name based on whether observer is a character
                         if is_character:
                             caller_display = caller.name if observer.knows_character(caller) else get_brief_description(caller)
                         else:
                             caller_display = get_brief_description(caller)
-                        msg = f'{caller_display} {action_text_others} to you, "{format_sentence(message)}"'
-                        observer.msg(format_sentence(msg, no_period=True))
+                        msg = format_sentence(f'{caller_display} {action_text_others} to you, "{format_sentence(message)}"', no_period=True)
+                        observer.msg(msg)
                 else:
                     # Message for other observers
                     target_str = caller.format_target_list(targets, observer=observer if is_character else None)
@@ -418,8 +418,8 @@ class CmdSay(default_cmds.MuxCommand):
                         caller_display = caller.name if observer.knows_character(caller) else get_brief_description(caller)
                     else:
                         caller_display = get_brief_description(caller)
-                    msg = f'{caller_display} {action_text_others} to {target_str}, "{format_sentence(message)}"'
-                    observer.msg(format_sentence(msg, no_period=True))
+                    msg = format_sentence(f'{caller_display} {action_text_others} to {target_str}, "{format_sentence(message)}"', no_period=True)
+                    observer.msg(msg)
 
             # Handle NPC responses
             for target in targets:
@@ -435,10 +435,10 @@ class CmdSay(default_cmds.MuxCommand):
                 message = self.capitalize_first_letter(message)  # Re-capitalize after drunk modification
 
             # Use drunk action text in both messages
-            room_message = f'{caller.name} {action_text_others}, "{format_sentence(message)}"'
-            caller.location.msg_contents(format_sentence(room_message, no_period=True), exclude=[caller])
-            self_message = f'You {action_text_self}, "{format_sentence(message)}"'
-            caller.msg(format_sentence(self_message, no_period=True))
+            room_message = format_sentence(f'{caller.name} {action_text_others}, "{format_sentence(message)}"', no_period=True)
+            caller.location.msg_contents(room_message, exclude=[caller])
+            self_message = format_sentence(f'You {action_text_self}, "{format_sentence(message)}"', no_period=True)
+            caller.msg(self_message)
 
 class CmdInventory(default_cmds.CmdInventory):
     """

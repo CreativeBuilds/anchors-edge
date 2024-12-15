@@ -746,18 +746,32 @@ class Character(ObjectParent, DefaultCharacter):
             # If the status was modified during sanitization, inform the user
             if sanitized_status != status:
                 self.db.rstatus = sanitized_status
-                # Notify the room if this is only a rstatus change
+                # Notify online friends
                 if old_status != sanitized_status:
-                    self.location.msg_contents(f"{self.get_display_name(include_rstatus=False)} is now {sanitized_status}")
+                    # Get all online characters
+                    from evennia.objects.models import ObjectDB
+                    online_chars = [obj for obj in ObjectDB.objects.filter(db_typeclass_path__contains='typeclasses.characters.Character')
+                                  if obj.has_account and obj.sessions.count()]
+                    # Filter to only friends and notify them
+                    for char in online_chars:
+                        if char != self and hasattr(char.db, 'known_by') and char.db.known_by.get(self.id, 0) >= 2:  # KnowledgeLevel.FRIEND
+                            char.msg(f"{self.name} set their status to {sanitized_status}")
                 return True, f"Your roleplay status has been set to: {sanitized_status} (invalid characters were removed)"
             else:
                 self.db.rstatus = status
-                # Notify the room if this is only a rstatus change
+                # Notify online friends
                 if old_status != status:
-                    self.location.msg_contents(f"{self.get_display_name(include_rstatus=False)} is now {status}")
+                    # Get all online characters
+                    from evennia.objects.models import ObjectDB
+                    online_chars = [obj for obj in ObjectDB.objects.filter(db_typeclass_path__contains='typeclasses.characters.Character')
+                                  if obj.has_account and obj.sessions.count()]
+                    # Filter to only friends and notify them
+                    for char in online_chars:
+                        if char != self and hasattr(char.db, 'known_by') and char.db.known_by.get(self.id, 0) >= 2:  # KnowledgeLevel.FRIEND
+                            char.msg(f"{self.name} set their status to {status}")
                 return True, f"Your roleplay status has been set to: {status}"
         else:
-            # Just clear the status without notifying the room
+            # Just clear the status without notifying anyone
             self.db.rstatus = None
             return True, "Your roleplay status has been cleared."
 

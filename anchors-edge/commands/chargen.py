@@ -1074,8 +1074,8 @@ class CmdCreateCharacter(Command):
     def func(self):
         """Start character creation menu."""
         try:
-            # Check if already puppeting a character
-            if self.session and self.caller.get_puppet(self.session):
+            # Check if caller is a Character (meaning they're already playing)
+            if hasattr(self.caller, 'is_typeclass') and self.caller.is_typeclass('typeclasses.characters.Character'):
                 self.caller.msg("|rYou're already playing a character!|n")
                 return
 

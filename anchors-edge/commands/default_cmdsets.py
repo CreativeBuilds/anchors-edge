@@ -71,7 +71,7 @@ class CharacterCmdSet(DefaultCharacterCmdSet):
         self.add(CmdRoleplayStatus())
         self.add(CmdOptionalStatus())
         # Add social commands
-        add_social_commands(self)
+        # add_social_commands(self)
 
 
 

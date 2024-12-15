@@ -330,57 +330,36 @@ class CmdSay(default_cmds.MuxCommand):
                 if not hasattr(observer, 'msg'):
                     continue
 
-                # Check if observer is a character that can know other characters
-                is_character = hasattr(observer, 'knows_character')
-                
                 if observer == caller:
                     # Message for the speaker
-                    target_list = []
-                    for t in targets:
-                        if hasattr(t, 'name'):  # Make sure target has a name
-                            if hasattr(caller, 'knows_character') and caller.knows_character(t):
-                                target_list.append(t.name)
-                            else:
-                                target_list.append(get_brief_description(t))
-                    target_str = ", ".join(target_list)
-                    observer.msg(f'You {action_text_self} to {target_str}, "{message}"')
+                    target_str = caller.format_target_list(targets, observer=caller)
+                    msg = f'You {action_text_self} to {target_str}, "{message}"'
+                    observer.msg(format_sentence(msg))
                 elif observer in targets:
                     # Message for the target(s)
                     if len(targets) > 1:
-                        others = []
-                        for t in targets:
-                            if t != observer and hasattr(t, 'name'):
-                                if is_character and observer.knows_character(t):
-                                    others.append(t.name)
-                                else:
-                                    others.append(get_brief_description(t))
-                        if others:
-                            others_str = f" and {', '.join(others)}"
-                        else:
-                            others_str = ""
-                        caller_display = caller.name if (is_character and observer.knows_character(caller)) else get_brief_description(caller)
-                        observer.msg(f'{caller_display} {action_text_others} to you{others_str}, "{message}"')
+                        # Get list of other targets (excluding the current observer)
+                        other_targets = [t for t in targets if t != observer]
+                        others_str = f" and {caller.format_target_list(other_targets, observer=observer)}" if other_targets else ""
+                        caller_display = caller.name if observer.knows_character(caller) else get_brief_description(caller)
+                        msg = f'{caller_display} {action_text_others} to you{others_str}, "{message}"'
+                        observer.msg(format_sentence(msg))
                     else:
-                        caller_display = caller.name if (is_character and observer.knows_character(caller)) else get_brief_description(caller)
-                        observer.msg(f'{caller_display} {action_text_others} to you, "{message}"')
+                        caller_display = caller.name if observer.knows_character(caller) else get_brief_description(caller)
+                        msg = f'{caller_display} {action_text_others} to you, "{message}"'
+                        observer.msg(format_sentence(msg))
                 else:
                     # Message for other observers
-                    target_list = []
-                    for t in targets:
-                        if hasattr(t, 'name'):  # Make sure target has a name
-                            if is_character and observer.knows_character(t):
-                                target_list.append(t.name)
-                            else:
-                                target_list.append(get_brief_description(t))
-                    target_str = ", ".join(target_list)
-                    caller_display = caller.name if (is_character and observer.knows_character(caller)) else get_brief_description(caller)
-                    observer.msg(f'{caller_display} {action_text_others} to {target_str}, "{message}"')
+                    target_str = caller.format_target_list(targets, observer=observer)
+                    caller_display = caller.name if observer.knows_character(caller) else get_brief_description(caller)
+                    msg = f'{caller_display} {action_text_others} to {target_str}, "{message}"'
+                    observer.msg(format_sentence(msg))
 
             # Handle NPC responses
             for target in targets:
                 if hasattr(target, 'db') and hasattr(target.db, 'is_npc') and target.db.is_npc:
                     response = target.handle_conversation(caller, message)
-                    caller.location.msg_contents(response.strip())
+                    caller.location.msg_contents(format_sentence(response.strip()))
 
         else:
             # Regular say command
@@ -390,8 +369,9 @@ class CmdSay(default_cmds.MuxCommand):
 
             # Use drunk action text in both messages
             room_message = f'{caller.name} {action_text_others}, "{message}"'
-            caller.location.msg_contents(room_message, exclude=[caller])
-            caller.msg(f'You {action_text_self}, "{message}"')
+            caller.location.msg_contents(format_sentence(room_message), exclude=[caller])
+            self_message = f'You {action_text_self}, "{message}"'
+            caller.msg(format_sentence(self_message))
 
 class CmdInventory(default_cmds.CmdInventory):
     """

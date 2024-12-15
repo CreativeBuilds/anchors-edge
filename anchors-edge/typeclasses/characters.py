@@ -761,6 +761,45 @@ class Character(ObjectParent, DefaultCharacter):
         self.clear_rstatus()
         return super().at_pre_move(destination, **kwargs)
 
+    def format_target_list(self, targets, observer=None, include_you=False):
+        """
+        Format a list of targets with proper conjunctions.
+        
+        Args:
+            targets (list): List of target objects
+            observer (Object, optional): The character viewing the list
+            include_you (bool): Whether to include "you" in the list for the observer
+            
+        Returns:
+            str: Formatted list like "Bob, Alice and Charlie" or "you, Bob and Charlie"
+        """
+        if not targets:
+            return ""
+
+        # Build list of names/descriptions
+        names = []
+        for target in targets:
+            if not hasattr(target, 'name'):
+                continue
+                
+            if observer and target == observer and include_you:
+                names.append("you")
+            elif observer and hasattr(observer, 'knows_character') and observer.knows_character(target):
+                names.append(target.name)
+            else:
+                names.append(get_brief_description(target))
+
+        if not names:
+            return ""
+            
+        # Format the list with proper conjunctions
+        if len(names) == 1:
+            return names[0]
+        elif len(names) == 2:
+            return f"{names[0]} and {names[1]}"
+        else:
+            return f"{', '.join(names[:-1])}, and {names[-1]}"
+
     def find_targets(self, target_string, location=None, quiet=False):
         """
         Find targets by name or description.

@@ -1074,6 +1074,11 @@ class CmdCreateCharacter(Command):
     def func(self):
         """Start character creation menu."""
         try:
+            # Check if already puppeting a character
+            if self.caller.get_puppet():
+                self.caller.msg("|rYou're already playing a character!|n")
+                return
+
             # Initialize _playable_characters if it doesn't exist
             if not hasattr(self.caller.db, '_playable_characters') or self.caller.db._playable_characters is None:
                 self.caller.db._playable_characters = []

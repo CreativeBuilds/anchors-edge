@@ -252,29 +252,29 @@ class CmdSay(default_cmds.MuxCommand):
         # Determine base verb based on message ending
         if message.rstrip().endswith('!'):
             base_verb = "exclaim" if is_self else "exclaims"
+            needs_to = True
         elif message.rstrip().endswith('?'):
             base_verb = "ask" if is_self else "asks"
+            needs_to = False
         else:
             base_verb = "say" if is_self else "says"
+            needs_to = True
 
         # Add drunk modifiers based on intoxication
         if intoxication_level <= 1:
-            return base_verb
+            verb = base_verb
         elif intoxication_level == 2:
-            if is_self:
-                return f"slurringly {base_verb}"
-            else:
-                return f"slurringly {base_verb}"
+            verb = f"slurringly {base_verb}"
         elif intoxication_level == 3:
-            if is_self:
-                return f"drunkenly {base_verb}"
-            else:
-                return f"drunkenly {base_verb}"
+            verb = f"drunkenly {base_verb}"
         else:
-            if is_self:
-                return f"very drunkenly {base_verb}"
-            else:
-                return f"very drunkenly {base_verb}"
+            verb = f"very drunkenly {base_verb}"
+
+        # Add "to" if needed
+        if needs_to:
+            verb = f"{verb} to"
+
+        return verb
 
     def parse_targets_and_message(self, args):
         """Parse input to extract targets and message."""
@@ -386,8 +386,11 @@ class CmdSay(default_cmds.MuxCommand):
 
                 if observer == caller:
                     # Message for the speaker
-                    target_str = ", ".join(t.name if (hasattr(observer, 'knows_character') and observer.knows_character(t)) else get_brief_description(t) for t in targets)
-                    msg = format_sentence(f'You {action_text_self} to {target_str} "{format_sentence(message)}"', no_period=True)
+                    if len(targets) > 1:
+                        target_str = f"{', '.join(t.name if (hasattr(observer, 'knows_character') and observer.knows_character(t)) else get_brief_description(t) for t in targets[:-1])} and {targets[-1].name if (hasattr(observer, 'knows_character') and observer.knows_character(targets[-1])) else get_brief_description(targets[-1])}"
+                    else:
+                        target_str = targets[0].name if (hasattr(observer, 'knows_character') and observer.knows_character(targets[0])) else get_brief_description(targets[0])
+                    msg = format_sentence(f'You {action_text_self} to {target_str}, "{format_sentence(message)}"', no_period=True)
                     observer.msg(msg)
                 elif observer in targets:
                     # Message for the target(s)
@@ -403,7 +406,7 @@ class CmdSay(default_cmds.MuxCommand):
                             caller_display = caller.name if observer.knows_character(caller) else get_brief_description(caller)
                         else:
                             caller_display = get_brief_description(caller)
-                        msg = format_sentence(f'{caller_display} {action_text_others} to you{others_str} "{format_sentence(message)}"', no_period=True)
+                        msg = format_sentence(f'{caller_display} {action_text_others} to you{others_str}, "{format_sentence(message)}"', no_period=True)
                         observer.msg(msg)
                     else:
                         # Get caller display name based on whether observer is a character
@@ -411,7 +414,7 @@ class CmdSay(default_cmds.MuxCommand):
                             caller_display = caller.name if observer.knows_character(caller) else get_brief_description(caller)
                         else:
                             caller_display = get_brief_description(caller)
-                        msg = format_sentence(f'{caller_display} {action_text_others} to you "{format_sentence(message)}"', no_period=True)
+                        msg = format_sentence(f'{caller_display} {action_text_others} to you, "{format_sentence(message)}"', no_period=True)
                         observer.msg(msg)
                 else:
                     # Message for other observers
@@ -424,7 +427,7 @@ class CmdSay(default_cmds.MuxCommand):
                         caller_display = caller.name if observer.knows_character(caller) else get_brief_description(caller)
                     else:
                         caller_display = get_brief_description(caller)
-                    msg = format_sentence(f'{caller_display} {action_text_others} to {target_str} "{format_sentence(message)}"', no_period=True)
+                    msg = format_sentence(f'{caller_display} {action_text_others} to {target_str}, "{format_sentence(message)}"', no_period=True)
                     observer.msg(msg)
 
             # Handle NPC responses

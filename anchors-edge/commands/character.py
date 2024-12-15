@@ -387,90 +387,64 @@ class CmdIntro(Command):
 
 class CmdLongIntro(Command):
     """
-    Formally introduce yourself to another character.
+    Give a longer introduction to someone, sharing more details about yourself.
     
     Usage:
-        longintro <character>
-        
-    This establishes a deeper connection with the character,
-    allowing you to see their full description and message
-    them from anywhere. Both characters must be mutually
-    introduced first, and both must use longintro for the
-    full connection to be established.
+      longintro <character>
     """
-    
     key = "longintro"
     locks = "cmd:all()"
     help_category = "Social"
     
     def func(self):
-        # If we're a character, get our account
-        account = self.caller.account if hasattr(self.caller, 'account') else self.caller
-        
-        # Check if we're a character without an account
-        if not hasattr(self.caller, 'account') or not self.caller.account:
-            self.caller.msg("You need to select a character first!")
-            return
+        """Handle the long introduction."""
+        try:
+            if not self.args:
+                self.caller.msg("Usage: longintro <character>")
+                return
+                
+            # Find target
+            target = self.caller.search(self.args)
+            if not target:
+                return
+                
+            # Can't introduce to yourself
+            if target == self.caller:
+                self.caller.msg("You already know yourself!")
+                return
+                
+            # Get descriptions for messages
+            caller_basic = get_brief_description(self.caller)
+            target_basic = get_brief_description(target)
             
-        if not self.args:
-            self.caller.msg("Usage: longintro <character>")
-            return
-        
-        target = self.caller.search(self.args)
-        if not target:
-            return
-        
-        # Check if target is a character
-        if not target.is_typeclass('typeclasses.characters.Character'):
-            self.caller.msg("You can only introduce yourself to other characters.")
-            return
-        
-        # Check if target already has knowledge level of FRIEND
-        if target.db.known_by.get(self.caller.id, KnowledgeLevel.STRANGER) == KnowledgeLevel.FRIEND:
-            self.caller.msg(f"You've already formally introduced yourself to {target.name}.")
-            return
+            # Get pronouns
+            caller_pronouns = self.caller.get_pronouns()
+            target_pronouns = target.get_pronouns()
             
-        # Initialize relationships dicts if they don't exist
-        if not self.caller.db.known_by:
-            self.caller.db.known_by = {}
-        if not target.db.known_by:
-            target.db.known_by = {}
+            # Format reflexive pronouns
+            caller_reflexive = caller_pronouns["reflexive"]
+            target_reflexive = target_pronouns["reflexive"]
             
-        target_basic = target.generate_brief_description().rstrip('.')
+            # Check if target already knows caller
+            if target.knows_character(self.caller):
+                self.caller.msg(f"They already know who you are.")
+                return
+                
+            # Set knowledge level to FAMILIAR
+            target.set_knowledge(self.caller, KnowledgeLevel.FAMILIAR)
             
-        # Check if they have at least acquaintance status with each other
-        if not (target.id in self.caller.db.known_by and 
-                self.caller.db.known_by[target.id] >= KnowledgeLevel.ACQUAINTANCE and
-                self.caller.id in target.db.known_by and 
-                target.db.known_by[self.caller.id] >= KnowledgeLevel.ACQUAINTANCE):
-            self.caller.msg(f"You need to be at least acquainted with the {target_basic} first.")
+            # Notify both parties
+            self.caller.msg(f"You share more details about yourself with {target_basic}.")
+            target.msg(f"{caller_basic} shares more details about {caller_reflexive} with you.")
+            
+            # Notify the room
+            for obj in self.caller.location.contents:
+                if obj not in [self.caller, target] and hasattr(obj, 'msg'):
+                    obj.msg(format_sentence(f"{caller_basic} shares more details about {caller_reflexive} with {target_basic}."))
+        except Exception as err:
+            from utils.error_handler import handle_error
+            handle_error(self.caller, err)
             return
-            
-        # Check if target is already friends with caller
-        if (self.caller.id in target.db.known_by and 
-            target.db.known_by[self.caller.id] == KnowledgeLevel.FRIEND):
-            self.caller.msg(f"You've already formally introduced yourself to {target.name}.")
-            return
-            
-        # Set knowledge level to FRIEND for target's side
-        target.db.known_by[self.caller.id] = KnowledgeLevel.FRIEND
-        
-        # Check if this completes a mutual formal introduction
-        is_mutual_formal = (target.id in self.caller.db.known_by and 
-                          self.caller.id in target.db.known_by and
-                          target.db.known_by[self.caller.id] == KnowledgeLevel.FRIEND and
-                          self.caller.db.known_by[target.id] == KnowledgeLevel.FRIEND)
-        
-        # Get the proper reflexive pronoun for the caller
-        caller_reflexive = get_pronoun(self.caller, "reflexive")
-        
-        # Notify both parties
-        self.caller.msg(f"You formally introduce yourself to {target.name}.")
-        target.msg(f"{self.caller.name} formally introduces {caller_reflexive} to you.")
-        
-        if is_mutual_formal:
-            self.caller.msg(f"|gYou and {target.name} are now formally introduced and can message each other from anywhere.|n")
-            target.msg(f"|gYou and {self.caller.name} are now formally introduced and can message each other from anywhere.|n")
 
 class CmdQuit(Command):
     """

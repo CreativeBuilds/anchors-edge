@@ -854,7 +854,47 @@ class CmdShh(EmoteCommandBase):
     key = "shh"
     emote_text = "puts {their} finger to {their} lips"
 
-# Update add_social_commands to include new emotes
+# Add after all emote commands but before add_social_commands
+
+class CmdEmoteList(Command):
+    """
+    List all available social emotes.
+    
+    Usage:
+      emotelist
+      socials
+    """
+    key = "emotelist"
+    aliases = ["socials"]
+    locks = "cmd:all()"
+    help_category = "Social"
+    
+    def func(self):
+        """Show list of all social commands"""
+        # Get all command classes from this module that inherit from EmoteCommandBase
+        emote_commands = []
+        for name, obj in globals().items():
+            if (isinstance(obj, type) and 
+                issubclass(obj, EmoteCommandBase) and 
+                obj != EmoteCommandBase):
+                emote_commands.append(obj)
+        
+        # Sort commands by key
+        emote_commands.sort(key=lambda x: x.key)
+        
+        # Format the output
+        msg = "|wAvailable Social Commands:|n\n"
+        
+        for cmd in emote_commands:
+            # Get the first line of the docstring as brief help
+            help_text = cmd.__doc__.split('\n')[0].strip()
+            msg += f"\n|w{cmd.key}|n - {help_text}"
+            if hasattr(cmd, 'aliases') and cmd.aliases:
+                aliases = ', '.join(cmd.aliases)
+                msg += f" (aliases: {aliases})"
+        
+        self.caller.msg(msg)
+
 def add_social_commands(cmdset):
     """Add all social commands to a command set"""
     cmdset.add(CmdSmile())
@@ -898,3 +938,4 @@ def add_social_commands(cmdset):
     cmdset.add(CmdHeaddesk())  # Added
     cmdset.add(CmdTired())  # Added
     cmdset.add(CmdShh())  # Added
+    cmdset.add(CmdEmoteList())  # Add the new emotelist command

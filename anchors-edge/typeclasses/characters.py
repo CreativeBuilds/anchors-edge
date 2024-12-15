@@ -782,23 +782,34 @@ class Character(ObjectParent, DefaultCharacter):
             if not hasattr(target, 'name'):
                 continue
                 
-            if observer and target == observer and include_you:
-                names.append("you")
-            elif observer and hasattr(observer, 'knows_character') and observer.knows_character(target):
+            # If this target is the observer, skip it - we'll handle it separately
+            if observer and target == observer:
+                continue
+                
+            if observer and hasattr(observer, 'knows_character') and observer.knows_character(target):
                 names.append(target.name)
             else:
                 names.append(get_brief_description(target))
 
         if not names:
-            return ""
+            return "you" if observer and observer in targets else ""
             
-        # Format the list with proper conjunctions
+        # If observer is one of the targets, format differently
+        if observer and observer in targets:
+            if len(names) == 0:
+                return "you"
+            elif len(names) == 1:
+                return f"you and {names[0]}"
+            else:
+                return f"you, {', '.join(names[:-1])} and {names[-1]}"
+        
+        # Standard formatting for non-target observers
         if len(names) == 1:
             return names[0]
         elif len(names) == 2:
             return f"{names[0]} and {names[1]}"
         else:
-            return f"{', '.join(names[:-1])}, and {names[-1]}"
+            return f"{', '.join(names[:-1])} and {names[-1]}"
 
     def find_targets(self, target_string, location=None, quiet=False):
         """

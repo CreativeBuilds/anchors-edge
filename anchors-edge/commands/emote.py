@@ -341,7 +341,11 @@ class CmdEmoteList(Command):
             if emote in STANDARD_EMOTES:
                 emote_data = STANDARD_EMOTES[emote]
                 solo_action = f"{self.caller.name} {emote_data['other']}"
-                targeted = f"{self.caller.name} {emote_data['targeted']} <target>"
+                # Check if emote supports targeting
+                if 'targeted' in emote_data:
+                    targeted = f"{self.caller.name} {emote_data['targeted']} <target>"
+                else:
+                    targeted = "(not targetable)"
                 table.add_row(emote, solo_action, targeted)
         
         self.caller.msg("|wAvailable automatic emotes:|n")

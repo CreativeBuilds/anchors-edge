@@ -14,8 +14,9 @@ class CmdRoleplayStatus(MuxCommand):
       rstatus <status description>
 
     This command allows you to set a status for your character that will show up
-    in the room description of what your character is doing. The status will
-    automatically clear when you move.
+    in the room description of what your character is doing. When you change your
+    status, everyone in the room will be notified with a message like
+    "<name> is now <status>". The status will automatically clear when you move.
 
     Maximum length: 50 characters
 

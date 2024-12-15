@@ -727,6 +727,8 @@ class Character(ObjectParent, DefaultCharacter):
         Returns:
             tuple: (success, message)
         """
+        old_status = self.db.rstatus
+        
         if status:
             if len(status) > 50:  # Max length check
                 return False, "Status description cannot exceed 50 characters."
@@ -744,11 +746,18 @@ class Character(ObjectParent, DefaultCharacter):
             # If the status was modified during sanitization, inform the user
             if sanitized_status != status:
                 self.db.rstatus = sanitized_status
+                # Notify the room if this is only a rstatus change
+                if old_status != sanitized_status:
+                    self.location.msg_contents(f"{self.get_display_name(include_rstatus=False)} is now {sanitized_status}")
                 return True, f"Your roleplay status has been set to: {sanitized_status} (invalid characters were removed)"
             else:
                 self.db.rstatus = status
+                # Notify the room if this is only a rstatus change
+                if old_status != status:
+                    self.location.msg_contents(f"{self.get_display_name(include_rstatus=False)} is now {status}")
                 return True, f"Your roleplay status has been set to: {status}"
         else:
+            # Just clear the status without notifying the room
             self.db.rstatus = None
             return True, "Your roleplay status has been cleared."
 

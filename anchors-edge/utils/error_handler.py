@@ -5,14 +5,14 @@ Common error handling utilities for command sets.
 from evennia import logger
 from evennia.accounts.models import AccountDB
 from evennia.utils import logger as evennia_logger
-import aiohttp
-import asyncio
+import requests
 import traceback
 from datetime import datetime
+from threading import Thread
 
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1317957206561259521/PTufBfx3veJoAmCq22B0qCJ_3k6ZJlhbyhNRjGLQqzqTt9I7aGMx7978ddzQAEoeLVvt"
 
-async def send_to_discord(message, error=None):
+def send_to_discord(message, error=None):
     """
     Send a message to Discord via webhook.
     
@@ -42,13 +42,18 @@ async def send_to_discord(message, error=None):
         }
         
         # Send to Discord
-        async with aiohttp.ClientSession() as session:
-            async with session.post(DISCORD_WEBHOOK_URL, json=payload) as response:
-                if response.status != 204:
-                    evennia_logger.log_err(f"Failed to send Discord webhook: {await response.text()}")
+        response = requests.post(DISCORD_WEBHOOK_URL, json=payload)
+        if response.status_code != 204:
+            evennia_logger.log_err(f"Failed to send Discord webhook: {response.text}")
                     
     except Exception as e:
         evennia_logger.log_err(f"Error sending Discord webhook: {e}")
+
+def send_to_discord_thread(message, error=None):
+    """Send Discord message in a separate thread to avoid blocking."""
+    thread = Thread(target=send_to_discord, args=(message, error))
+    thread.daemon = True  # Thread will exit when main program exits
+    thread.start()
 
 def notify_admins(message, error=None):
     """
@@ -63,8 +68,8 @@ def notify_admins(message, error=None):
         if account.sessions.count() > 0:  # Only message online admins
             account.msg(f"|r[Admin Alert]|n {message}")
     
-    # Send to Discord asynchronously
-    asyncio.create_task(send_to_discord(message, error))
+    # Send to Discord in a separate thread
+    send_to_discord_thread(message, error)
 
 def handle_error(obj, err, unlogged=False):
     """

@@ -477,27 +477,35 @@ class Character(ObjectParent, DefaultCharacter):
         # Return knowledge level >= ACQUAINTANCE
         return character.id in self.db.known_by and self.db.known_by[character.id] >= KnowledgeLevel.ACQUAINTANCE
 
-    def get_display_name(self, looker=None, **kwargs):
+    def get_display_name(self, looker=None, include_rstatus=True, **kwargs):
         """
         Get the display name of this character based on whether the looker knows them.
         Args:
             looker: The character looking at this character
+            include_rstatus: Whether to include roleplay status (defaults to True)
         Returns:
             str: The name to display
         """
-        # Always show your own name to yourself
+        # Get base name/description
         if looker == self:
-            return capitalize_first_letter(self.name)
-        
-        # For others, check knowledge level
-        if looker and hasattr(looker, 'knows_character'):
+            base_name = capitalize_first_letter(self.name)
+        elif looker and hasattr(looker, 'knows_character'):
             if looker.knows_character(self):
                 knowledge_level = looker.db.known_by.get(self.id, KnowledgeLevel.STRANGER)
                 if knowledge_level >= KnowledgeLevel.ACQUAINTANCE:
-                    return capitalize_first_letter(self.name)
-                
-        # Return brief description for unknown characters
-        return get_brief_description(self)
+                    base_name = capitalize_first_letter(self.name)
+                else:
+                    base_name = get_brief_description(self)
+            else:
+                base_name = get_brief_description(self)
+        else:
+            base_name = get_brief_description(self)
+
+        # Add roleplay status if requested and available
+        if include_rstatus and hasattr(self.db, 'rstatus') and self.db.rstatus:
+            return f"{base_name} ({self.db.rstatus})"
+        
+        return base_name
 
     def announce_move_from(self, destination, msg=None, mapping=None, **kwargs):
         """

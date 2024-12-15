@@ -356,15 +356,15 @@ class CmdEmote(Command):
     Usage:
       emote <action>
       pose <action>
-      : <action>
+      ; <action>
 
     Example:
       emote waves.
       emote scratches their head in confusion.
-      : grins mischievously.
+      ; grins mischievously.
     """
     key = "emote"
-    aliases = ["pose", ":"]
+    aliases = ["pose", ";"]
     locks = "cmd:all()"
 
     def format_emote_message(self, caller, message):

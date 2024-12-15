@@ -873,7 +873,7 @@ def add_social_commands(cmdset):
     """Add all social commands to a command set"""
     cmdset.add(CmdSmile())
     cmdset.add(CmdGrin())
-    cmdset.add(CmdMgrin())  # Added
+    # cmdset.add(CmdMgrin())  # Added
     cmdset.add(CmdLaugh())
     cmdset.add(CmdChuckle())
     cmdset.add(CmdGiggle())
@@ -888,13 +888,13 @@ def add_social_commands(cmdset):
     cmdset.add(CmdBlush())
     cmdset.add(CmdSigh())
     cmdset.add(CmdClap())
-    cmdset.add(CmdApplaud())  # Added
-    cmdset.add(CmdLapplaud())  # Added
+    # cmdset.add(CmdApplaud())  # Added
+    # cmdset.add(CmdLapplaud())  # Added
     cmdset.add(CmdSmirk())
     cmdset.add(CmdSneer())
     cmdset.add(CmdEye())
     cmdset.add(CmdChortle())
-    cmdset.add(CmdSnort())  # Added
+    # cmdset.add(CmdSnort())  # Added
     cmdset.add(CmdBeam())
     cmdset.add(CmdPoke())
     cmdset.add(CmdBrow())
@@ -902,14 +902,14 @@ def add_social_commands(cmdset):
     cmdset.add(CmdTup())
     cmdset.add(CmdTdown())
     cmdset.add(CmdTongue())
-    cmdset.add(CmdHipcheck())  # Added
-    cmdset.add(CmdShouldercheck())  # Added
-    cmdset.add(CmdBounce())  # Added
-    cmdset.add(CmdHmm())  # Added
-    cmdset.add(CmdQuestion())  # Added
-    cmdset.add(CmdYawn())  # Added
-    cmdset.add(CmdAgree())  # Added
-    cmdset.add(CmdFacepalm())  # Added
-    cmdset.add(CmdHeaddesk())  # Added
-    cmdset.add(CmdTired())  # Added
-    cmdset.add(CmdShh())  # Added
+    # cmdset.add(CmdHipcheck())  # Added
+    # cmdset.add(CmdShouldercheck())  # Added
+    # cmdset.add(CmdBounce())  # Added
+    # cmdset.add(CmdHmm())  # Added
+    # cmdset.add(CmdQuestion())  # Added
+    # cmdset.add(CmdYawn())  # Added
+    # cmdset.add(CmdAgree())  # Added
+    # cmdset.add(CmdFacepalm())  # Added
+    # cmdset.add(CmdHeaddesk())  # Added
+    # cmdset.add(CmdTired())  # Added
+    # cmdset.add(CmdShh())  # Added

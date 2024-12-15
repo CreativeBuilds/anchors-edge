@@ -13,6 +13,7 @@ from evennia.commands.default.cmdset_character import CharacterCmdSet as Default
 from evennia.commands.default.cmdset_account import AccountCmdSet as DefaultAccountCmdSet
 from evennia.commands.default.cmdset_session import SessionCmdSet as DefaultSessionCmdSet
 from evennia.commands.default.cmdset_unloggedin import UnloggedinCmdSet as DefaultUnloggedinCmdSet
+from evennia.commands.cmdset import CmdSet
 
 from commands.build_world import CmdBuildWorld
 from commands.character import (
@@ -30,6 +31,20 @@ from commands.unloggedin import CmdUnloggedinLook
 from commands.social import add_social_commands
 from commands.roleplay import CmdRoleplayStatus, CmdOptionalStatus
 from utils.error_handler import handle_error
+
+
+class EmoteCmdSet(CmdSet):
+    """
+    This cmdset contains all the standard emote commands.
+    """
+    key = "EmoteCmdSet"
+    priority = 1  # Higher than default (0)
+
+    def at_cmdset_creation(self):
+        """
+        Register all standard emotes
+        """
+        register_standard_emotes(self)
 
 
 class CharacterCmdSet(DefaultCharacterCmdSet):
@@ -70,10 +85,11 @@ class CharacterCmdSet(DefaultCharacterCmdSet):
         # Add roleplay status commands
         self.add(CmdRoleplayStatus())
         self.add(CmdOptionalStatus())
-        # Register all standard emotes
-        register_standard_emotes(self)
         # Add social commands
         # add_social_commands(self)
+        
+        # Add the emote cmdset
+        self.add(EmoteCmdSet)
 
 
 class AccountCmdSet(DefaultAccountCmdSet):

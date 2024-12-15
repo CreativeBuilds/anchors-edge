@@ -410,10 +410,19 @@ class CmdSay(default_cmds.MuxCommand):
 
         else:
             # Regular untargeted speech
-            self_message = format_sentence(f'You {action_text_self}, "{format_sentence(message)}"', no_period=True)
+            if hasattr(self, 'is_emote') and self.is_emote:
+                # For emotes, use "You" for self-view
+                self_message = format_sentence(f'You {message}', no_period=True)
+            else:
+                self_message = format_sentence(f'You {action_text_self}, "{format_sentence(message)}"', no_period=True)
+
             # Use get_display_name to handle knowledge level for observers
             # This will be formatted per-observer in msg_contents
-            observer_message = lambda observer: format_sentence(f'{caller.get_display_name(looker=observer)} {action_text_others}, "{format_sentence(message)}"', no_period=True)
+            if hasattr(self, 'is_emote') and self.is_emote:
+                # For emotes, format the message directly
+                observer_message = lambda observer: format_sentence(f'{caller.get_display_name(looker=observer)} {message}', no_period=True)
+            else:
+                observer_message = lambda observer: format_sentence(f'{caller.get_display_name(looker=observer)} {action_text_others}, "{format_sentence(message)}"', no_period=True)
 
         return self_message, target_messages, observer_message
 
@@ -1158,3 +1167,46 @@ class CmdLook(default_cmds.CmdLook):
             return
                 
         self.msg(f"You don't see anything matching '{search_term}' here.")
+
+class EmoteCommand(CmdSay):
+    """
+    Express an emotion or action.
+
+    Usage:
+      emote <action>
+      pose <action>
+      : <action>
+
+    Example:
+      emote waves.
+      emote grins mischievously.
+      : jumps up and down with excitement!
+    """
+
+    key = "emote"
+    aliases = ["pose", ":"]
+    locks = "cmd:all()"
+    help_category = "Communication"
+    is_emote = True  # Flag to indicate this is an emote command
+
+    def func(self):
+        """Implements the command"""
+        caller = self.caller
+
+        if not self.args:
+            caller.msg("What do you want to emote?")
+            return
+
+        # Format all messages
+        self_message, target_messages, observer_message = self.format_speech_messages(caller, self.args.strip())
+
+        # Send messages
+        caller.msg(self_message)
+        
+        # Send message to other observers
+        if observer_message:
+            exclude = [caller]
+            # For each observer, format the message with their specific view
+            for observer in caller.location.contents:
+                if observer not in exclude and hasattr(observer, 'msg'):
+                    observer.msg(observer_message(observer))

@@ -869,25 +869,32 @@ class Character(ObjectParent, DefaultCharacter):
                 if (obj != self and 
                     inherits_from(obj, "typeclasses.characters.Character")):
                     
-                    # Get the visible name (actual name if known, description if not)
-                    visible_name = obj.name if self.knows_character(obj) else get_brief_description(obj)
+                    # Try matching against name first if we know them
+                    if self.knows_character(obj):
+                        if search_term in obj.name.lower():
+                            targets.append(obj)
+                            found = True
+                            break
                     
-                    # Try matching against visible name
-                    if search_term in visible_name.lower():
-                        targets.append(obj)
-                        found = True
-                        break
-                    
-                    # If no match and we don't know them, try matching against description
-                    if not found and not self.knows_character(obj):
-                        desc = get_brief_description(obj).lower()
+                    # If no match or we don't know them, try matching against description
+                    if not found:
+                        # Get the basic description without any status
+                        desc = obj.generate_basic_description().lower()
                         # Remove articles for matching
                         desc_words = desc.split()
                         if desc_words[0] in ['a', 'an', 'the']:
                             desc = ' '.join(desc_words[1:])
                         
-                        # Check for partial matches in description
-                        if search_term in desc:
+                        # Check for partial matches in any word of the description
+                        desc_words = desc.split()
+                        for word in desc_words:
+                            if search_term in word:
+                                targets.append(obj)
+                                found = True
+                                break
+                        
+                        # Also try matching against the full description
+                        if not found and search_term in desc:
                             targets.append(obj)
                             found = True
                             break

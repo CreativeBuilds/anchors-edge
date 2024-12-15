@@ -311,6 +311,12 @@ class CmdSay(default_cmds.MuxCommand):
         # If no target pattern is matched, treat entire input as message
         return "", args
 
+    def capitalize_first_letter(self, msg):
+        """Ensure the first letter of a message is capitalized."""
+        if not msg:
+            return msg
+        return msg[0].upper() + msg[1:]
+
     def func(self):
         """Implements the command"""
         caller = self.caller
@@ -332,6 +338,9 @@ class CmdSay(default_cmds.MuxCommand):
         action_text_others = self.get_drunk_action_text(intoxication_level, is_self=False, message=message)
         action_text_self = self.get_drunk_action_text(intoxication_level, is_self=True, message=message)
 
+        # Capitalize and format the message
+        message = self.capitalize_first_letter(message)
+
         # If we have a target string, handle targeted message
         if target_string:
             targets, failed_targets = caller.find_targets(target_string)
@@ -349,6 +358,7 @@ class CmdSay(default_cmds.MuxCommand):
             # Modify speech if drunk
             if intoxication_level > 1:
                 message = self.modify_drunk_speech(message, intoxication_level)
+                message = self.capitalize_first_letter(message)  # Re-capitalize after drunk modification
 
             # Send personalized messages to each observer
             for observer in caller.location.contents:
@@ -361,8 +371,8 @@ class CmdSay(default_cmds.MuxCommand):
                 if observer == caller:
                     # Message for the speaker
                     target_str = caller.format_target_list(targets, observer=caller)
-                    msg = f'You {action_text_self} to {target_str}, "{message}"'
-                    observer.msg(format_sentence(msg))
+                    msg = f'You {action_text_self} to {target_str}, "{format_sentence(message)}"'
+                    observer.msg(msg)
                 elif observer in targets:
                     # Message for the target(s)
                     if len(targets) > 1:
@@ -374,16 +384,16 @@ class CmdSay(default_cmds.MuxCommand):
                             caller_display = caller.name if observer.knows_character(caller) else get_brief_description(caller)
                         else:
                             caller_display = get_brief_description(caller)
-                        msg = f'{caller_display} {action_text_others} to you{others_str}, "{message}"'
-                        observer.msg(format_sentence(msg))
+                        msg = f'{caller_display} {action_text_others} to you{others_str}, "{format_sentence(message)}"'
+                        observer.msg(msg)
                     else:
                         # Get caller display name based on whether observer is a character
                         if is_character:
                             caller_display = caller.name if observer.knows_character(caller) else get_brief_description(caller)
                         else:
                             caller_display = get_brief_description(caller)
-                        msg = f'{caller_display} {action_text_others} to you, "{message}"'
-                        observer.msg(format_sentence(msg))
+                        msg = f'{caller_display} {action_text_others} to you, "{format_sentence(message)}"'
+                        observer.msg(msg)
                 else:
                     # Message for other observers
                     target_str = caller.format_target_list(targets, observer=observer if is_character else None)
@@ -392,8 +402,8 @@ class CmdSay(default_cmds.MuxCommand):
                         caller_display = caller.name if observer.knows_character(caller) else get_brief_description(caller)
                     else:
                         caller_display = get_brief_description(caller)
-                    msg = f'{caller_display} {action_text_others} to {target_str}, "{message}"'
-                    observer.msg(format_sentence(msg))
+                    msg = f'{caller_display} {action_text_others} to {target_str}, "{format_sentence(message)}"'
+                    observer.msg(msg)
 
             # Handle NPC responses
             for target in targets:
@@ -406,12 +416,13 @@ class CmdSay(default_cmds.MuxCommand):
             # Modify speech if drunk
             if intoxication_level > 1:
                 message = self.modify_drunk_speech(message, intoxication_level)
+                message = self.capitalize_first_letter(message)  # Re-capitalize after drunk modification
 
             # Use drunk action text in both messages
-            room_message = f'{caller.name} {action_text_others}, "{message}"'
-            caller.location.msg_contents(format_sentence(room_message), exclude=[caller])
-            self_message = f'You {action_text_self}, "{message}"'
-            caller.msg(format_sentence(self_message))
+            room_message = f'{caller.name} {action_text_others}, "{format_sentence(message)}"'
+            caller.location.msg_contents(room_message, exclude=[caller])
+            self_message = f'You {action_text_self}, "{format_sentence(message)}"'
+            caller.msg(self_message)
 
 class CmdInventory(default_cmds.CmdInventory):
     """

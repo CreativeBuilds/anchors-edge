@@ -205,17 +205,22 @@ class CmdCharSelect(Command):
     
     def func(self):
         """Execute command."""
+        # Check if we're already puppeting a character
+        if hasattr(self.caller, 'character') and self.caller.character:
+            self.caller.msg("You are already playing a character.")
+            return
+            
         if not self.args:
             self.caller.msg("Usage: charselect <character>")
             return
             
         # Find character
-        characters = self.caller.db._playable_characters
+        characters = self.caller.db._playable_characters or []
         char_name = self.args.strip()
         
         char = None
         for test_char in characters:
-            if test_char.key.lower() == char_name.lower():
+            if test_char and hasattr(test_char, 'key') and test_char.key and test_char.key.lower() == char_name.lower():
                 char = test_char
                 break
                 
@@ -223,9 +228,10 @@ class CmdCharSelect(Command):
             # Try fuzzy matching
             matches = []
             for test_char in characters:
-                ratio = string_similarity(char_name, test_char.key)
-                if ratio > 0.2:  # Even lower threshold for more lenient matching
-                    matches.append((test_char, ratio))
+                if test_char and hasattr(test_char, 'key') and test_char.key:
+                    ratio = string_similarity(char_name, test_char.key)
+                    if ratio > 0.2:  # Even lower threshold for more lenient matching
+                        matches.append((test_char, ratio))
                     
             # Sort matches by ratio, highest first
             matches.sort(key=lambda x: x[1], reverse=True)
@@ -264,16 +270,8 @@ class CmdSignout(Command):
     
     def func(self):
         """Execute command."""
-        if hasattr(self.caller, 'account') and self.caller.account:
-            # We're a character object
-            charname = self.caller.name
-            account = self.caller.account
-            account.unpuppet_object(self.session)
-            account.msg(f"\nYou stop being |w{charname}|n.\n")
-        else:
-            # We're an account or something else, disconnect from the game
-            self.caller.msg("\nGoodbye! Disconnecting...\n")
-            self.caller.disconnect_session_from_account(self.session)
+        self.caller.msg("\nGoodbye! Disconnecting...\n")
+        self.caller.disconnect_session_from_account(self.session)
 
 class CmdIntro(Command):
     """

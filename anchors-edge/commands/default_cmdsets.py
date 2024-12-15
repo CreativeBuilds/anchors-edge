@@ -19,8 +19,7 @@ from commands.command import (
     CmdDescribeSelf, BriefCommand, CmdRegenRoom,
     CmdSay, CmdLsay, CmdInventory, GiveCommand,
     CmdEat, CmdDrink, CmdChug, SmellCommand,
-    TasteCommand, CmdIdentify, CmdWho, CmdLook,
-    EmoteCommand
+    TasteCommand, CmdIdentify, CmdWho, CmdLook
 )
 
 class CharacterCmdSet(default_cmds.CharacterCmdSet):
@@ -55,9 +54,6 @@ class CharacterCmdSet(default_cmds.CharacterCmdSet):
         self.add(CmdIdentify())
         self.add(CmdWho())
         self.add(CmdLook())
-        # Replace the default emote command with our custom one
-        self.remove("emote")  # Remove by command key
-        self.add(EmoteCommand())
 
 
 class AccountCmdSet(default_cmds.AccountCmdSet):

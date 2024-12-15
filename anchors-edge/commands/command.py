@@ -143,7 +143,7 @@ class CmdRegenRoom(MuxCommand):
         
         caller.msg(f"|GForced regeneration of descriptions for {target.key}.|n")
 
-class SayCommand(default_cmds.MuxCommand):
+class CmdSay(default_cmds.MuxCommand):
     """
     Speak in the room or to specific people.
 

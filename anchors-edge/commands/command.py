@@ -164,6 +164,175 @@ class CmdSay(default_cmds.MuxCommand):
     locks = "cmd:all()"
     help_category = "Communication"
 
+    def modify_drunk_speech(self, message, intoxication_level):
+        """Modify speech based on intoxication level using AI"""
+        OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+        if not OPENROUTER_API_KEY:
+            return message
+
+        # Only modify speech if character is noticeably drunk or more
+        if intoxication_level <= 1:  # Skip if sober or just tipsy
+            return message
+
+        url = "https://openrouter.ai/api/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "http://localhost:4001",
+            "X-Title": "Anchors Edge MUD"
+        }
+
+        # Adjust prompt based on intoxication level
+        if intoxication_level == 2:
+            instructions = (
+                "Convert this message to show mild intoxication by adding slight slurs "
+                "and occasional word stumbles. Keep the message the same length and meaning. "
+                "Don't add extra words or context."
+                "Example: 'How's it going?' becomes 'Howsh it goin?'"
+            )
+        elif intoxication_level == 3:
+            instructions = (
+                "Convert this message to show moderate intoxication with more pronounced slurring "
+                "and word confusion. Keep the message the same length and meaning. "
+                "Don't add extra words or context."
+                "Example: 'how's it going?'  becomes 'howsh it goinn? *hic*'"
+            )
+        else:
+            instructions = (
+                "Convert this message to show heavy intoxication with strong slurring "
+                "and word confusion. Keep the message the same length and meaning. "
+                "Don't add extra words or context."
+                "Example: 'how's it going?' becomes 'howsh et gooinnn?'"
+            )
+
+        data = {
+            "model": "x-ai/grok-vision-beta",
+            "messages": [
+                {
+                    "role": "user", 
+                    "content": (
+                        f"Convert exactly: '{message}'|/"
+                        f"To drunk speech. {instructions}|/"
+                        "Rules:|/"
+                        "1. Keep exactly the same length and meaning|/"
+                        "2. Don't add any new words or context|/"
+                        "3. Only modify pronunciation and spelling|/"
+                        "4. Return only the modified text"
+                    )
+                }
+            ],
+            "temperature": 0.4,
+            "max_tokens": 256
+        }
+
+        try:
+            response = requests.post(url, headers=headers, json=data)
+            if response.status_code == 200:
+                drunk_message = response.json()['choices'][0]['message']['content'].strip()
+                # Clean up any quotes or extra spaces
+                drunk_message = drunk_message.strip("'\"").strip()
+                # Add occasional hiccups based on intoxication
+                if intoxication_level >= 3 and len(message) > 10:
+                    drunk_message = drunk_message.replace(". ", ". *hic* ")
+                return drunk_message
+        except Exception as e:
+            print(f"Error modifying drunk speech: {e}")
+
+        return message  # Return original message if API call fails
+
+    def get_drunk_action_text(self, intoxication_level, is_self=False, message=""):
+        """
+        Get appropriate action text based on intoxication level and message punctuation.
+        
+        Args:
+            intoxication_level (int): The speaker's intoxication level
+            is_self (bool): Whether this is for the speaker's own message
+            message (str): The message being spoken, used to determine speech type
+        """
+        # Determine base verb based on message ending
+        if message.rstrip().endswith('!'):
+            base_verb = "exclaim" if is_self else "exclaims"
+            needs_to = True
+        elif message.rstrip().endswith('?'):
+            base_verb = "ask" if is_self else "asks"
+            needs_to = False
+        else:
+            base_verb = "say" if is_self else "says"
+            needs_to = True
+
+        # Add drunk modifiers based on intoxication
+        if intoxication_level <= 1:
+            verb = base_verb
+        elif intoxication_level == 2:
+            verb = f"slurringly {base_verb}"
+        elif intoxication_level == 3:
+            verb = f"drunkenly {base_verb}"
+        else:
+            verb = f"very drunkenly {base_verb}"
+
+        # Add "to" if needed
+        if needs_to:
+            verb = f"{verb} to"
+
+        return verb
+
+    def parse_targets_and_message(self, args):
+        """Parse input to extract targets and message."""
+        # Handle empty input
+        if not args:
+            return [], ""
+
+        args = args.strip()
+
+        # Handle incomplete "say to" command
+        if args.lower() == "to":
+            return None, None
+
+        # Handle "say to <target> <message>"
+        if args.lower().startswith("to "):
+            try:
+                _, target_and_message = args.split(" ", 1)
+            except ValueError:
+                return None, None
+        else:
+            target_and_message = args
+
+        # Look for the first space that's not part of a comma-separated list
+        target_end = -1
+        in_target_list = True
+        for i, char in enumerate(target_and_message):
+            if char == ',':
+                continue
+            if char == ' ' and (i == 0 or target_and_message[i-1] not in ','):
+                # Check if this space is followed by punctuation (like "!")
+                if (i + 1 < len(target_and_message) and 
+                    target_and_message[i + 1] in '!?.'):
+                    continue
+                target_end = i
+                break
+
+        if target_end != -1:
+            target_string = target_and_message[:target_end].strip()
+            message = target_and_message[target_end:].strip()
+            
+            # If we started with "to", verify we got both parts
+            if args.lower().startswith("to ") and not message:
+                return None, None
+                
+            # Try to find at least one target
+            targets, failed = self.caller.find_targets(target_string, location=self.caller.location, quiet=True)
+            if targets:
+                return target_string, message
+        
+        # If no target pattern is matched, treat entire input as message
+        return "", args
+
+    def capitalize_first_letter(self, msg):
+        """Ensure the first letter of a message is capitalized."""
+        if not msg:
+            return msg
+        return msg[0].upper() + msg[1:]
+
     def format_speech_messages(self, caller, message, targets=None, action_prefix=""):
         """
         Format speech messages for all observers.

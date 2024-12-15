@@ -905,7 +905,7 @@ def add_social_commands(cmdset):
     cmdset.add(CmdHipcheck())  # Added
     cmdset.add(CmdShouldercheck())  # Added
     cmdset.add(CmdBounce())  # Added
-    # cmdset.add(CmdHmm())  # Added
+    cmdset.add(CmdHmm())  # Added
     # cmdset.add(CmdQuestion())  # Added
     cmdset.add(CmdYawn())  # Added
     cmdset.add(CmdAgree())  # Added

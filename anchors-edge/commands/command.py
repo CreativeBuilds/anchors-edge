@@ -292,19 +292,42 @@ class CmdSay(default_cmds.MuxCommand):
         if args.lower().startswith("to "):
             try:
                 _, target_and_message = args.split(" ", 1)
-                targets_str, message = target_and_message.split(" ", 1)
-                return targets_str, message
+                # Look for the first space after any commas to separate targets from message
+                target_end = -1
+                for i, char in enumerate(target_and_message):
+                    if char == ',':
+                        continue
+                    if char == ' ' and not target_and_message[i-1].isalnum():  # Space after punctuation
+                        target_end = i
+                        break
+                
+                if target_end != -1:
+                    targets_str = target_and_message[:target_end].strip()
+                    message = target_and_message[target_end:].strip()
+                    return targets_str, message
+                else:
+                    return None, None
             except ValueError:
                 return None, None
 
         # Handle "say <target> <message>"
         try:
-            words = args.split()
-            if len(words) > 1:
+            # Look for the first space after any commas to separate targets from message
+            target_end = -1
+            for i, char in enumerate(args):
+                if char == ',':
+                    continue
+                if char == ' ' and not args[i-1].isalnum():  # Space after punctuation
+                    target_end = i
+                    break
+            
+            if target_end != -1:
+                target_string = args[:target_end].strip()
+                message = args[target_end:].strip()
                 # Try to find the target in the room
-                potential_target = self.caller.search(words[0], location=self.caller.location, quiet=True)
+                potential_target = self.caller.search(target_string, location=self.caller.location, quiet=True)
                 if potential_target:
-                    return words[0], " ".join(words[1:])
+                    return target_string, message
         except Exception:
             pass
 

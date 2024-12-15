@@ -1073,64 +1073,75 @@ class CmdCreateCharacter(Command):
     
     def func(self):
         """Start character creation menu."""
-        # Check character limit
-        if len(self.caller.db._playable_characters) >= settings.MAX_CHARACTERS_PER_ACCOUNT:
-            self.caller.msg("|rYou have reached the maximum number of characters allowed (5).|n")
-            self.caller.msg("You must delete a character before creating a new one.")
-            return
+        try:
+            # Initialize _playable_characters if it doesn't exist
+            if not hasattr(self.caller.db, '_playable_characters') or self.caller.db._playable_characters is None:
+                self.caller.db._playable_characters = []
 
-        # Only show age verification if this is their first character
-        if not self.caller.db._playable_characters and not self.caller.db.age_verified:
-            start_node = "node_age_verification"
-        else:
-            start_node = "node_race_select"
+            # Check character limit
+            if len(self.caller.db._playable_characters) >= settings.MAX_CHARACTERS_PER_ACCOUNT:
+                self.caller.msg("|rYou have reached the maximum number of characters allowed (5).|n")
+                self.caller.msg("You must delete a character before creating a new one.")
+                return
+
+            # Only show age verification if this is their first character
+            if not self.caller.db._playable_characters and not self.caller.db.age_verified:
+                start_node = "node_age_verification"
+            else:
+                start_node = "node_race_select"
+                
+            # Ensure we have a default home location
+            default_home = ensure_default_home()
             
-        # Ensure we have a default home location
-        default_home = ensure_default_home()
-        
-        # Clean up any existing character creation data
-        if hasattr(self.caller.ndb, '_menutree'):
-            del self.caller.ndb._menutree
+            # Clean up any existing character creation data
+            if hasattr(self.caller.ndb, '_menutree'):
+                del self.caller.ndb._menutree
+                
+            # Store the default home in the menu tree for later use
+            self.caller.ndb._menutree = type('MenuData', (), {'default_home': default_home})
             
-        # Store the default home in the menu tree for later use
-        self.caller.ndb._menutree = type('MenuData', (), {'default_home': default_home})
-        
-        def custom_formatter(optionlist):
-            """
-            Don't display the options - they're already in the node text
-            """
-            return ""
-            
-        def node_formatter(nodetext, optionstext):
-            """
-            Simply return the node text without any formatting
-            """
-            return nodetext
-            
-        # Start the menu with custom formatting
-        EvMenu(self.caller,
-               {
-                   "node_age_verification": node_age_verification,     # 0. Age verification
-                   "node_race_select": node_race_select,              # 1. Select race
-                   "node_subrace_select": node_subrace_select,        # 2. Select subrace (if applicable)
-                   "node_gender_select": node_gender_select,          # 3. Select gender
-                   "node_height_select": node_height_select,          # 4. Select height
-                   "node_height_confirm": node_height_confirm,        # 5. Confirm height
-                   "node_age_select": node_age_select,               # 6. Select age
-                   "node_age_confirm": node_age_confirm,             # 7. Confirm age
-                   "node_background_select": node_background_select,  # 8. Select background
-                   "node_description_select": node_description_select, # 9. Customize descriptions
-                   "node_text_descriptor": node_text_descriptor,      # 10. Overall text description
-                   "node_name_select": node_name_select,             # 11. Choose name
-                   "node_name_confirm": node_name_confirm,           # 12. Confirm name
-                   "node_final_confirm": node_final_confirm,         # 13. Final review
-                   "node_create_char": node_create_char              # 14. Create character
-               },
-               startnode=start_node,
-               cmd_on_exit=None,
-               options_formatter=custom_formatter,
-               node_formatter=node_formatter,
-               options_separator="")
+            def custom_formatter(optionlist):
+                """
+                Don't display the options - they're already in the node text
+                """
+                return ""
+                
+            def node_formatter(nodetext, optionstext):
+                """
+                Simply return the node text without any formatting
+                """
+                return nodetext
+                
+            # Start the menu with custom formatting
+            EvMenu(self.caller,
+                   {
+                       "node_age_verification": node_age_verification,     # 0. Age verification
+                       "node_race_select": node_race_select,              # 1. Select race
+                       "node_subrace_select": node_subrace_select,        # 2. Select subrace (if applicable)
+                       "node_gender_select": node_gender_select,          # 3. Select gender
+                       "node_height_select": node_height_select,          # 4. Select height
+                       "node_height_confirm": node_height_confirm,        # 5. Confirm height
+                       "node_age_select": node_age_select,               # 6. Select age
+                       "node_age_confirm": node_age_confirm,             # 7. Confirm age
+                       "node_background_select": node_background_select,  # 8. Select background
+                       "node_description_select": node_description_select, # 9. Customize descriptions
+                       "node_text_descriptor": node_text_descriptor,      # 10. Overall text description
+                       "node_name_select": node_name_select,             # 11. Choose name
+                       "node_name_confirm": node_name_confirm,           # 12. Confirm name
+                       "node_final_confirm": node_final_confirm,         # 13. Final review
+                       "node_create_char": node_create_char              # 14. Create character
+                   },
+                   startnode=start_node,
+                   cmd_on_exit=None,
+                   options_formatter=custom_formatter,
+                   node_formatter=node_formatter,
+                   options_separator="")
+        except Exception as err:
+            # Send friendly message to user
+            self.caller.msg("|rAn error occurred starting character creation. Please try again.|n")
+            # Log the error through our error handler
+            from utils.error_handler import handle_error
+            handle_error(self.caller, err)
   
 def node_age_verification(caller):
     """Initial age verification check."""

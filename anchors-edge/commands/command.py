@@ -1236,3 +1236,74 @@ class CmdHeight(Command):
         self.msg("Average: 40-60% of race's height range")
         self.msg("Tall: 60-75% of race's height range")
         self.msg("Very Tall: Top 25% of race's height range")
+
+class CmdAge(Command):
+    """
+    Shows age ranges for all races.
+
+    Usage:
+      age
+
+    This command displays a table of age ranges for all races,
+    showing the minimum and maximum ages for each race and subrace.
+    
+    Age categories are relative to each race's range:
+    - Very Young: Bottom 25% of race's age range
+    - Young: 25-40% of race's age range  
+    - Adult: 40-60% of race's age range
+    - Mature: 60-75% of race's age range
+    - Elder: Top 25% of race's age range
+    """
+    key = "age"
+    locks = "cmd:all()"
+
+    def func(self):
+        """Execute the age command."""
+        from evennia.utils.evtable import EvTable
+        from django.conf import settings
+
+        # Create table headers
+        table = EvTable(
+            "|wRace/Subrace|n",
+            "|wAge Range|n",
+            "|wLife Expectancy|n",
+            table=None,
+            border="table",
+            pad_width=1
+        )
+
+        # Process each race and store entries
+        entries = []
+        for race, age_data in sorted(settings.RACE_AGE_RANGES.items()):
+            # Handle races with subraces
+            if isinstance(age_data, dict) and any(subrace in ["normal", "hill", "wood", "high"] for subrace in age_data):
+                for subrace, subrace_data in sorted(age_data.items()):
+                    race_name = f"{race} ({subrace.capitalize()})"
+                    min_age = subrace_data.get('min', 'Unknown')
+                    max_age = subrace_data.get('max', 'Unknown')
+                    life_expectancy = subrace_data.get('life_expectancy', 'Unknown')
+                    entries.append((race_name, f"{min_age}-{max_age}", str(life_expectancy)))
+            else:
+                # Handle races without subraces
+                min_age = age_data.get('min', 'Unknown')
+                max_age = age_data.get('max', 'Unknown')
+                life_expectancy = age_data.get('life_expectancy', 'Unknown')
+                entries.append((race, f"{min_age}-{max_age}", str(life_expectancy)))
+
+        # Add entries to table one per row
+        for entry in sorted(entries):
+            table.add_row(*entry)
+
+        # Display the table
+        self.msg("|c=== Race Age Ranges ===|n")
+        self.msg(table)
+        
+        # Show age category ranges
+        # self.msg("\n|wAge Categories:|n")
+        # self.msg("Very Young: Bottom 25% of race's age range")
+        # self.msg("Young: 25-40% of race's age range")
+        # self.msg("Adult: 40-60% of race's age range")
+        # self.msg("Mature: 60-75% of race's age range")
+        # self.msg("Elder: Top 25% of race's age range")
+
+

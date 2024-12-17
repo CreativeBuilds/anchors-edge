@@ -1,0 +1,63 @@
+{
+    "Human": {
+        "normal": {
+            "min": 18,
+            "max": 80,
+            "life_expectancy": 90
+        },
+        "halfling": {
+            "min": 18,
+            "max": 90,
+            "life_expectancy": 100
+        }
+    },
+    "Elf": {
+        "high": {
+            "min": 50,
+            "max": 700,
+            "life_expectancy": 750
+        },
+        "wood": {
+            "min": 50,
+            "max": 650,
+            "life_expectancy": 700
+        },
+        "half": {
+            "min": 20,
+            "max": 180,
+            "life_expectancy": 200
+        }
+    },
+    "Dwarf": {
+        "mountain": {
+            "min": 40,
+            "max": 350,
+            "life_expectancy": 400
+        },
+        "hill": {
+            "min": 40,
+            "max": 300,
+            "life_expectancy": 350
+        }
+    },
+    "Gnome": {
+        "min": 30,
+        "max": 400,
+        "life_expectancy": 450
+    },
+    "Kobold": {
+        "min": 6,
+        "max": 50,
+        "life_expectancy": 60
+    },
+    "Feline": {
+        "min": 16,
+        "max": 70,
+        "life_expectancy": 80
+    },
+    "Ashenkin": {
+        "min": 18,
+        "max": 120,
+        "life_expectancy": 140
+    }
+} 

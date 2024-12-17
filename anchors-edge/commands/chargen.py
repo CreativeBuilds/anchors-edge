@@ -811,29 +811,36 @@ Is this the height you want?
 def node_age_select(caller):
     """Select character age."""
     race = caller.ndb._menutree.race
-    
-    # Define age ranges for each race
-    age_ranges = {
-        "Human": {"min": 18, "max": 75},
-        "Elf": {"min": 18, "max": 600},  # Elves are long-lived
-        "Dwarf": {"min": 18, "max": 300},  # Dwarves live several centuries
-        "Gnome": {"min": 18, "max": 350},  # Gnomes are also long-lived
-        "Kobold": {"min": 18, "max": 50},  # Shorter lifespan
-        "Feline": {"min": 18, "max": 70},  # Similar to humans
-        "Ashenkin": {"min": 18, "max": 175}  # Magical nature extends life
-    }
-    
-    # Get the age range for the selected race
-    age_range = age_ranges.get(race, age_ranges["Human"])  # Default to human if race not found
+    subrace = caller.ndb._menutree.subrace if hasattr(caller.ndb._menutree, 'subrace') else None
+
+    # Get age ranges from settings
+    age_ranges = settings.RACE_AGE_RANGES
     
     text = f"""
 |c== Character Creation - Age Selection ==|n
 
 Choose your character's age. Different races have different natural lifespans.
 
-|wAge Range for {race}:|n
+|wAge Range for {race}{f" ({subrace})" if subrace else ""}:|n"""
+
+    # Get the age range for the selected race and subrace
+    if subrace and race in age_ranges and subrace in age_ranges[race]:
+        age_range = age_ranges[race][subrace]
+    elif race in age_ranges:
+        if isinstance(age_ranges[race], dict) and any(subrace in ["normal", "halfling", "hill", "wood", "high", "mountain", "half"] for subrace in age_ranges[race]):
+            # If race has subraces but none specified, use first subrace as default
+            first_subrace = next(iter(age_ranges[race]))
+            age_range = age_ranges[race][first_subrace]
+        else:
+            age_range = age_ranges[race]
+    else:
+        # Fallback to human normal if race not found
+        age_range = age_ranges["Human"]["normal"]
+
+    text += f"""
 Minimum: {age_range['min']} years
 Maximum: {age_range['max']} years
+Life Expectancy: {age_range['life_expectancy']} years
 
 |wEnter your character's age (in years):|n"""
 
@@ -847,7 +854,7 @@ Maximum: {age_range['max']} years
                 caller.msg(f"Age must be at least {age_range['min']} years.")
                 return None
             elif age > age_range["max"]:
-                caller.msg(f"Age cannot exceed {age_range['max']} years for {race}s.")
+                caller.msg(f"Age cannot exceed {age_range['max']} years for {race}{f' ({subrace})' if subrace else ''}s.")
                 return None
                 
             # Store age

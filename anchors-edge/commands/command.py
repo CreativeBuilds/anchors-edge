@@ -1294,7 +1294,7 @@ class CmdAge(Command):
         entries = []
         for race, age_data in sorted(age_ranges.items()):
             # Handle races with subraces
-            if isinstance(age_data, dict) and any(subrace in ["normal", "hill", "wood", "high"] for subrace in age_data):
+            if isinstance(age_data, dict) and any(subrace in ["normal", "halfling", "hill", "wood", "high", "mountain", "half"] for subrace in age_data):
                 for subrace, subrace_data in sorted(age_data.items()):
                     race_name = f"{race} ({subrace.capitalize()})"
                     min_age = subrace_data.get('min', 'Unknown')
@@ -1314,14 +1314,15 @@ class CmdAge(Command):
 
         # Display the table
         self.msg("|c=== Race Age Ranges ===|n")
+        self.msg("|wNote: Life expectancy indicates natural lifespan under normal conditions.|n")
         self.msg(table)
         
-        # Show age category ranges (DISABLED FOR NOW)
-        # self.msg("\n|wAge Categories:|n")
-        # self.msg("Very Young: Bottom 25% of race's age range")
-        # self.msg("Young: 25-40% of race's age range")
-        # self.msg("Adult: 40-60% of race's age range")
-        # self.msg("Mature: 60-75% of race's age range")
-        # self.msg("Elder: Top 25% of race's age range")
+        # Show age category ranges
+        self.msg("\n|wAge Categories:|n")
+        self.msg("Very Young: Bottom 25% of race's age range")
+        self.msg("Young: 25-40% of race's age range")
+        self.msg("Adult: 40-60% of race's age range")
+        self.msg("Mature: 60-75% of race's age range")
+        self.msg("Elder: Top 25% of race's age range")
 
 

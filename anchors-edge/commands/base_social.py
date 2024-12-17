@@ -111,35 +111,43 @@ class EmoteCommandBase(Command):
                 preposition = words[0].lower()
                 args = " ".join(words[1:])  # Remove preposition from args
             
-            # Split remaining args into potential target and modifier
-            # Look for the first space after any commas to separate targets from modifier
-            target_end = -1
-            in_target = True
-            for i, char in enumerate(args):
-                if char == ',':
-                    continue
-                if char == ' ' and not args[i-1].isalnum():  # Space after punctuation
-                    target_end = i
-                    break
+            # Split target and modifier more robustly
+            # First normalize spaces to single spaces
+            args = ' '.join(args.split())
             
-            if target_end != -1:
-                target_string = args[:target_end].strip()
-                modifier = args[target_end:].strip()
+            # Try to find the first word that could be a modifier
+            parts = args.split(' ')
+            target_end = 0
+            
+            # If we have multiple parts, try to find where the modifier starts
+            if len(parts) > 1:
+                potential_target = parts[0]
+                # Try to find the target with just the first word
+                found_targets, failed = self.caller.find_targets(potential_target)
+                if found_targets:
+                    target_string = potential_target
+                    modifier = ' '.join(parts[1:])
+                else:
+                    # If no target found with first word, treat everything as modifier
+                    target_string = ""
+                    modifier = args
             else:
+                # Single word - try it as a target
                 target_string = args
                 modifier = ""
                 
             # Try to find targets
-            found_targets, failed_targets = self.caller.find_targets(target_string)
-            
-            if failed_targets:
-                if len(failed_targets) == len(target_string.split(",")):
-                    self.caller.msg(f"Could not find anyone matching: {', '.join(failed_targets)}")
-                    return
-                else:
-                    self.caller.msg(f"Warning: Could not find: {', '.join(failed_targets)}")
-            
-            targets.extend(found_targets)
+            if target_string:
+                found_targets, failed_targets = self.caller.find_targets(target_string)
+                
+                if failed_targets:
+                    if len(failed_targets) == len(target_string.split(",")):
+                        self.caller.msg(f"Could not find anyone matching: {', '.join(failed_targets)}")
+                        return
+                    else:
+                        self.caller.msg(f"Warning: Could not find: {', '.join(failed_targets)}")
+                
+                targets.extend(found_targets)
             
             # If no targets found and we have args, treat everything as modifier
             if not targets and args:

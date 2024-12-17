@@ -860,7 +860,7 @@ class Character(ObjectParent, DefaultCharacter):
 
     def find_targets(self, target_string, location=None, quiet=False):
         """
-        Find targets by name or description.
+        Find targets by name or description using simple string matching.
         
         Args:
             target_string (str): String containing target names/descriptions separated by commas
@@ -896,42 +896,32 @@ class Character(ObjectParent, DefaultCharacter):
                               if (hasattr(obj, 'has_account') and obj.has_account) or 
                                  (hasattr(obj.db, 'is_npc') and obj.db.is_npc)]
             
-            # First try exact name match for characters we know
+            matches = []
             for obj in potential_targets:
                 if obj == self:  # Skip self
                     continue
                     
-                # If we know them, try matching against their name only
-                if self.knows_character(obj):
-                    if obj.name.lower() == search_term:
-                        targets.append(obj)
-                        found = True
-                        break
-                # If we don't know them, try matching against their description only
-                else:
-                    desc = get_brief_description(obj).lower()
-                    # Remove articles for matching
-                    desc_words = desc.split()
-                    if desc_words[0] in ['a', 'an', 'the']:
-                        desc = ' '.join(desc_words[1:])
-                    
-                    if desc == search_term:
-                        targets.append(obj)
-                        found = True
-                        break
+                # Match against name if we know them, description if we don't
+                match_text = obj.name.lower() if self.knows_character(obj) else get_brief_description(obj).lower()
+                
+                if search_term in match_text:
+                    matches.append(obj)
             
-            # If no exact match found, try partial matches only for known characters
-            if not found:
-                for obj in potential_targets:
-                    if obj == self:  # Skip self
-                        continue
-                        
-                    # Only try partial name matches for known characters
+            # If we found exactly one match, use it
+            if len(matches) == 1:
+                targets.append(matches[0])
+                found = True
+            # If we found multiple matches, consider it a failure
+            elif len(matches) > 1 and not quiet:
+                match_descriptions = []
+                for obj in matches:
                     if self.knows_character(obj):
-                        if search_term in obj.name.lower():
-                            targets.append(obj)
-                            found = True
-                            break
+                        match_descriptions.append(f"  {obj.name}")
+                    else:
+                        match_descriptions.append(f"  {get_brief_description(obj)}")
+                        
+                self.msg(f"Multiple matches for '{search_term}':|/{'|/'.join(match_descriptions)}|/Please be more specific.")
+                return [], []
             
             if not found:
                 failed_targets.append(search_term)

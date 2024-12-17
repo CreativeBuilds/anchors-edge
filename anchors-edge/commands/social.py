@@ -896,6 +896,51 @@ class CmdEmoteList(Command):
         they = get_pronoun(self.caller, "subjective")
         them = get_pronoun(self.caller, "objective")
         
+        # Example variations for more natural demonstrations
+        examples = {
+            "smile": ("smile warmly at Gad", f"{caller_name} smiles warmly at Gad."),
+            "grin": ("grin wickedly", f"{caller_name} grins wickedly."),
+            "mgrin": ("mgrin mischievously", f"{caller_name} grins mischievously."),
+            "laugh": ("laugh heartily at Gad", f"{caller_name} laughs heartily at Gad."),
+            "chuckle": ("chuckle knowingly", f"{caller_name} chuckles knowingly."),
+            "giggle": ("giggle uncontrollably", f"{caller_name} giggles uncontrollably."),
+            "wave": ("wave cheerfully at Gad", f"{caller_name} waves cheerfully at Gad."),
+            "bow": ("bow deeply", f"{caller_name} bows deeply."),
+            "nod": ("nod sagely at Gad", f"{caller_name} nods sagely at Gad."),
+            "wink": ("wink playfully at Gad", f"{caller_name} winks playfully at Gad."),
+            "frown": ("frown thoughtfully", f"{caller_name} frowns thoughtfully."),
+            "shrug": ("shrug helplessly", f"{caller_name} shrugs helplessly."),
+            "pout": ("pout adorably", f"{caller_name} pouts adorably."),
+            "greet": ("greet Gad warmly", f"{caller_name} greets Gad warmly."),
+            "blush": ("blush furiously", f"{caller_name} blushes furiously."),
+            "sigh": ("sigh wearily", f"{caller_name} sighs wearily."),
+            "clap": ("clap enthusiastically", f"{caller_name} claps enthusiastically."),
+            "applaud": ("applaud Gad's performance", f"{caller_name} applauds Gad's performance."),
+            "lapplaud": ("lapplaud loudly", f"{caller_name} applauds loudly."),
+            "smirk": ("smirk deviously at Gad", f"{caller_name} smirks deviously at Gad."),
+            "sneer": ("sneer disdainfully", f"{caller_name} sneers disdainfully."),
+            "eye": ("eye Gad suspiciously", f"{caller_name} eyes Gad suspiciously."),
+            "chortle": ("chortle gleefully", f"{caller_name} chortles gleefully."),
+            "snort": ("snort derisively", f"{caller_name} snorts derisively."),
+            "beam": ("beam brightly at Gad", f"{caller_name} beams brightly at Gad."),
+            "poke": ("poke Gad playfully", f"{caller_name} pokes Gad playfully."),
+            "brow": ("brow curiously", f"{caller_name} arches {their} eyebrow curiously."),
+            "ack": ("ack", f"{caller_name} makes an acknowledging sound."),
+            "tup": ("tup Gad encouragingly", f"{caller_name} gives a thumbs up to Gad encouragingly."),
+            "tdown": ("tdown Gad", f"{caller_name} gives a thumbs down to Gad."),
+            "tongue": ("tongue Gad", f"{caller_name} sticks out {their} tongue at Gad."),
+            "hipcheck": ("hipcheck Gad playfully", f"{caller_name} gives Gad a playful hipcheck."),
+            "shouldercheck": ("shouldercheck Gad roughly", f"{caller_name} shoulderchecks Gad roughly."),
+            "bounce": ("bounce excitedly", f"{caller_name} bounces around excitedly."),
+            "hmm": ("hmm thoughtfully", f"{caller_name} hums thoughtfully."),
+            "yawn": ("yawn sleepily", f"{caller_name} yawns sleepily."),
+            "agree": ("agree with Gad", f"{caller_name} nods {their} head in agreement with Gad."),
+            "facepalm": ("facepalm dramatically", f"{caller_name} puts {their} face in {their} hands dramatically."),
+            "headdesk": ("headdesk repeatedly", f"{caller_name} beats {their} head against the nearest wall repeatedly."),
+            "tired": ("tired", f"{caller_name} rubs {their} eyes tiredly."),
+            "shh": ("shh Gad quietly", f"{caller_name} puts {their} finger to {their} lips at Gad.")
+        }
+        
         # Create table
         table = evtable.EvTable(
             "|wCommand|n",
@@ -906,19 +951,27 @@ class CmdEmoteList(Command):
             width=80
         )
         
+        # Get list of actual command keys
+        available_commands = {cmd.key for cmd in emote_commands}
+        
+        # Filter examples to only include available commands
+        filtered_examples = {k: v for k, v in examples.items() if k in available_commands}
+        
         for cmd in emote_commands:
-            # Get the docstring for help text
-            doc = cmd.__doc__.strip().split('\n')[0] if cmd.__doc__ else ""
-            
-            # Generate examples based on command key and docstring
-            if "at <target>" in doc:
-                example = f"{cmd.key} Gad happily"
-                self_output = f"You {cmd.key} happily at Gad."
-                other_output = f"{caller_name} {cmd.key}s happily at Gad."
+            # Get example from our filtered dictionary, or generate a default one
+            if cmd.key in filtered_examples:
+                example, other_output = filtered_examples[cmd.key]
             else:
-                example = f"{cmd.key} happily"
-                self_output = f"You {cmd.key} happily."
-                other_output = f"{caller_name} {cmd.key}s happily."
+                # Get the docstring for help text
+                doc = cmd.__doc__.strip().split('\n')[0] if cmd.__doc__ else ""
+                
+                # Generate example based on command key and docstring
+                if "at <target>" in doc:
+                    example = f"{cmd.key} Gad"
+                    other_output = f"{caller_name} {cmd.key}s at Gad."
+                else:
+                    example = f"{cmd.key}"
+                    other_output = f"{caller_name} {cmd.key}s."
             
             # Add command and examples to table
             table.add_row(

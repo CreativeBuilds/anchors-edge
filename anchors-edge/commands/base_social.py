@@ -43,15 +43,18 @@ class EmoteCommandBase(Command):
                 "reflexive": "themselves"
             }
 
-    def format_emote_text(self, is_self=False, char=None, target=None):
+    def format_emote_text(self, is_self=False, char=None, target=None, use_target_name=False):
         """Format emote text with proper pronouns"""
         if is_self:
+            # Get target pronouns if we have a target
+            target_pronouns = self.get_pronouns(target) if target else None
+            
             # Convert third-person to second-person
             # e.g., "{char} sticks out {their} tongue" -> "stick out your tongue"
             text = self.emote_text.format(
                 char="you",
                 their="your",
-                them="you",
+                them=target_pronouns["objective"] if target_pronouns else "you",
                 they="you",
                 theirs="yours",
                 themselves="yourself"
@@ -64,11 +67,16 @@ class EmoteCommandBase(Command):
         else:
             # Use character's pronouns
             pronouns = self.get_pronouns(char)
-            target_pronouns = self.get_pronouns(target) if target else pronouns
+            if use_target_name and target:
+                target_text = target.name
+            else:
+                target_pronouns = self.get_pronouns(target) if target else pronouns
+                target_text = target_pronouns["objective"]
+                
             return self.emote_text.format(
                 char="{char}",  # Placeholder for name/description
                 their=pronouns["possessive"],
-                them=target_pronouns["objective"] if target else pronouns["objective"],
+                them=target_text,
                 they=pronouns["subjective"],
                 theirs=pronouns["possessive"],
                 themselves=pronouns["reflexive"]
@@ -228,8 +236,19 @@ class EmoteCommandBase(Command):
                     # Build final message
                     if observer == self.caller:
                         msg = f"You {self.format_emote_text(is_self=True, target=target_for_emote)}"
-                    else:
+                    elif is_observer_target:
                         msg = f"{caller_name} {self.format_emote_text(char=self.caller, target=target_for_emote)}"
+                    else:
+                        # For observers who aren't involved, use names if they know both parties
+                        if is_character and target_for_emote:
+                            if observer.knows_character(self.caller) and observer.knows_character(target_for_emote):
+                                # Use actual names since observer knows both
+                                msg = f"{caller_name} {self.format_emote_text(char=self.caller, target=target_for_emote, use_target_name=True)}"
+                            else:
+                                # Use descriptions for those they don't know
+                                msg = f"{caller_name} {self.format_emote_text(char=self.caller, target=target_for_emote)}"
+                        else:
+                            msg = f"{caller_name} {self.format_emote_text(char=self.caller, target=target_for_emote)}"
                         
                     # Only add preposition and target if the emote doesn't handle its own targeting
                     if not self.uses_target_in_emote:

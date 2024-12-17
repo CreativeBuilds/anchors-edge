@@ -517,9 +517,33 @@ class CmdShouldercheck(EmoteCommandBase):
     Examples:
       shouldercheck Gad
       shouldercheck Gad angrily
+      
+    You must specify a target, and you cannot shouldercheck yourself.
     """
     key = "shouldercheck"
     emote_text = "shoulderchecks {them} harshly on the way by"
+    
+    def func(self):
+        """Handle the shouldercheck command."""
+        if not self.args:
+            self.caller.msg("Who do you want to shouldercheck?")
+            return
+            
+        # Parse target from args
+        args = self.args.strip()
+        
+        # Try to find targets
+        found_targets, failed_targets = self.caller.find_targets(args)
+        
+        if not found_targets:
+            if failed_targets:
+                self.caller.msg(f"Could not find anyone matching: {', '.join(failed_targets)}")
+            else:
+                self.caller.msg("Who do you want to shouldercheck?")
+            return
+            
+        # Continue with normal emote processing
+        super().func()
 
 class CmdBounce(EmoteCommandBase):
     """

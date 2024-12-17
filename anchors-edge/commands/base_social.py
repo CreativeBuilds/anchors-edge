@@ -10,6 +10,7 @@ class EmoteCommandBase(Command):
     """Base class for simple emote commands"""
     locks = "cmd:all()"
     help_category = "Social"
+    auto_help = False  # This will hide all social commands from help
     
     def get_pronouns(self, character):
         """
@@ -95,6 +96,16 @@ class EmoteCommandBase(Command):
             return conjugated + ' ' + ' '.join(words[1:])
         return conjugated
 
+    def check_self_targeting(self, targets):
+        """
+        Check if the caller is trying to target themselves.
+        Returns True if self-targeting is detected.
+        """
+        if self.caller in targets:
+            self.caller.msg("You cannot target yourself with this emote.")
+            return True
+        return False
+
     def func(self):
         """Handle the emote command."""
         # Parse target from args
@@ -148,6 +159,10 @@ class EmoteCommandBase(Command):
                         self.caller.msg(f"Warning: Could not find: {', '.join(failed_targets)}")
                 
                 targets.extend(found_targets)
+                
+                # Check for self-targeting
+                if self.check_self_targeting(targets):
+                    return
             
             # If no targets found and we have args, treat everything as modifier
             if not targets and args:

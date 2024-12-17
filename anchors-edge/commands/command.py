@@ -1261,6 +1261,24 @@ class CmdAge(Command):
         """Execute the age command."""
         from evennia.utils.evtable import EvTable
         from django.conf import settings
+        import os
+        from pathlib import Path
+
+        try:
+            # Try to get age ranges from settings
+            age_ranges = settings.RACE_AGE_RANGES
+        except AttributeError:
+            # If not in settings, try to load directly from file
+            try:
+                game_dir = settings.GAME_DIR
+                data_path = Path(game_dir) / "data" / "descriptions" / "race_ages.json"
+                with open(data_path, 'r') as f:
+                    import json
+                    age_ranges = json.load(f)
+            except Exception as e:
+                self.msg("Error: Could not load race age ranges. Please notify an admin.")
+                self.msg(f"Technical details: {str(e)}")
+                return
 
         # Create table headers
         table = EvTable(
@@ -1274,7 +1292,7 @@ class CmdAge(Command):
 
         # Process each race and store entries
         entries = []
-        for race, age_data in sorted(settings.RACE_AGE_RANGES.items()):
+        for race, age_data in sorted(age_ranges.items()):
             # Handle races with subraces
             if isinstance(age_data, dict) and any(subrace in ["normal", "hill", "wood", "high"] for subrace in age_data):
                 for subrace, subrace_data in sorted(age_data.items()):
@@ -1299,11 +1317,11 @@ class CmdAge(Command):
         self.msg(table)
         
         # Show age category ranges
-        # self.msg("\n|wAge Categories:|n")
-        # self.msg("Very Young: Bottom 25% of race's age range")
-        # self.msg("Young: 25-40% of race's age range")
-        # self.msg("Adult: 40-60% of race's age range")
-        # self.msg("Mature: 60-75% of race's age range")
-        # self.msg("Elder: Top 25% of race's age range")
+        self.msg("\n|wAge Categories:|n")
+        self.msg("Very Young: Bottom 25% of race's age range")
+        self.msg("Young: 25-40% of race's age range")
+        self.msg("Adult: 40-60% of race's age range")
+        self.msg("Mature: 60-75% of race's age range")
+        self.msg("Elder: Top 25% of race's age range")
 
 

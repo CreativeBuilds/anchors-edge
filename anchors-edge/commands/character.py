@@ -417,13 +417,9 @@ class CmdIntroLong(Command):
             caller_basic = get_brief_description(self.caller)
             target_basic = get_brief_description(target)
             
-            # Get pronouns
-            caller_pronouns = self.caller.get_pronouns()
-            target_pronouns = target.get_pronouns()
-            
-            # Format reflexive pronouns
-            caller_reflexive = caller_pronouns["reflexive"]
-            target_reflexive = target_pronouns["reflexive"]
+            # Get pronouns using the get_pronoun function
+            caller_reflexive = get_pronoun(self.caller, "reflexive")
+            target_reflexive = get_pronoun(target, "reflexive")
             
             # Check if target already knows caller
             if target.knows_character(self.caller):

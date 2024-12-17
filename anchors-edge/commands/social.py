@@ -898,16 +898,16 @@ class CmdEmoteList(Command):
         
         # Example variations for more natural demonstrations
         examples = {
-            "smile": ("smile warmly at Gad", f"{caller_name} smiles warmly at Gad."),
+            "smile": ("smile Gad warmly", f"{caller_name} smiles warmly at Gad."),
             "grin": ("grin wickedly", f"{caller_name} grins wickedly."),
             "mgrin": ("mgrin mischievously", f"{caller_name} grins mischievously."),
-            "laugh": ("laugh heartily at Gad", f"{caller_name} laughs heartily at Gad."),
+            "laugh": ("laugh Gad heartily", f"{caller_name} laughs heartily at Gad."),
             "chuckle": ("chuckle knowingly", f"{caller_name} chuckles knowingly."),
             "giggle": ("giggle uncontrollably", f"{caller_name} giggles uncontrollably."),
-            "wave": ("wave cheerfully at Gad", f"{caller_name} waves cheerfully at Gad."),
+            "wave": ("wave Gad cheerfully", f"{caller_name} waves cheerfully at Gad."),
             "bow": ("bow deeply", f"{caller_name} bows deeply."),
-            "nod": ("nod sagely at Gad", f"{caller_name} nods sagely at Gad."),
-            "wink": ("wink playfully at Gad", f"{caller_name} winks playfully at Gad."),
+            "nod": ("nod Gad sagely", f"{caller_name} nods sagely at Gad."),
+            "wink": ("wink Gad playfully", f"{caller_name} winks playfully at Gad."),
             "frown": ("frown thoughtfully", f"{caller_name} frowns thoughtfully."),
             "shrug": ("shrug helplessly", f"{caller_name} shrugs helplessly."),
             "pout": ("pout adorably", f"{caller_name} pouts adorably."),
@@ -915,14 +915,14 @@ class CmdEmoteList(Command):
             "blush": ("blush furiously", f"{caller_name} blushes furiously."),
             "sigh": ("sigh wearily", f"{caller_name} sighs wearily."),
             "clap": ("clap enthusiastically", f"{caller_name} claps enthusiastically."),
-            "applaud": ("applaud Gad's performance", f"{caller_name} applauds Gad's performance."),
+            "applaud": ("applaud Gad enthusiastically", f"{caller_name} applauds Gad enthusiastically."),
             "lapplaud": ("lapplaud loudly", f"{caller_name} applauds loudly."),
-            "smirk": ("smirk deviously at Gad", f"{caller_name} smirks deviously at Gad."),
+            "smirk": ("smirk Gad deviously", f"{caller_name} smirks deviously at Gad."),
             "sneer": ("sneer disdainfully", f"{caller_name} sneers disdainfully."),
             "eye": ("eye Gad suspiciously", f"{caller_name} eyes Gad suspiciously."),
             "chortle": ("chortle gleefully", f"{caller_name} chortles gleefully."),
             "snort": ("snort derisively", f"{caller_name} snorts derisively."),
-            "beam": ("beam brightly at Gad", f"{caller_name} beams brightly at Gad."),
+            "beam": ("beam Gad brightly", f"{caller_name} beams brightly at Gad."),
             "poke": ("poke Gad playfully", f"{caller_name} pokes Gad playfully."),
             "brow": ("brow curiously", f"{caller_name} arches {their} eyebrow curiously."),
             "ack": ("ack", f"{caller_name} makes an acknowledging sound."),
@@ -934,11 +934,11 @@ class CmdEmoteList(Command):
             "bounce": ("bounce excitedly", f"{caller_name} bounces around excitedly."),
             "hmm": ("hmm thoughtfully", f"{caller_name} hums thoughtfully."),
             "yawn": ("yawn sleepily", f"{caller_name} yawns sleepily."),
-            "agree": ("agree with Gad", f"{caller_name} nods {their} head in agreement with Gad."),
+            "agree": ("agree Gad", f"{caller_name} nods {their} head in agreement with Gad."),
             "facepalm": ("facepalm dramatically", f"{caller_name} puts {their} face in {their} hands dramatically."),
             "headdesk": ("headdesk repeatedly", f"{caller_name} beats {their} head against the nearest wall repeatedly."),
             "tired": ("tired", f"{caller_name} rubs {their} eyes tiredly."),
-            "shh": ("shh Gad quietly", f"{caller_name} puts {their} finger to {their} lips at Gad.")
+            "shh": ("shh Gad", f"{caller_name} puts {their} finger to {their} lips at Gad.")
         }
         
         # Create table

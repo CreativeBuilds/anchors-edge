@@ -5,6 +5,7 @@ Social commands module for common emotes and gestures.
 from evennia import Command
 from typeclasses.relationships import get_brief_description
 from utils.text_formatting import format_sentence
+from .character import get_pronoun
 
 class EmoteCommandBase(Command):
     """Base class for simple emote commands"""
@@ -895,9 +896,9 @@ class CmdEmoteList(Command):
         
         # Get caller's name and pronouns
         caller_name = self.caller.get_display_name(self.caller)
-        their = self.caller.get_pronoun_possessive()
-        they = self.caller.get_pronoun_subject()
-        them = self.caller.get_pronoun_objective()
+        their = get_pronoun(self.caller, "possessive")
+        they = get_pronoun(self.caller, "subjective")
+        them = get_pronoun(self.caller, "objective")
         
         for cmd in emote_commands:
             # Get the docstring for help text

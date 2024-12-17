@@ -170,13 +170,10 @@ class EmoteCommandBase(Command):
             if target_string:
                 found_targets, failed_targets = self.caller.find_targets(target_string)
                 
+                # If we got any failed targets, stop here - don't continue with the emote
                 if failed_targets:
-                    if len(failed_targets) == len(target_string.split(",")):
-                        self.caller.msg(f"Could not find anyone matching: {', '.join(failed_targets)}")
-                        return
-                    else:
-                        self.caller.msg(f"Warning: Could not find: {', '.join(failed_targets)}")
-                
+                    return
+                    
                 targets.extend(found_targets)
                 
                 # Check for self-targeting

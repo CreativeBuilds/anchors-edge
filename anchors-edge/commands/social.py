@@ -877,6 +877,8 @@ class CmdEmoteList(Command):
     
     def func(self):
         """Show list of all social commands with examples"""
+        from evennia.utils import evtable
+        
         # Get all command classes from this module that inherit from EmoteCommandBase
         emote_commands = []
         for name, obj in globals().items():
@@ -888,43 +890,57 @@ class CmdEmoteList(Command):
         # Sort commands by key
         emote_commands.sort(key=lambda x: x.key)
         
-        # Format the output as a table
-        msg = "|wSocial Commands:|n\n"
-        msg += "+" + "-" * 15 + "+" + "-" * 25 + "+" + "-" * 35 + "+\n"
-        msg += f"|{'Command':^15}|{'Example':^25}|{'Appears as':^35}|\n"
-        msg += "+" + "-" * 15 + "+" + "-" * 25 + "+" + "-" * 35 + "+\n"
-        
-        # Get caller's name and pronouns
-        caller_name = self.caller.get_display_name(self.caller)
+        # Get caller's name and pronouns - use key (name) instead of display_name to avoid rstatus
+        caller_name = self.caller.key
         their = get_pronoun(self.caller, "possessive")
         they = get_pronoun(self.caller, "subjective")
         them = get_pronoun(self.caller, "objective")
+        
+        # Create table
+        table = evtable.EvTable(
+            "|wCommand|n",
+            "|wExample Usage|n",
+            "|wAppears as|n",
+            table=None,
+            border="cells",
+            width=80
+        )
         
         for cmd in emote_commands:
             # Get the docstring for help text
             doc = cmd.__doc__.strip().split('\n')[0] if cmd.__doc__ else ""
             
-            # Generate example based on command key and docstring
-            example = f"{cmd.key} Gad" if "at <target>" in doc else cmd.key
-            self_output = f"You {cmd.key} at Gad." if "at <target>" in doc else f"You {cmd.key}."
-            other_output = f"{caller_name} {cmd.key}s at Gad." if "at <target>" in doc else f"{caller_name} {cmd.key}s."
+            # Generate examples based on command key and docstring
+            if "at <target>" in doc:
+                example = f"{cmd.key} Gad happily"
+                self_output = f"You {cmd.key} happily at Gad."
+                other_output = f"{caller_name} {cmd.key}s happily at Gad."
+            else:
+                example = f"{cmd.key} happily"
+                self_output = f"You {cmd.key} happily."
+                other_output = f"{caller_name} {cmd.key}s happily."
             
-            # Truncate if too long
-            example = (example[:22] + '...') if len(example) > 22 else example
-            other_output = (other_output[:32] + '...') if len(other_output) > 32 else other_output
-            
-            msg += f"|{cmd.key:<15}|{example:<25}|{other_output:<35}|\n"
+            # Add command and examples to table
+            table.add_row(
+                f"|c{cmd.key}|n",
+                example,
+                other_output
+            )
             
             # Add aliases if any
             if hasattr(cmd, 'aliases') and cmd.aliases:
                 aliases = ', '.join(cmd.aliases)
                 if aliases:
-                    msg += f"|{'└─ ' + aliases:<15}|{' ':25}|{' ':35}|\n"
-                    
-        msg += "+" + "-" * 15 + "+" + "-" * 25 + "+" + "-" * 35 + "+\n"
-        msg += "\nUse |whelp <command>|n for more details on any command."
+                    table.add_row(
+                        f"└─ {aliases}",
+                        "",
+                        ""
+                    )
         
-        self.caller.msg(msg)
+        # Send the table to the caller
+        self.caller.msg("|wSocial Commands:|n")
+        self.caller.msg(table)
+        self.caller.msg("\nUse |whelp <command>|n for more details on any command.")
 
 def add_social_commands(cmdset):
     """Add all social commands to a command set"""

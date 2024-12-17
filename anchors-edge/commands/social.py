@@ -687,6 +687,7 @@ class CmdEmoteList(Command):
         their = get_pronoun(self.caller, "possessive")
         they = get_pronoun(self.caller, "subjective")
         them = get_pronoun(self.caller, "objective")
+        themselves = get_pronoun(self.caller, "reflexive")  # Add reflexive pronoun
         
         # Example variations for more natural demonstrations
         examples = {

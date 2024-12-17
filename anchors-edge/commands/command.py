@@ -1186,38 +1186,54 @@ class CmdHeight(Command):
         # Create table headers
         table = EvTable(
             "|wRace/Subrace|n",
-            "|wGender|n",
-            "|wHeight Range|n",
+            "|wHeight Range (Male/Female)|n",
+            "|wRace/Subrace|n",
+            "|wHeight Range (Male/Female)|n",
             table=None,
             border="table",
             pad_width=1
         )
 
-        # Process each race
+        # Process each race and store entries
+        entries = []
         for race, height_data in sorted(settings.RACE_HEIGHT_RANGES.items()):
             # Handle races with subraces
             if isinstance(height_data, dict) and any(subrace in ["normal", "hill", "wood", "high"] for subrace in height_data):
                 for subrace, gender_data in sorted(height_data.items()):
                     race_name = f"{race} ({subrace.capitalize()})"
-                    for gender, ranges in sorted(gender_data.items()):
-                        min_feet = ranges["min"] // 12
-                        min_inches = ranges["min"] % 12
-                        max_feet = ranges["max"] // 12
-                        max_inches = ranges["max"] % 12
-                        height_range = f"{min_feet}'{min_inches} - {max_feet}'{max_inches}\""
-                        table.add_row(race_name, gender.capitalize(), height_range)
+                    if 'male' in gender_data and 'female' in gender_data:
+                        male = gender_data['male']
+                        female = gender_data['female']
+                        male_min = f"{male['min'] // 12}'{male['min'] % 12}"
+                        male_max = f"{male['max'] // 12}'{male['max'] % 12}"
+                        female_min = f"{female['min'] // 12}'{female['min'] % 12}"
+                        female_max = f"{female['max'] // 12}'{female['max'] % 12}"
+                        height_range = f"{male_min} ({female_min}) - {male_max} ({female_max})"
+                        entries.append((race_name, height_range))
             else:
                 # Handle races without subraces
-                for gender, ranges in sorted(height_data.items()):
-                    min_feet = ranges["min"] // 12
-                    min_inches = ranges["min"] % 12
-                    max_feet = ranges["max"] // 12
-                    max_inches = ranges["max"] % 12
-                    height_range = f"{min_feet}'{min_inches} - {max_feet}'{max_inches}\""
-                    table.add_row(race, gender.capitalize(), height_range)
+                if 'male' in height_data and 'female' in height_data:
+                    male = height_data['male']
+                    female = height_data['female']
+                    male_min = f"{male['min'] // 12}'{male['min'] % 12}"
+                    male_max = f"{male['max'] // 12}'{male['max'] % 12}"
+                    female_min = f"{female['min'] // 12}'{female['min'] % 12}"
+                    female_max = f"{female['max'] // 12}'{female['max'] % 12}"
+                    height_range = f"{male_min} ({female_min}) - {male_max} ({female_max})"
+                    entries.append((race, height_range))
+
+        # Add entries to table, two per row
+        for i in range(0, len(entries), 2):
+            row = list(entries[i])
+            if i + 1 < len(entries):
+                row.extend(entries[i + 1])
+            else:
+                row.extend(["", ""])  # Pad last row if needed
+            table.add_row(*row)
 
         # Display the table
         self.msg("|c=== Race Height Ranges ===|n")
+        self.msg("|w(Heights shown as: Male (Female))|n")
         self.msg(table)
         
         # Show height category ranges

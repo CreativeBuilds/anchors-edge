@@ -1157,3 +1157,73 @@ class CmdLook(default_cmds.CmdLook):
             return
                 
         self.msg(f"You don't see anything matching '{search_term}' here.")
+        
+class CmdHeight(Command):
+    """
+    Shows height ranges for all races.
+
+    Usage:
+      height
+
+    This command displays a table of height ranges for all races,
+    showing the minimum and maximum heights for each gender and subrace.
+    
+    Height descriptions are relative to each race's range:
+    - Very Short: Bottom 25% of race's height range
+    - Short: 25-40% of race's height range  
+    - Average: 40-60% of race's height range
+    - Tall: 60-75% of race's height range
+    - Very Tall: Top 25% of race's height range
+    """
+    key = "height"
+    locks = "cmd:all()"
+
+    def func(self):
+        """Execute the height command."""
+        from evennia.utils.evtable import EvTable
+        from django.conf import settings
+
+        # Create table headers
+        table = EvTable(
+            "|wRace/Subrace|n",
+            "|wGender|n",
+            "|wHeight Range|n",
+            table=None,
+            border="table",
+            pad_width=1
+        )
+
+        # Process each race
+        for race, height_data in sorted(settings.RACE_HEIGHT_RANGES.items()):
+            # Handle races with subraces
+            if isinstance(height_data, dict) and any(subrace in ["normal", "hill", "wood", "high"] for subrace in height_data):
+                for subrace, gender_data in sorted(height_data.items()):
+                    race_name = f"{race} ({subrace.capitalize()})"
+                    for gender, ranges in sorted(gender_data.items()):
+                        min_feet = ranges["min"] // 12
+                        min_inches = ranges["min"] % 12
+                        max_feet = ranges["max"] // 12
+                        max_inches = ranges["max"] % 12
+                        height_range = f"{min_feet}'{min_inches} - {max_feet}'{max_inches}\""
+                        table.add_row(race_name, gender.capitalize(), height_range)
+            else:
+                # Handle races without subraces
+                for gender, ranges in sorted(height_data.items()):
+                    min_feet = ranges["min"] // 12
+                    min_inches = ranges["min"] % 12
+                    max_feet = ranges["max"] // 12
+                    max_inches = ranges["max"] % 12
+                    height_range = f"{min_feet}'{min_inches} - {max_feet}'{max_inches}\""
+                    table.add_row(race, gender.capitalize(), height_range)
+
+        # Display the table
+        self.msg("|c=== Race Height Ranges ===|n")
+        self.msg(table)
+        
+        # Show height category ranges
+        self.msg("\n|wHeight Categories:|n")
+        self.msg("Very Short: Bottom 25% of race's height range")
+        self.msg("Short: 25-40% of race's height range")
+        self.msg("Average: 40-60% of race's height range")
+        self.msg("Tall: 60-75% of race's height range")
+        self.msg("Very Tall: Top 25% of race's height range")

@@ -895,54 +895,9 @@ class CmdEmoteList(Command):
         
         # Get caller's name and pronouns
         caller_name = self.caller.get_display_name(self.caller)
-        their = self.caller.get_pronoun('their')
-        they = self.caller.get_pronoun('they')
-        them = self.caller.get_pronoun('them')
-        
-        # Example outputs for each command
-        examples = {
-            "smile": ("smile Gad", "You smile at Gad.", f"{caller_name} smiles at Gad."),
-            "grin": ("grin wickedly", "You grin wickedly.", f"{caller_name} grins wickedly."),
-            "mgrin": ("mgrin", "You grin mischievously.", f"{caller_name} grins mischievously."),
-            "laugh": ("laugh heartily", "You laugh heartily.", f"{caller_name} laughs heartily."),
-            "chuckle": ("chuckle knowingly", "You chuckle knowingly.", f"{caller_name} chuckles knowingly."),
-            "giggle": ("giggle", "You giggle.", f"{caller_name} giggles."),
-            "wave": ("wave Gad", "You wave at Gad.", f"{caller_name} waves at Gad."),
-            "bow": ("bow deeply", "You bow deeply.", f"{caller_name} bows deeply."),
-            "nod": ("nod Gad", "You nod at Gad.", f"{caller_name} nods at Gad."),
-            "wink": ("wink Gad", "You wink at Gad.", f"{caller_name} winks at Gad."),
-            "frown": ("frown sadly", "You frown sadly.", f"{caller_name} frowns sadly."),
-            "shrug": ("shrug helplessly", "You shrug helplessly.", f"{caller_name} shrugs helplessly."),
-            "pout": ("pout", "You pout.", f"{caller_name} pouts."),
-            "greet": ("greet Gad warmly", "You greet Gad warmly.", f"{caller_name} greets Gad warmly."),
-            "blush": ("blush deeply", "You blush deeply.", f"{caller_name} blushes deeply."),
-            "sigh": ("sigh wearily", "You sigh wearily.", f"{caller_name} sighs wearily."),
-            "clap": ("clap enthusiastically", "You clap enthusiastically.", f"{caller_name} claps enthusiastically."),
-            "applaud": ("applaud performance", "You applaud the performance.", f"{caller_name} applauds the performance."),
-            "lapplaud": ("lapplaud", "You applaud loudly.", f"{caller_name} applauds loudly."),
-            "smirk": ("smirk knowingly", "You smirk knowingly.", f"{caller_name} smirks knowingly."),
-            "sneer": ("sneer disdainfully", "You sneer disdainfully.", f"{caller_name} sneers disdainfully."),
-            "eye": ("eye suspiciously", "You eye suspiciously.", f"{caller_name} eyes suspiciously."),
-            "chortle": ("chortle gleefully", "You chortle gleefully.", f"{caller_name} chortles gleefully."),
-            "snort": ("snort derisively", "You snort derisively.", f"{caller_name} snorts derisively."),
-            "beam": ("beam happily", "You beam happily.", f"{caller_name} beams happily."),
-            "poke": ("poke Gad", "You poke Gad with your finger.", f"{caller_name} pokes Gad with {their} finger."),
-            "brow": ("brow", "You arch your eyebrow.", f"{caller_name} arches {their} eyebrow."),
-            "ack": ("ack", "You make an acknowledging sound.", f"{caller_name} makes an acknowledging sound."),
-            "tup": ("tup Gad", "You give a thumbs up to Gad.", f"{caller_name} gives a thumbs up to Gad."),
-            "tdown": ("tdown Gad", "You give a thumbs down to Gad.", f"{caller_name} gives a thumbs down to Gad."),
-            "tongue": ("tongue Gad", "You stick out your tongue at Gad.", f"{caller_name} sticks out {their} tongue at Gad."),
-            "hipcheck": ("hipcheck Gad", "You give Gad a friendly hipcheck.", f"{caller_name} gives Gad a friendly hipcheck."),
-            "shouldercheck": ("shouldercheck Gad", "You shouldercheck Gad harshly.", f"{caller_name} shoulderchecks Gad harshly."),
-            "bounce": ("bounce happily", "You bounce around excitedly.", f"{caller_name} bounces around excitedly."),
-            "hmm": ("hmm thoughtfully", "You hum thoughtfully.", f"{caller_name} hums thoughtfully."),
-            "yawn": ("yawn sleepily", "You yawn sleepily.", f"{caller_name} yawns sleepily."),
-            "agree": ("agree Gad", "You nod your head in agreement at Gad.", f"{caller_name} nods {their} head in agreement at Gad."),
-            "facepalm": ("facepalm", "You put your face in your hands and sigh.", f"{caller_name} puts {their} face in {their} hands and sighs."),
-            "headdesk": ("headdesk", "You beat your head against the nearest wall.", f"{caller_name} beats {their} head against the nearest wall."),
-            "tired": ("tired", "You rub your eyes tiredly.", f"{caller_name} rubs {their} eyes tiredly."),
-            "shh": ("shh Gad", "You put your finger to your lips.", f"{caller_name} puts {their} finger to {their} lips.")
-        }
+        their = self.caller.get_pronoun_possessive()
+        they = self.caller.get_pronoun_subject()
+        them = self.caller.get_pronoun_objective()
         
         for cmd in emote_commands:
             # Get the docstring for help text

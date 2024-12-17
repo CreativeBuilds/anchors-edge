@@ -526,7 +526,7 @@ class CmdShouldercheck(EmoteCommandBase):
     def func(self):
         """Handle the shouldercheck command."""
         if not self.args:
-            self.caller.msg("Who do you want to shouldercheck?")
+            self.caller.msg("Usage: shouldercheck <person> [<modifier>]\nExample: shouldercheck Gad angrily")
             return
             
         # Parse target from args
@@ -539,7 +539,7 @@ class CmdShouldercheck(EmoteCommandBase):
             if failed_targets:
                 self.caller.msg(f"Could not find anyone matching: {', '.join(failed_targets)}")
             else:
-                self.caller.msg("Who do you want to shouldercheck?")
+                self.caller.msg("Who do you want to shouldercheck?\nExample: shouldercheck Gad")
             return
             
         # Continue with normal emote processing

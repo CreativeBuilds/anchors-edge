@@ -1316,12 +1316,12 @@ class CmdAge(Command):
         self.msg("|c=== Race Age Ranges ===|n")
         self.msg(table)
         
-        # Show age category ranges
-        self.msg("\n|wAge Categories:|n")
-        self.msg("Very Young: Bottom 25% of race's age range")
-        self.msg("Young: 25-40% of race's age range")
-        self.msg("Adult: 40-60% of race's age range")
-        self.msg("Mature: 60-75% of race's age range")
-        self.msg("Elder: Top 25% of race's age range")
+        # Show age category ranges (DISABLED FOR NOW)
+        # self.msg("\n|wAge Categories:|n")
+        # self.msg("Very Young: Bottom 25% of race's age range")
+        # self.msg("Young: 25-40% of race's age range")
+        # self.msg("Adult: 40-60% of race's age range")
+        # self.msg("Mature: 60-75% of race's age range")
+        # self.msg("Elder: Top 25% of race's age range")
 
 

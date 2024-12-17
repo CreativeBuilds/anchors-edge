@@ -1,36 +1,6 @@
 """
-Changing the default command parser
-
-The cmdparser is responsible for parsing the raw text inserted by the
-user, identifying which command/commands match and return one or more
-matching command objects. It is called by Evennia's cmdhandler and
-must accept input and return results on the same form. The default
-handler is very generic so you usually don't need to overload this
-unless you have very exotic parsing needs; advanced parsing is best
-done at the Command.parse level.
-
-The default cmdparser understands the following command combinations
-(where [] marks optional parts.)
-
-[cmdname[ cmdname2 cmdname3 ...] [the rest]
-
-A command may consist of any number of space-separated words of any
-length, and contain any character. It may also be empty.
-
-The parser makes use of the cmdset to find command candidates. The
-parser return a list of matches. Each match is a tuple with its first
-three elements being the parsed cmdname (lower case), the remaining
-arguments, and the matched cmdobject from the cmdset.
-
-
-This module is not accessed by default. To tell Evennia to use it
-instead of the default command parser, add the following line to
-your settings file:
-
-    COMMAND_PARSER = "server.conf.cmdparser.cmdparser"
-
+Changing the default command parser to handle no-space emotes and other special cases.
 """
-
 
 def cmdparser(raw_string, cmdset, caller, match_index=None):
     """
@@ -49,7 +19,46 @@ def cmdparser(raw_string, cmdset, caller, match_index=None):
             everything not included in the cmdname. Cmdobj is the actual
             command instance taken from the cmdset, cmdlen is the length
             of the command name and the mratio is some quality value to
-            (possibly) separate multiple matches.
-
+            separate multiple matches.
     """
-    # Your implementation here
+    if not raw_string:
+        return []
+
+    # Special case for emote command with no space
+    if raw_string.startswith(';'):
+        # Find the emote command in the cmdset
+        emote_matches = [cmd for cmd in cmdset if cmd.key == 'emote' or ';' in (cmd.aliases or [])]
+        if emote_matches:
+            emote_cmd = emote_matches[0]
+            # Return the emote command with everything after ; as args
+            return [('emote', raw_string[1:], emote_cmd, 1, 1.0)]
+
+    # Default parsing for all other commands
+    raw_string = raw_string.strip()
+    
+    # Split by spaces for normal command processing
+    if not raw_string:
+        return []
+    
+    parts = raw_string.split(None, 1)
+    cmdname = parts[0].lower()
+    args = parts[1] if len(parts) > 1 else ''
+
+    # Build a list of matching commands
+    matches = []
+    for cmd in cmdset:
+        try:
+            # Match command names
+            if cmd.key == cmdname or \
+               cmdname in [alias.lower() for alias in cmd.aliases]:
+                matches.append((cmdname, args, cmd, len(cmdname), 1.0))
+        except Exception:
+            continue
+
+    # Handle match_index
+    if match_index is not None and matches:
+        if 0 <= match_index < len(matches):
+            return [matches[match_index]]
+        return []
+
+    return matches

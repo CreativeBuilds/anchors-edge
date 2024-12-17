@@ -1187,8 +1187,6 @@ class CmdHeight(Command):
         table = EvTable(
             "|wRace/Subrace|n",
             "|wHeight Range (Male/Female)|n",
-            "|wRace/Subrace|n",
-            "|wHeight Range (Male/Female)|n",
             table=None,
             border="table",
             pad_width=1
@@ -1222,14 +1220,9 @@ class CmdHeight(Command):
                     height_range = f"{male_min} ({female_min}) - {male_max} ({female_max})"
                     entries.append((race, height_range))
 
-        # Add entries to table, two per row
-        for i in range(0, len(entries), 2):
-            row = list(entries[i])
-            if i + 1 < len(entries):
-                row.extend(entries[i + 1])
-            else:
-                row.extend(["", ""])  # Pad last row if needed
-            table.add_row(*row)
+        # Add entries to table one per row
+        for entry in sorted(entries):
+            table.add_row(*entry)
 
         # Display the table
         self.msg("|c=== Race Height Ranges ===|n")

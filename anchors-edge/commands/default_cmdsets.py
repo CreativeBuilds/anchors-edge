@@ -25,7 +25,7 @@ from commands.admin import (
     CmdCleanupAccounts, CmdResetAccount, CmdDebugCharacter,
     CmdLastWipe, CmdChangelog, CmdResetWorld
 )
-from commands.command import CmdWho, CmdLook, CmdSay, CmdLsay, CmdHeight
+from commands.command import CmdWho, CmdLook, CmdSay, CmdLsay, CmdHeight, CmdAge
 from commands.emote import CmdEmote, CmdPmote, CmdOmote, CmdTmote
 from commands.unloggedin import CmdUnloggedinLook
 from commands.social import add_social_commands
@@ -73,7 +73,7 @@ class CharacterCmdSet(DefaultCharacterCmdSet):
         # Add social commands
         add_social_commands(self)
         self.add(CmdHeight())
-
+        self.add(CmdAge())
 
 
 class AccountCmdSet(DefaultAccountCmdSet):

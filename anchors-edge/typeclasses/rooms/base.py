@@ -132,7 +132,7 @@ class WeatherAwareRoom(DefaultRoom):
                     char_line = f"{display_name}{rp_status}"
                 else:
                     # For other characters, use get_display_name which already includes status
-                    char_line = char.get_display_name(looker)
+                    char_line = char.get_display_name(looker, include_rstatus=True)
                     
                 full_text += f"|/  |c{char_line}|n"
         

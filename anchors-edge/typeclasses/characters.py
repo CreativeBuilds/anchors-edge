@@ -477,7 +477,7 @@ class Character(ObjectParent, DefaultCharacter):
         # Return knowledge level >= ACQUAINTANCE
         return character.id in self.db.known_by and self.db.known_by[character.id] >= KnowledgeLevel.ACQUAINTANCE
 
-    def get_display_name(self, looker=None, include_rstatus=True, **kwargs):
+    def get_display_name(self, looker=None, include_rstatus=False, **kwargs):
         """
         Get the display name of this character based on whether the looker knows them.
         Args:

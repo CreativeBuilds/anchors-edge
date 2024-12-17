@@ -861,14 +861,6 @@ class Character(ObjectParent, DefaultCharacter):
     def find_targets(self, target_string, location=None, quiet=False):
         """
         Find targets by name or description using simple string matching.
-        
-        Args:
-            target_string (str): String containing target names/descriptions separated by commas
-            location (Object, optional): Location to search in. Defaults to caller's location.
-            quiet (bool, optional): Whether to suppress error messages. Defaults to False.
-            
-        Returns:
-            tuple: (list of found targets, list of failed target strings)
         """
         if not target_string:
             return [], []
@@ -911,17 +903,17 @@ class Character(ObjectParent, DefaultCharacter):
             if len(matches) == 1:
                 targets.append(matches[0])
                 found = True
-            # If we found multiple matches, consider it a failure
-            elif len(matches) > 1 and not quiet:
-                match_descriptions = []
-                for obj in matches:
-                    if self.knows_character(obj):
-                        match_descriptions.append(f"  {obj.name}")
-                    else:
-                        match_descriptions.append(f"  {get_brief_description(obj)}")
-                        
-                self.msg(f"Multiple matches for '{search_term}':|/{'|/'.join(match_descriptions)}|/Please be more specific.")
-                return [], []
+            # If we found multiple matches, add to failed targets
+            elif len(matches) > 1:
+                if not quiet:
+                    match_descriptions = []
+                    for obj in matches:
+                        if self.knows_character(obj):
+                            match_descriptions.append(f"  {obj.name}")
+                        else:
+                            match_descriptions.append(f"  {get_brief_description(obj)}")
+                    self.msg(f"Multiple matches for '{search_term}':|/{'|/'.join(match_descriptions)}|/Please be more specific.")
+                failed_targets.append(search_term)  # Add to failed targets
             
             if not found:
                 failed_targets.append(search_term)

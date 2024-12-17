@@ -896,46 +896,43 @@ class Character(ObjectParent, DefaultCharacter):
                               if (hasattr(obj, 'has_account') and obj.has_account) or 
                                  (hasattr(obj.db, 'is_npc') and obj.db.is_npc)]
             
-            # First try exact or partial name match for characters we know
+            # First try exact name match for characters we know
             for obj in potential_targets:
                 if obj == self:  # Skip self
                     continue
                     
-                # If we know them, try matching against their name
+                # If we know them, try matching against their name only
                 if self.knows_character(obj):
-                    if search_term in obj.name.lower():
+                    if obj.name.lower() == search_term:
                         targets.append(obj)
                         found = True
                         break
-                
-                # Try matching against description
-                desc = get_brief_description(obj).lower()
-                # Remove articles for matching
-                desc_words = desc.split()
-                if desc_words[0] in ['a', 'an', 'the']:
-                    desc = ' '.join(desc_words[1:])
-                
-                # Check for partial matches in description
-                if search_term in desc:
-                    targets.append(obj)
-                    found = True
-                    break
-            
-            # If no match found through name/description, try standard search
-            if not found:
-                result = self.search(search_term, location=location, quiet=True)
-                if result:
-                    if isinstance(result, list):
-                        if len(result) == 1:
-                            targets.append(result[0])
-                            found = True
-                        elif not quiet:
-                            self.msg(f"Multiple matches for '{search_term}'. Please be more specific.")
-                            return [], []
-                    else:
-                        targets.append(result)
+                # If we don't know them, try matching against their description only
+                else:
+                    desc = get_brief_description(obj).lower()
+                    # Remove articles for matching
+                    desc_words = desc.split()
+                    if desc_words[0] in ['a', 'an', 'the']:
+                        desc = ' '.join(desc_words[1:])
+                    
+                    if desc == search_term:
+                        targets.append(obj)
                         found = True
+                        break
+            
+            # If no exact match found, try partial matches only for known characters
+            if not found:
+                for obj in potential_targets:
+                    if obj == self:  # Skip self
+                        continue
                         
+                    # Only try partial name matches for known characters
+                    if self.knows_character(obj):
+                        if search_term in obj.name.lower():
+                            targets.append(obj)
+                            found = True
+                            break
+            
             if not found:
                 failed_targets.append(search_term)
                 

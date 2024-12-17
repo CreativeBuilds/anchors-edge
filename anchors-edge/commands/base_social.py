@@ -11,6 +11,7 @@ class EmoteCommandBase(Command):
     locks = "cmd:all()"
     help_category = "Social"
     auto_help = False  # This will hide all social commands from help
+    uses_target_in_emote = False  # Set to True for emotes that handle their own targeting
     
     def get_pronouns(self, character):
         """
@@ -42,7 +43,7 @@ class EmoteCommandBase(Command):
                 "reflexive": "themselves"
             }
 
-    def format_emote_text(self, is_self=False, char=None):
+    def format_emote_text(self, is_self=False, char=None, target=None):
         """Format emote text with proper pronouns"""
         if is_self:
             # Convert third-person to second-person
@@ -63,10 +64,11 @@ class EmoteCommandBase(Command):
         else:
             # Use character's pronouns
             pronouns = self.get_pronouns(char)
+            target_pronouns = self.get_pronouns(target) if target else pronouns
             return self.emote_text.format(
                 char="{char}",  # Placeholder for name/description
                 their=pronouns["possessive"],
-                them=pronouns["objective"],
+                them=target_pronouns["objective"] if target else pronouns["objective"],
                 they=pronouns["subjective"],
                 theirs=pronouns["possessive"],
                 themselves=pronouns["reflexive"]
@@ -189,15 +191,21 @@ class EmoteCommandBase(Command):
                     # Get target names/descriptions based on observer's knowledge
                     target_names = []
                     is_observer_target = False
+                    target_for_emote = None
                     
                     for target in targets:
                         if observer == target:
                             is_observer_target = True
+                            target_for_emote = target
                             continue  # Skip adding "you" to the list
                         if is_character and observer.knows_character(target):
                             target_names.append(target.name)
+                            if not target_for_emote:
+                                target_for_emote = target
                         else:
                             target_names.append(get_brief_description(target))
+                            if not target_for_emote:
+                                target_for_emote = target
                     
                     # Format target list
                     if target_names:
@@ -219,11 +227,13 @@ class EmoteCommandBase(Command):
                     
                     # Build final message
                     if observer == self.caller:
-                        msg = f"You {self.format_emote_text(is_self=True)} {preposition} {targets_str}"
-                    elif is_observer_target:
-                        msg = f"{caller_name} {self.format_emote_text(char=self.caller)} {preposition} {targets_str}"
+                        msg = f"You {self.format_emote_text(is_self=True, target=target_for_emote)}"
                     else:
-                        msg = f"{caller_name} {self.format_emote_text(char=self.caller)} {preposition} {targets_str}"
+                        msg = f"{caller_name} {self.format_emote_text(char=self.caller, target=target_for_emote)}"
+                        
+                    # Only add preposition and target if the emote doesn't handle its own targeting
+                    if not self.uses_target_in_emote:
+                        msg = f"{msg} {preposition} {targets_str}"
                 else:
                     # Non-targeted emote
                     if observer == self.caller:

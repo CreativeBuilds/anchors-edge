@@ -522,6 +522,7 @@ class CmdShouldercheck(EmoteCommandBase):
     """
     key = "shouldercheck"
     emote_text = "shoulderchecks {them} harshly on the way by"
+    uses_target_in_emote = True  # This emote handles its own targeting
     
     def func(self):
         """Handle the shouldercheck command."""

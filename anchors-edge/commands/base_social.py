@@ -49,12 +49,16 @@ class EmoteCommandBase(Command):
             # Get target pronouns if we have a target
             target_pronouns = self.get_pronouns(target) if target else None
             
+            # For self view, use target's name only if we know them
+            target_text = target.name if (target and hasattr(self.caller, 'knows_character') and 
+                                        self.caller.knows_character(target)) else get_brief_description(target)
+            
             # Convert third-person to second-person
             # e.g., "{char} sticks out {their} tongue" -> "stick out your tongue"
             text = self.emote_text.format(
                 char="you",
                 their="your",
-                them=target.name if target else "you",  # Use target's name for self view
+                them=target_text if target else "you",  # Use target's name or description based on knowledge
                 they="you",
                 theirs="yours",
                 themselves="yourself"

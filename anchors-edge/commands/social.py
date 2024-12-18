@@ -94,51 +94,45 @@ class CmdGiggle(EmoteCommandBase):
 # Gestures
 class CmdWave(EmoteCommandBase):
     """
-    Wave, optionally at someone and with a modifier.
+    Wave, optionally at/to/towards someone and with a modifier.
     
     Usage:
-      wave [<person>] [<modifier>]
+      wave [<preposition>] [<person>] [<modifier>]
       
     Examples:
       wave
       wave Gad
+      wave to Gad
+      wave towards Gad
+      wave at Gad,Bob
       wave wildly
-      wave Gad enthusiastically
+      wave to Gad enthusiastically
     """
     key = "wave"
     emote_text = "waves"
+    allowed_prepositions = ["at", "to", "towards"]
+    default_preposition = "at"
 
 class CmdBow(EmoteCommandBase):
     """
-    Bow, optionally to someone and with a modifier.
+    Bow, optionally to/before someone and with a modifier.
     
     Usage:
-      bow [<person>] [<modifier>]
-      
-    Examples:
-      bow
-      bow Gad
-      bow deeply
-      bow Gad respectfully
+      bow [<preposition>] [<person>] [<modifier>]
     """
     key = "bow"
     emote_text = "bows"
+    allowed_prepositions = ["to", "before"]
+    default_preposition = "to"
 
 class CmdNod(EmoteCommandBase):
     """
-    Nod, optionally at someone and with a modifier.
-    
-    Usage:
-      nod [<person>] [<modifier>]
-      
-    Examples:
-      nod
-      nod Gad
-      nod slowly
-      nod Gad in agreement
+    Nod, optionally to/at someone and with a modifier.
     """
     key = "nod"
     emote_text = "nods"
+    allowed_prepositions = ["to", "at"]
+    default_preposition = "to"
 
 # Facial expressions
 class CmdWink(EmoteCommandBase):

@@ -18,6 +18,8 @@ class EmoteCommandBase(Command):
     help_category = "Social"
     auto_help = False  # This will hide all social commands from help
     targetable = TargetType.OPTIONAL  # Default to optional targeting
+    allowed_prepositions = ["at", "to"]  # Default allowed prepositions
+    default_preposition = "at"  # Default preposition if none specified
     
     def get_pronouns(self, character):
         """
@@ -198,6 +200,16 @@ class EmoteCommandBase(Command):
                 
         return None
 
+    def parse_targets_and_preposition(self, args):
+        """
+        Parse args to extract preposition and targets.
+        Returns (preposition, targets_str)
+        """
+        words = args.split()
+        if len(words) > 1 and words[0].lower() in self.allowed_prepositions:
+            return words[0].lower(), " ".join(words[1:])
+        return self.default_preposition, args
+
     def func(self):
         """Handle the emote command."""
         if not self.args:
@@ -217,11 +229,13 @@ class EmoteCommandBase(Command):
         args = self.args.strip()
         targets_str = None
         modifier = None
+        preposition = self.default_preposition
         
         if " " in args:
-            targets_str, modifier = args.rsplit(" ", 1)
+            first_part, modifier = args.rsplit(" ", 1)
+            preposition, targets_str = self.parse_targets_and_preposition(first_part)
         else:
-            targets_str = args
+            preposition, targets_str = self.parse_targets_and_preposition(args)
             
         # Split potential targets by commas and handle multi-word names
         if targets_str:
@@ -263,8 +277,7 @@ class EmoteCommandBase(Command):
                     themselves=get_pronoun(self.caller, "reflexive")
                 )
             else:
-                # Add "at" or "to" based on the emote
-                preposition = "to" if self.key in ["wave", "bow", "nod"] else "at"
+                # Use the parsed or default preposition
                 emote = f"{self.emote_text} {preposition} {target_string}"
             
             # Add modifier if present

@@ -188,6 +188,9 @@ class EmoteCommandBase(Command):
         best_match = None
         best_ratio = 0.4  # Lower threshold for more lenient matching
         
+        # Debug output
+        self.caller.msg(f"Searching for: {search_term}")
+        
         for obj in possible_targets:
             if not hasattr(obj, 'db'):  # Skip non-db objects
                 continue
@@ -218,11 +221,16 @@ class EmoteCommandBase(Command):
                 display_words = display_name.split()
                 match_strings.extend(display_words)
             
+            # Debug output
+            self.caller.msg(f"Checking object: {desc}")
+            self.caller.msg(f"Match strings: {match_strings}")
+            
             # Find best match ratio among all possible strings
             for match_string in match_strings:
                 # Check for direct substring match first
                 if search_term in match_string:
                     ratio = 0.9  # High ratio for substring matches
+                    self.caller.msg(f"Found substring match: {match_string} ({ratio})")
                 else:
                     # Use sequence matcher for fuzzy matching
                     ratio = SequenceMatcher(None, search_term, match_string).ratio()
@@ -230,11 +238,13 @@ class EmoteCommandBase(Command):
                     # Boost ratio for partial word matches at start
                     if match_string.startswith(search_term):
                         ratio = max(ratio, 0.8)
+                        self.caller.msg(f"Found partial match at start: {match_string} ({ratio})")
                         
                 if ratio > best_ratio:
                     best_ratio = ratio
                     best_match = obj
-                
+                    self.caller.msg(f"New best match: {desc} ({ratio})")
+                    
         return best_match
 
     def parse_targets_and_preposition(self, args):

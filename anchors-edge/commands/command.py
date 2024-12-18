@@ -1079,6 +1079,7 @@ class CmdLook(default_cmds.CmdLook):
     Usage:
       look
       look <obj>
+      look at <obj>
       look *<account>
       l
     """
@@ -1093,7 +1094,11 @@ class CmdLook(default_cmds.CmdLook):
             super().func()
             return
             
+        # Clean up the search term
         search_term = self.args.lower().strip()
+        # Remove 'at ' prefix if present
+        if search_term.startswith("at "):
+            search_term = search_term[3:]
         
         # Handle special terms first
         if search_term in ['here', 'room']:
@@ -1133,28 +1138,47 @@ class CmdLook(default_cmds.CmdLook):
         # Get descriptions for matching
         matches = []
         for obj in candidates:
-            if hasattr(obj, 'get_display_name'):
-                full_desc = obj.get_display_name(caller).lower()
-            else:
-                full_desc = obj.name.lower()
+            # Skip self
+            if obj == caller:
+                continue
+
+            # Get all possible ways to refer to the object
+            match_strings = []
             
-            # Direct substring match gets highest priority
-            if search_term in full_desc or search_term in obj.key.lower():
-                matches.append((obj, 1.0))
-            else:
-                # Try fuzzy matching without spaces for abbreviations
-                desc_no_spaces = full_desc.replace(" ", "")
-                key_no_spaces = obj.key.lower().replace(" ", "")
-                search_no_spaces = search_term.replace(" ", "")
+            # Add the object's key (name)
+            if hasattr(obj, 'key'):
+                match_strings.append(obj.key.lower())
+            
+            # Add the display name if available
+            if hasattr(obj, 'get_display_name'):
+                match_strings.append(obj.get_display_name(caller).lower())
+            
+            # For characters, add their brief description
+            if hasattr(obj, 'is_typeclass') and obj.is_typeclass('typeclasses.characters.Character'):
+                brief_desc = get_brief_description(obj).lower()
+                match_strings.append(brief_desc)
                 
-                # Try matching against both description and key
-                desc_ratio = SequenceMatcher(None, search_no_spaces, desc_no_spaces).ratio()
-                key_ratio = SequenceMatcher(None, search_no_spaces, key_no_spaces).ratio()
-                
-                # Use the better match
-                ratio = max(desc_ratio, key_ratio)
-                if ratio > 0.6:  # Threshold for fuzzy matches
-                    matches.append((obj, ratio))
+                # If the caller knows this character, also add their name
+                if hasattr(caller, 'knows_character') and caller.knows_character(obj):
+                    match_strings.append(obj.name.lower())
+            
+            # Try each possible match string
+            best_ratio = 0
+            for match_string in match_strings:
+                # Direct substring match gets highest priority
+                if search_term in match_string:
+                    best_ratio = 1.0
+                    break
+                else:
+                    # Try fuzzy matching without spaces for abbreviations
+                    match_no_spaces = match_string.replace(" ", "")
+                    search_no_spaces = search_term.replace(" ", "")
+                    
+                    ratio = SequenceMatcher(None, search_no_spaces, match_no_spaces).ratio()
+                    best_ratio = max(best_ratio, ratio)
+            
+            if best_ratio > 0.5:  # Lower threshold for more lenient matching
+                matches.append((obj, best_ratio))
             
         logger.log_info(f"Matches for '{search_term}': {[obj.name for obj, ratio in matches]}")
         
@@ -1178,7 +1202,7 @@ class CmdLook(default_cmds.CmdLook):
             return
                 
         self.msg(f"You don't see anything matching '{search_term}' here.")
-        
+
 class CmdWhisper(default_cmds.MuxCommand):
     """
     Whisper a message to a person.

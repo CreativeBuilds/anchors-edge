@@ -1196,6 +1196,7 @@ class CmdWhisper(default_cmds.MuxCommand):
             if not hasattr(obj, 'is_typeclass') or not obj.is_typeclass('typeclasses.characters.Character'):
                 continue
                 
+            # Skip self as a target
             if obj == caller:
                 continue
                 
@@ -1230,6 +1231,13 @@ class CmdWhisper(default_cmds.MuxCommand):
             caller.msg("Usage: whisper <person> <message> OR whisper to <person> <message>")
             return
 
+        # Check if trying to whisper to self
+        if target_name.lower() in ["me", "self", "myself"] or (
+            hasattr(caller, 'name') and target_name.lower() == caller.name.lower()
+        ):
+            caller.msg("You can't whisper to yourself!")
+            return
+
         # Find potential targets
         matches = self.find_target(caller, target_name)
         
@@ -1261,17 +1269,26 @@ class CmdWhisper(default_cmds.MuxCommand):
         caller.msg(f'You whisper to {target_display}, "{message}"')
         target.msg(f'{caller_display} whispers to you, "{message}"')
 
-        # Optional: Add a subtle hint to others in the room that whispering is happening
+        # Show a message to others in the room that whispering is happening
         # but they can't hear what's being said
         for obj in caller.location.contents:
-            if obj != caller and obj != target and hasattr(obj, 'msg'):
+            if obj != caller and obj != target and hasattr(obj, 'msg') and hasattr(obj, 'is_typeclass') and obj.is_typeclass('typeclasses.characters.Character'):
                 observer_sees_caller = hasattr(obj, 'knows_character') and obj.knows_character(caller)
                 observer_sees_target = hasattr(obj, 'knows_character') and obj.knows_character(target)
                 
+                # Get appropriate names/descriptions based on observer's knowledge
                 caller_name = caller.name if observer_sees_caller else get_brief_description(caller)
                 target_name = target.name if observer_sees_target else get_brief_description(target)
                 
-                obj.msg(f"{caller_name} whispers something to {target_name}.")
+                # Randomly choose a message format for variety
+                import random
+                messages = [
+                    f"{caller_name} whispers something to {target_name}.",
+                    f"{caller_name} leans in close to whisper to {target_name}.",
+                    f"You notice {caller_name} whispering to {target_name}.",
+                    f"{caller_name} quietly whispers something to {target_name}."
+                ]
+                obj.msg(random.choice(messages))
 
 class CmdHeight(Command):
     """

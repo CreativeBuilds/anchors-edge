@@ -1256,7 +1256,6 @@ class CmdWhisper(default_cmds.MuxCommand):
 
     def parse(self):
         """Parse the command."""
-        super().parse()
         args = self.args.strip()
         
         if not args:

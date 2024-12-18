@@ -36,18 +36,18 @@ if [ ! -f "$PIP_BIN" ]; then
 fi
 
 # Update requirements
-log "Updating requirements"
-"$PIP_BIN" install -r requirements.txt || {
-    log "Failed to install requirements"
-    exit 1
-}
+# log "Updating requirements"
+# "$PIP_BIN" install -r requirements.txt || {
+#     log "Failed to install requirements"
+#     exit 1
+# }
 
 # Ensure evennia is installed
-log "Installing/updating evennia"
-"$PIP_BIN" install --upgrade evennia || {
-    log "Failed to install/update evennia"
-    exit 1
-}
+# log "Installing/updating evennia"
+# "$PIP_BIN" install --upgrade evennia || {
+#     log "Failed to install/update evennia"
+#     exit 1
+# }
 
 # Now get the evennia binary path after installation
 EVENNIA_BIN="$VENV_PATH/bin/evennia"

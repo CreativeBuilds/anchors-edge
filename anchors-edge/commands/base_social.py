@@ -261,7 +261,25 @@ class EmoteCommandBase(Command):
                         msg = f"{base_msg} {preposition} {targets_str}"
                 else:
                     # No targets - just show the emote
-                    msg = f"{caller_name} {self.emote_text}"
+                    # Get the caller's pronouns
+                    pronouns = self.get_pronouns(self.caller)
+                    
+                    # Format the emote text with the caller's pronouns
+                    formatted_emote = self.emote_text.format(
+                        char=caller_name,
+                        their=pronouns["possessive"],
+                        them=pronouns["objective"],
+                        they=pronouns["subjective"],
+                        theirs=pronouns["possessive"],
+                        themselves=pronouns["reflexive"]
+                    )
+                    
+                    if observer == self.caller:
+                        # For the caller, use "You" instead of their name
+                        msg = f"You {formatted_emote.format(char='you')}"
+                    else:
+                        # For observers, use the caller's name/description
+                        msg = f"{caller_name} {formatted_emote}"
                 
                 # Add modifier if present
                 if modifier:

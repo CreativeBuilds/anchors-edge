@@ -6,7 +6,7 @@ from evennia import Command
 from typeclasses.relationships import get_brief_description
 from utils.text_formatting import format_sentence
 from .character import get_pronoun
-from .base_social import EmoteCommandBase
+from .base_social import EmoteCommandBase, TargetType
 from enum import Enum
 
 # Smile variants

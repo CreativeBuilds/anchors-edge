@@ -715,7 +715,7 @@ class CmdEmoteList(Command):
         # Create table
         table = evtable.EvTable(
             "|wCommand|n",
-            "|wExample Usage|n",
+            "|wUsage|n",
             "|wAppears as|n",
             table=None,
             border="cells",
@@ -728,38 +728,33 @@ class CmdEmoteList(Command):
             uses_target = "{them}" in emote_text or cmd.uses_target_in_emote
             needs_target = hasattr(cmd, 'uses_target_in_emote') and cmd.uses_target_in_emote
             
+            # Format command name with usage indicators
+            command_name = f"|c{cmd.key}|n"
+            if uses_target and needs_target:
+                command_name += " |w<target>|n"
+            elif uses_target:
+                command_name += " |w[<target>]|n"
+            command_name += " |w[<modifier>]|n"
+            
             # Format the emote text with pronouns for display
             display_text = emote_text.format(
                 char=caller_name,
                 their=their,
-                them="Gad" if uses_target else them,
+                them="<target>" if uses_target else them,
                 they=they,
                 theirs=their,
                 themselves=themselves
             )
             
-            # Generate example usage
-            if needs_target:
-                # Command requires a target
-                example = f"{cmd.key} Gad"
-                other_output = f"{caller_name} {display_text}"
-            elif uses_target:
-                # Command can have a target
-                example = f"{cmd.key} Gad"
-                other_output = f"{caller_name} {display_text}"
-            else:
-                # Command doesn't use targeting
-                example = cmd.key
-                other_output = f"{caller_name} {display_text}"
-            
-            # Add "at" for targeting if not already in emote_text
+            # Format the display text
+            other_output = f"{caller_name} {display_text}"
             if uses_target and "at" not in emote_text and not needs_target:
-                other_output = other_output.replace(" Gad", " at Gad")
+                other_output = other_output.replace(" <target>", " at <target>")
             
             # Add command and examples to table
             table.add_row(
-                f"|c{cmd.key}|n",
-                example,
+                command_name,
+                "",  # Remove example usage column
                 other_output
             )
             
@@ -777,6 +772,7 @@ class CmdEmoteList(Command):
         self.caller.msg("|wSocial Commands:|n")
         self.caller.msg(table)
         self.caller.msg("\nUse |whelp <command>|n for more details on any command.")
+        self.caller.msg("|w<target>|n is required, |w[<target>]|n and |w[<modifier>]|n are optional")
 
 def add_social_commands(cmdset):
     """Add all social commands to a command set"""

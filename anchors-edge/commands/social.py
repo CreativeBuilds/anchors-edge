@@ -509,25 +509,23 @@ class CmdHipcheck(EmoteCommandBase):
 
 class CmdShouldercheck(EmoteCommandBase):
     """
-    Shouldercheck someone harshly.
+    Shouldercheck someone as you pass by.
     
     Usage:
       shouldercheck <person> [<modifier>]
       
     Examples:
       shouldercheck Gad
-      shouldercheck Gad angrily
-      
-    You must specify a target, and you cannot shouldercheck yourself.
+      shouldercheck Gad harshly
     """
     key = "shouldercheck"
-    emote_text = "shoulderchecks {them} harshly on the way by"
-    uses_target_in_emote = True  # This emote handles its own targeting
+    emote_text = "shoulderchecks {them} {their} way by"
+    uses_target_in_emote = True  # This emote requires a target
     
     def func(self):
         """Handle the shouldercheck command."""
         if not self.args:
-            self.caller.msg("Usage: shouldercheck <person> [<modifier>]\nExample: shouldercheck Gad angrily")
+            self.caller.msg("Usage: shouldercheck <person> [<modifier>]\nExample: shouldercheck Gad harshly")
             return
             
         # Parse target from args
@@ -748,7 +746,7 @@ class CmdEmoteList(Command):
             "tdown": ("tdown Gad", f"{caller_name} gives a thumbs down at Gad."),
             "tongue": ("tongue Gad", f"{caller_name} sticks out {their} tongue at Gad."),
             "hipcheck": ("hipcheck Gad", f"{caller_name} gives {them} a friendly hipcheck."),
-            "shouldercheck": ("shouldercheck Gad", f"{caller_name} shoulderchecks {them} harshly on the way by."),
+            "shouldercheck": ("shouldercheck Gad", f"{caller_name} shoulderchecks {them} {their} way by."),
             "bounce": ("bounce", f"{caller_name} bounces around excitedly."),
             "hmm": ("hmm", f"{caller_name} hums thoughtfully to {themselves}."),
             "yawn": ("yawn", f"{caller_name} covers {their} mouth and yawns."),

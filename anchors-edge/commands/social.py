@@ -519,7 +519,7 @@ class CmdShouldercheck(EmoteCommandBase):
       shouldercheck Gad harshly
     """
     key = "shouldercheck"
-    emote_text = "shoulderchecks {them} {their} way by"
+    emote_text = "shoulderchecks {them} on {their} way by"
     uses_target_in_emote = True  # This emote requires a target
     
     def func(self):
@@ -746,7 +746,7 @@ class CmdEmoteList(Command):
             "tdown": ("tdown Gad", f"{caller_name} gives a thumbs down at Gad."),
             "tongue": ("tongue Gad", f"{caller_name} sticks out {their} tongue at Gad."),
             "hipcheck": ("hipcheck Gad", f"{caller_name} gives {them} a friendly hipcheck."),
-            "shouldercheck": ("shouldercheck Gad", f"{caller_name} shoulderchecks {them} {their} way by."),
+            "shouldercheck": ("shouldercheck Gad", f"{caller_name} shoulderchecks {them} on {their} way by."),
             "bounce": ("bounce", f"{caller_name} bounces around excitedly."),
             "hmm": ("hmm", f"{caller_name} hums thoughtfully to {themselves}."),
             "yawn": ("yawn", f"{caller_name} covers {their} mouth and yawns."),

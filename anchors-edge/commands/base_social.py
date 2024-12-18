@@ -189,7 +189,8 @@ class EmoteCommandBase(Command):
         best_ratio = 0.01  # Very low threshold for extremely lenient matching
         
         # Debug output
-        self.caller.msg(f"Searching for: {search_term}")
+        self.caller.msg("|wStarting search for:|n " + search_term)
+        self.caller.msg("|wChecking all possible targets:|n")
         
         for obj in possible_targets:
             if not hasattr(obj, 'db'):  # Skip non-db objects
@@ -205,27 +206,44 @@ class EmoteCommandBase(Command):
             desc = get_brief_description(obj).lower()
             
             # Add name if known
+            known_name = ""
             if is_character and hasattr(self.caller, 'knows_character') and self.caller.knows_character(obj):
-                desc = f"{obj.key.lower()} {desc}"
+                known_name = obj.key.lower()
+                desc = f"{known_name} {desc}"
             
-            # Debug output
-            self.caller.msg(f"Checking object: {desc}")
+            # Debug output for this target
+            self.caller.msg("\n|yChecking target:|n")
+            self.caller.msg(f"- Full description: {desc}")
+            if known_name:
+                self.caller.msg(f"- Known name: {known_name}")
             
             # Use sequence matcher for fuzzy matching
             ratio = SequenceMatcher(None, search_term, desc).ratio()
+            self.caller.msg(f"- Base ratio: {ratio:.3f}")
             
-            # Boost ratio for substring matches
+            # Check and report substring matches
             if search_term in desc:
-                ratio = max(ratio, 0.6)  # Lower boost for substring matches
-            elif any(word.startswith(search_term) for word in desc.split()):
-                ratio = max(ratio, 0.4)  # Lower boost for word starts with search term
-            elif any(search_term in word for word in desc.split()):
-                ratio = max(ratio, 0.3)  # Lower boost for substring in any word
+                self.caller.msg(f"- Found direct substring match!")
+                ratio = max(ratio, 0.6)
+            
+            # Check and report word start matches
+            matching_words = [word for word in desc.split() if word.startswith(search_term)]
+            if matching_words:
+                self.caller.msg(f"- Words starting with '{search_term}': {', '.join(matching_words)}")
+                ratio = max(ratio, 0.4)
+            
+            # Check and report substring in word matches
+            containing_words = [word for word in desc.split() if search_term in word]
+            if containing_words:
+                self.caller.msg(f"- Words containing '{search_term}': {', '.join(containing_words)}")
+                ratio = max(ratio, 0.3)
+                
+            self.caller.msg(f"- Final ratio: {ratio:.3f}")
                 
             if ratio > best_ratio:
                 best_ratio = ratio
                 best_match = obj
-                self.caller.msg(f"New best match: {desc} ({ratio})")
+                self.caller.msg(f"|gNew best match!|n Score: {ratio:.3f}")
                     
         return best_match
 

@@ -7,6 +7,7 @@ from typeclasses.relationships import get_brief_description
 from utils.text_formatting import format_sentence
 from enum import Enum
 from difflib import SequenceMatcher
+from commands.character import get_pronoun
 
 class TargetType(Enum):
     NONE = 0      # No targeting allowed
@@ -241,28 +242,15 @@ class EmoteCommandBase(Command):
         Parse args to extract preposition and targets.
         Returns (preposition, targets_str)
         """
-        words = args.split()
-        if not words:
-            return self.default_preposition, ""
+        args = args.strip()
+        
+        # Check for compound prepositions first (e.g. "towards")
+        for prep in sorted(self.allowed_prepositions, key=len, reverse=True):
+            if args.lower().startswith(prep + " "):
+                # Return everything after the preposition and space
+                return prep, args[len(prep)+1:]
             
-        # Check if first word is a preposition
-        first_word = words[0].lower()
-        if first_word in self.allowed_prepositions:
-            # Make sure there's something after the preposition
-            if len(words) > 1:
-                return first_word, " ".join(words[1:])
-            return first_word, ""
-            
-        # If first word isn't a preposition, check if it's a compound preposition
-        if len(words) > 1:
-            first_two = " ".join(words[:2]).lower()
-            if first_two in self.allowed_prepositions:
-                # Make sure there's something after the compound preposition
-                if len(words) > 2:
-                    return first_two, " ".join(words[2:])
-                return first_two, ""
-            
-        # If no preposition is found at the start, treat everything as target string
+        # If no preposition found, use default and return full args
         return self.default_preposition, args
 
     def func(self):

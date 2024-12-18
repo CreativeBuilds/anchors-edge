@@ -250,22 +250,21 @@ class EmoteCommandBase(Command):
                     
                     # Build final message
                     if observer == self.caller:
-                        msg = f"You {self.format_emote_text(is_self=True, target=target_for_emote, observer=observer)}"
+                        base_msg = f"You {self.format_emote_text(is_self=True, target=target_for_emote, observer=observer)}"
+                        msg = f"{base_msg} {preposition} {targets_str}"
                     elif is_observer_target:
-                        msg = f"{caller_name} {self.format_emote_text(char=self.caller, target=observer, observer=observer)}"
+                        base_msg = f"{caller_name} {self.format_emote_text(char=self.caller, target=observer, observer=observer)}"
+                        msg = f"{base_msg} {preposition} you"
                     else:
                         # For observers who aren't involved, use names if they know both parties
-                        if is_character and target_for_emote:
-                            if observer.knows_character(self.caller) and observer.knows_character(target_for_emote):
-                                msg = f"{caller_name} {self.format_emote_text(char=self.caller, target=target_for_emote, observer=observer)}"
-                            else:
-                                msg = f"{caller_name} {self.format_emote_text(char=self.caller, target=target_for_emote, observer=observer)}"
-                        else:
-                            msg = f"{caller_name} {self.format_emote_text(char=self.caller, target=target_for_emote, observer=observer)}"
+                        base_msg = f"{caller_name} {self.format_emote_text(char=self.caller, target=target_for_emote, observer=observer)}"
+                        msg = f"{base_msg} {preposition} {targets_str}"
                 else:
                     # No targets - just show the emote
                     msg = f"{caller_name} {self.emote_text}"
-                    if modifier:
-                        msg = f"{msg} {modifier}"
+                
+                # Add modifier if present
+                if modifier:
+                    msg = f"{msg} {modifier}"
                 
                 observer.msg(msg) 

@@ -250,21 +250,6 @@ class EmoteCommandBase(Command):
                     
                     # Build final message
                     if observer == self.caller:
-                        base_msg = f"You {self.format_emote_text(is_self=True, target=target_for_emote, observer=observer)}"
-                        msg = f"{base_msg} {preposition} {targets_str}"
-                    elif is_observer_target:
-                        base_msg = f"{caller_name} {self.format_emote_text(char=self.caller, target=observer, observer=observer)}"
-                        msg = f"{base_msg} {preposition} you"
-                    else:
-                        # For observers who aren't involved, use names if they know both parties
-                        base_msg = f"{caller_name} {self.format_emote_text(char=self.caller, target=target_for_emote, observer=observer)}"
-                        msg = f"{base_msg} {preposition} {targets_str}"
-                else:
-                    # No targets - just show the emote
-                    # Get the caller's pronouns
-                    pronouns = self.get_pronouns(self.caller)
-                    
-                    if observer == self.caller:
                         # For the caller, conjugate the verb and use "your"
                         # Split the emote text to get the verb
                         words = self.emote_text.split()
@@ -273,16 +258,18 @@ class EmoteCommandBase(Command):
                         conjugated_emote = ' '.join(words)
                         
                         # Format with "your" instead of possessive pronoun
-                        msg = f"You {conjugated_emote.format(
+                        formatted_emote = conjugated_emote.format(
                             char='you',
                             their='your',
                             them='you',
                             they='you',
                             theirs='yours',
                             themselves='yourself'
-                        )}"
+                        )
+                        msg = f"You {formatted_emote}"
                     else:
                         # For observers, use the caller's name/description and pronouns
+                        pronouns = self.get_pronouns(self.caller)
                         formatted_emote = self.emote_text.format(
                             char=caller_name,
                             their=pronouns["possessive"],

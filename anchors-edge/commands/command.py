@@ -1181,12 +1181,15 @@ class CmdWhisper(default_cmds.MuxCommand):
     Whisper a message to a person.
 
     Usage:
-      whisper <person> = <message>
-      whisper to <person> = <message>
+      whisper <person> <message>
+      whisper to <person> <message>
 
     Examples:
-      whisper gad = ya like jazz?
-      whisper to gad = ya like jazz?
+      whisper gad ya like jazz
+      You whisper to gad, "ya like jazz?"
+
+      whisper to gad ya like jazz?
+      You whisper to gad, "Ya like jazz?"
     
     Whispering is different from the say command 
     in that others in the room won't be able to hear 
@@ -1198,59 +1201,132 @@ class CmdWhisper(default_cmds.MuxCommand):
     aliases = []
     locks = "cmd:all()"
     help_category = "Communication"
-    arg_regex = r"\s|$"
+
+    def find_target(self, caller, search_term):
+        """
+        Find target based on name or description using fuzzy matching.
+        Returns a list of potential matches.
+        """
+        matches = []
+        search_term = search_term.lower()
+        
+        # Get all characters in the room
+        for obj in caller.location.contents:
+            if not hasattr(obj, 'is_typeclass') or not obj.is_typeclass('typeclasses.characters.Character'):
+                continue
+                
+            # Skip self as a target
+            if obj == caller:
+                continue
+                
+            # If caller knows the character, check their name with fuzzy matching
+            if hasattr(caller, 'knows_character') and caller.knows_character(obj):
+                name = obj.name.lower()
+                # Direct substring match gets highest priority
+                if search_term in name:
+                    matches.append((obj, 1.0))
+                else:
+                    # Try fuzzy matching without spaces for abbreviations
+                    name_no_spaces = name.replace(" ", "")
+                    search_no_spaces = search_term.replace(" ", "")
+                    ratio = SequenceMatcher(None, search_no_spaces, name_no_spaces).ratio()
+                    if ratio > 0.6:  # Threshold for fuzzy matches
+                        matches.append((obj, ratio))
+            # If caller doesn't know them, check their description with fuzzy matching
+            else:
+                brief_desc = get_brief_description(obj).lower()
+                # Direct substring match gets highest priority
+                if search_term in brief_desc:
+                    matches.append((obj, 1.0))
+                else:
+                    # Try fuzzy matching without spaces
+                    desc_no_spaces = brief_desc.replace(" ", "")
+                    search_no_spaces = search_term.replace(" ", "")
+                    ratio = SequenceMatcher(None, search_no_spaces, desc_no_spaces).ratio()
+                    if ratio > 0.6:  # Threshold for fuzzy matches
+                        matches.append((obj, ratio))
+        
+        # Sort matches by ratio (highest first) and return just the objects
+        return [obj for obj, ratio in sorted(matches, key=lambda x: x[1], reverse=True)]
+
+    def parse(self):
+        """Parse the command."""
+        super().parse()
+        args = self.args.strip()
+        
+        if not args:
+            self.target = None
+            self.message = None
+            return
+
+        if args.lower().startswith("to "):
+            args = args[3:]  # Remove "to " prefix
+
+        try:
+            target_name, message = args.split(" ", 1)
+            self.target_name = target_name
+            self.message = message
+        except ValueError:
+            self.target_name = args
+            self.message = None
 
     def func(self):
         """Handle whispering"""
-        caller = self.caller
-
-        if not self.args or not self.rhs:
-            caller.msg("Usage: whisper <person> = <message>")
+        if not self.args:
+            self.caller.msg("Usage: whisper <person> <message> OR whisper to <person> <message>")
             return
 
-        target_name = self.lhs.strip()
-        message = self.rhs.strip()
-
-        if target_name.lower().startswith("to "):
-            target_name = target_name[3:].strip()
+        if not self.message:
+            self.caller.msg("What do you want to whisper?")
+            return
 
         # Check if trying to whisper to self
-        if target_name.lower() in ["me", "self", "myself"] or (
-            hasattr(caller, 'name') and target_name.lower() == caller.name.lower()
+        if self.target_name.lower() in ["me", "self", "myself"] or (
+            hasattr(self.caller, 'name') and self.target_name.lower() == self.caller.name.lower()
         ):
-            caller.msg("You can't whisper to yourself!")
+            self.caller.msg("You can't whisper to yourself!")
             return
 
-        # Find the target
-        target = caller.search(
-            target_name,
-            location=caller.location,
-            typeclass='typeclasses.characters.Character'
-        )
-        if not target:
+        # Find potential targets
+        matches = self.find_target(self.caller, self.target_name)
+        
+        if not matches:
+            self.caller.msg(f"Could not find anyone matching '{self.target_name}' here.")
             return
+            
+        if len(matches) > 1:
+            # List the matches with appropriate descriptions
+            self.caller.msg("Multiple matches found. Please be more specific:")
+            for match in matches:
+                if hasattr(self.caller, 'knows_character') and self.caller.knows_character(match):
+                    self.caller.msg(f"- {match.name}")
+                else:
+                    self.caller.msg(f"- {get_brief_description(match)}")
+            return
+
+        target = matches[0]
 
         # Get knowledge levels between characters
-        caller_knows_target = hasattr(caller, 'knows_character') and caller.knows_character(target)
-        target_knows_caller = hasattr(target, 'knows_character') and target.knows_character(caller)
+        caller_knows_target = hasattr(self.caller, 'knows_character') and self.caller.knows_character(target)
+        target_knows_caller = hasattr(target, 'knows_character') and target.knows_character(self.caller)
 
         # Get appropriate display names based on knowledge
         target_display = target.name if caller_knows_target else get_brief_description(target)
-        caller_display = caller.name if target_knows_caller else get_brief_description(caller)
+        caller_display = self.caller.name if target_knows_caller else get_brief_description(self.caller)
 
         # Format and send messages
-        caller.msg(f'You whisper to {target_display}, "{message}"')
-        target.msg(f'{caller_display} whispers to you, "{message}"')
+        self.caller.msg(f'You whisper to {target_display}, "{self.message}"')
+        target.msg(f'{caller_display} whispers to you, "{self.message}"')
 
         # Show a message to others in the room that whispering is happening
         # but they can't hear what's being said
-        for obj in caller.location.contents:
-            if obj != caller and obj != target and hasattr(obj, 'msg') and hasattr(obj, 'is_typeclass') and obj.is_typeclass('typeclasses.characters.Character'):
-                observer_sees_caller = hasattr(obj, 'knows_character') and obj.knows_character(caller)
+        for obj in self.caller.location.contents:
+            if obj != self.caller and obj != target and hasattr(obj, 'msg') and hasattr(obj, 'is_typeclass') and obj.is_typeclass('typeclasses.characters.Character'):
+                observer_sees_caller = hasattr(obj, 'knows_character') and obj.knows_character(self.caller)
                 observer_sees_target = hasattr(obj, 'knows_character') and obj.knows_character(target)
                 
                 # Get appropriate names/descriptions based on observer's knowledge
-                caller_name = caller.name if observer_sees_caller else get_brief_description(caller)
+                caller_name = self.caller.name if observer_sees_caller else get_brief_description(self.caller)
                 target_name = target.name if observer_sees_target else get_brief_description(target)
                 
                 # Randomly choose a message format for variety

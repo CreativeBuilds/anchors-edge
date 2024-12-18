@@ -1158,6 +1158,79 @@ class CmdLook(default_cmds.CmdLook):
                 
         self.msg(f"You don't see anything matching '{search_term}' here.")
         
+class CmdWhisper(default_cmds.MuxCommand):
+    """
+    Whisper a message to a person.
+
+    Usage:
+      whisper <person> <message>
+      whisper to <person> <message>
+
+    Examples:
+      whisper gad ya like jazz
+      You whisper to gad, "ya like jazz?"
+
+      whisper to gad ya like jazz?
+      You whisper to gad, "Ya like jazz?"
+    
+    Whispering is different from the say command 
+    in that others in the room won't be able to hear 
+    you. It is different than the tell command because 
+    the person you whisper to must be in the same room 
+    as you.
+    """
+    key = "whisper"
+    locks = "cmd:all()"
+    help_category = "Communication"
+
+    def func(self):
+        """Handle whispering"""
+        caller = self.caller
+
+        if not self.args:
+            caller.msg("Usage: whisper <person> <message> OR whisper to <person> <message>")
+            return
+
+        # Parse the input to get target and message
+        args = self.args.strip()
+        if args.lower().startswith("to "):
+            args = args[3:]  # Remove "to " prefix
+
+        try:
+            target_name, message = args.split(" ", 1)
+        except ValueError:
+            caller.msg("Usage: whisper <person> <message> OR whisper to <person> <message>")
+            return
+
+        # Find the target in the same room
+        target = caller.search(target_name, location=caller.location)
+        if not target:
+            return
+
+        # Get knowledge levels between characters
+        caller_knows_target = hasattr(caller, 'knows_character') and caller.knows_character(target)
+        target_knows_caller = hasattr(target, 'knows_character') and target.knows_character(caller)
+
+        # Get appropriate display names based on knowledge
+        target_display = target.name if caller_knows_target else get_brief_description(target)
+        caller_display = caller.name if target_knows_caller else get_brief_description(caller)
+
+        # Format and send messages
+        caller.msg(f'You whisper to {target_display}, "{message}"')
+        target.msg(f'{caller_display} whispers to you, "{message}"')
+
+        # Optional: Add a subtle hint to others in the room that whispering is happening
+        # but they can't hear what's being said
+        for obj in caller.location.contents:
+            if obj != caller and obj != target and hasattr(obj, 'msg'):
+                observer_sees_caller = hasattr(obj, 'knows_character') and obj.knows_character(caller)
+                observer_sees_target = hasattr(obj, 'knows_character') and obj.knows_character(target)
+                
+                caller_name = caller.name if observer_sees_caller else get_brief_description(caller)
+                target_name = target.name if observer_sees_target else get_brief_description(target)
+                
+                obj.msg(f"{caller_name} whispers something to {target_name}.")
+
 class CmdHeight(Command):
     """
     Shows height ranges for all races.
@@ -1316,13 +1389,4 @@ class CmdAge(Command):
         self.msg("|c=== Race Age Ranges ===|n")
         self.msg("|wNote: Life expectancy indicates natural lifespan under normal conditions.|n")
         self.msg(table)
-        
-        # Show age category ranges
-        self.msg("\n|wAge Categories:|n")
-        self.msg("Very Young: Bottom 25% of race's age range")
-        self.msg("Young: 25-40% of race's age range")
-        self.msg("Adult: 40-60% of race's age range")
-        self.msg("Mature: 60-75% of race's age range")
-        self.msg("Elder: Top 25% of race's age range")
-
 

@@ -19,6 +19,15 @@ class EmoteCommandBase(Command):
         Returns dict with: subjective (he/she/they), objective (him/her/them),
         possessive (his/her/their), reflexive (himself/herself/themselves)
         """
+        # Handle None character
+        if not character or not hasattr(character, 'db'):
+            return {
+                "subjective": "they",
+                "objective": "them",
+                "possessive": "their",
+                "reflexive": "themselves"
+            }
+            
         gender = character.db.gender.lower() if hasattr(character.db, 'gender') else None
         
         if gender == "female":
@@ -50,7 +59,7 @@ class EmoteCommandBase(Command):
             target_pronouns = self.get_pronouns(target) if target else None
             
             # For self view, use target's name only if we know them
-            target_text = target.name if (target and hasattr(self.caller, 'knows_character') and 
+            target_text = target.name if (target and hasattr(target, 'name') and hasattr(self.caller, 'knows_character') and 
                                         self.caller.knows_character(target)) else get_brief_description(target)
             
             # Convert third-person to second-person
@@ -73,12 +82,12 @@ class EmoteCommandBase(Command):
             pronouns = self.get_pronouns(char)
             
             # For target text, use name if observer knows them, otherwise use brief description
-            if use_target_name and target:
+            if use_target_name and target and hasattr(target, 'name'):
                 target_text = target.name
             elif observer and target == observer:  # Special case when target is the observer
                 target_text = "you"
-            elif observer and hasattr(observer, 'knows_character') and observer.knows_character(target):
-                target_text = target.name
+            elif observer and hasattr(observer, 'knows_character') and target and observer.knows_character(target):
+                target_text = target.name if hasattr(target, 'name') else get_brief_description(target)
             else:
                 target_text = get_brief_description(target)
                 
@@ -196,7 +205,7 @@ class EmoteCommandBase(Command):
                 
                 # Determine how to show the caller's name/description
                 if is_character and observer.knows_character(self.caller):
-                    caller_name = self.caller.name
+                    caller_name = self.caller.name if hasattr(self.caller, 'name') else get_brief_description(self.caller)
                 else:
                     caller_name = get_brief_description(self.caller)
                     
@@ -213,7 +222,7 @@ class EmoteCommandBase(Command):
                             target_for_emote = target
                             continue  # Skip adding "you" to the list
                         if is_character and observer.knows_character(target):
-                            target_names.append(target.name)
+                            target_names.append(target.name if hasattr(target, 'name') else get_brief_description(target))
                             if not target_for_emote:
                                 target_for_emote = target
                         else:
@@ -248,26 +257,15 @@ class EmoteCommandBase(Command):
                         # For observers who aren't involved, use names if they know both parties
                         if is_character and target_for_emote:
                             if observer.knows_character(self.caller) and observer.knows_character(target_for_emote):
-                                # Use actual names since observer knows both
-                                msg = f"{caller_name} {self.format_emote_text(char=self.caller, target=target_for_emote, use_target_name=True, observer=observer)}"
+                                msg = f"{caller_name} {self.format_emote_text(char=self.caller, target=target_for_emote, observer=observer)}"
                             else:
-                                # Use descriptions for those they don't know
                                 msg = f"{caller_name} {self.format_emote_text(char=self.caller, target=target_for_emote, observer=observer)}"
                         else:
                             msg = f"{caller_name} {self.format_emote_text(char=self.caller, target=target_for_emote, observer=observer)}"
-                        
-                    # Only add preposition and target if the emote doesn't handle its own targeting
-                    if not self.uses_target_in_emote:
-                        msg = f"{msg} {preposition} {targets_str}"
                 else:
-                    # Non-targeted emote
-                    if observer == self.caller:
-                        msg = f"You {self.format_emote_text(is_self=True)}"
-                    else:
-                        msg = f"{caller_name} {self.format_emote_text(char=self.caller)}"
+                    # No targets - just show the emote
+                    msg = f"{caller_name} {self.emote_text}"
+                    if modifier:
+                        msg = f"{msg} {modifier}"
                 
-                # Add modifier if present
-                if modifier:
-                    msg = f"{msg} {modifier}"
-                        
-                observer.msg(format_sentence(msg)) 
+                observer.msg(msg) 

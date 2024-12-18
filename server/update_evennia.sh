@@ -35,6 +35,8 @@ if [ ! -f "$PIP_BIN" ]; then
     exit 1
 fi
 
+sleep 0.5
+
 # Update requirements
 # log "Updating requirements"
 # "$PIP_BIN" install -r requirements.txt || {

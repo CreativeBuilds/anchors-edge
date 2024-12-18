@@ -26,6 +26,14 @@ def get_brief_description(character, include_height=True, include_race=True, inc
         include_rstatus (bool): Whether to include roleplay status
         include_ostatus (bool): Whether to include optional status
     """
+    # Handle None character
+    if not character:
+        return "someone"
+        
+    # Handle case where character has no db attribute
+    if not hasattr(character, 'db'):
+        return character.name if hasattr(character, 'name') else "someone"
+
     # Start with optional status if included
     if include_ostatus and hasattr(character, 'get_ostatus'):
         ostatus = character.get_ostatus()

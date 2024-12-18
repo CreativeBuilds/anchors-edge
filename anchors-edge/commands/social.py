@@ -736,7 +736,7 @@ class CmdEmoteList(Command):
             if target_type == TargetType.REQUIRED:
                 command_name += " |w<target>|n"
             elif target_type == TargetType.OPTIONAL:
-                command_name += " |w[<target>]|n"
+                command_name += " |w[<t>]|n"
             command_name += " |w[<mod>]|n"
             
             # Format the emote text with pronouns for display
@@ -751,10 +751,6 @@ class CmdEmoteList(Command):
             
             # Format the display text
             other_output = f"{caller_name} {display_text}"
-            
-            # Add target text for optional targets
-            if target_type == TargetType.OPTIONAL:
-                other_output += " (at/to <target>)"
             
             # Add command and examples to table
             table.add_row(
@@ -775,7 +771,7 @@ class CmdEmoteList(Command):
         self.caller.msg("|wSocial Commands:|n")
         self.caller.msg(table)
         self.caller.msg("\nUse |whelp <command>|n for more details on any command.")
-        self.caller.msg("|w<target>|n is required, |w[<target>]|n and |w[<mod>]|n are optional")
+        self.caller.msg("|w<target>|n is required, |w[<t>]|n and |w[<mod>]|n are optional")
 
 def add_social_commands(cmdset):
     """Add all social commands to a command set"""

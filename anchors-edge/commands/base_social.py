@@ -193,15 +193,29 @@ class EmoteCommandBase(Command):
         else:
             targets_str = args
             
-        # Split potential targets by commas
+        # Split potential targets by commas and handle multi-word names
         if targets_str:
+            # Split by comma but preserve spaces within names
             target_names = [t.strip() for t in targets_str.split(",")]
             found_targets = []
             failed_targets = []
             
             for target_name in target_names:
-                target = self.caller.search(target_name)
+                # Try exact match first
+                target = self.caller.search(target_name, quiet=True)
+                if not target:
+                    # Try partial match with each word
+                    words = target_name.split()
+                    for word in words:
+                        target = self.caller.search(word, quiet=True)
+                        if target:
+                            break
+                
                 if target:
+                    # Check for self-targeting
+                    if target == self.caller:
+                        self.caller.msg("You cannot target yourself with this emote.")
+                        return
                     found_targets.append(target)
                 else:
                     failed_targets.append(target_name)

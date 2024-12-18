@@ -201,14 +201,22 @@ class EmoteCommandBase(Command):
             failed_targets = []
             
             for target_name in target_names:
-                # Try exact match first
-                target = self.caller.search(target_name, quiet=True)
-                if not target:
-                    # Try partial match with each word
-                    words = target_name.split()
-                    for word in words:
-                        target = self.caller.search(word, quiet=True)
-                        if target:
+                # Get all objects in the room that could be targets
+                possible_targets = self.caller.location.contents
+                target = None
+                
+                # Convert search term to lowercase for case-insensitive matching
+                search_term = target_name.lower()
+                
+                # Try to find a match
+                for obj in possible_targets:
+                    if hasattr(obj, 'key'):  # Make sure it's a valid object
+                        # Get the full name/description of the object
+                        obj_desc = obj.get_display_name(self.caller).lower()
+                        
+                        # Check if search term appears in the full description
+                        if search_term in obj_desc:
+                            target = obj
                             break
                 
                 if target:

@@ -166,7 +166,7 @@ class EmoteCommandBase(Command):
         elif len(target_names) == 2:
             return f"{target_names[0]} and {target_names[1]}"
         else:
-            return f"{', '.join(target_names[:-1])}, and {target_names[-1]}"
+            return f"{', '.join(target_names[:-1])} and {target_names[-1]}"
 
     def find_target(self, search_term):
         """
@@ -210,7 +210,7 @@ class EmoteCommandBase(Command):
                 theirs=get_pronoun(self.caller, "possessive"),
                 themselves=get_pronoun(self.caller, "reflexive")
             )
-            self.caller.location.msg_contents(f"{self.caller.key} {emote}")
+            self.caller.location.msg_contents(format_sentence(f"{self.caller.key} {emote}"))
             return
 
         # Split args into potential targets and modifier
@@ -271,4 +271,4 @@ class EmoteCommandBase(Command):
             if modifier:
                 emote = f"{emote} {modifier}"
                     
-            self.caller.location.msg_contents(f"{self.caller.key} {emote}")
+            self.caller.location.msg_contents(format_sentence(f"{self.caller.key} {emote}"))

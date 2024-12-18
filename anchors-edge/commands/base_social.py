@@ -136,6 +136,11 @@ class EmoteCommandBase(Command):
 
     def func(self):
         """Handle the emote command."""
+        # Check if someone is trying to target a non-targetable emote
+        if self.args and not self.uses_target_in_emote:
+            self.caller.msg(f"The {self.key} emote doesn't take a target. Just type {self.key}")
+            return
+
         # Parse target from args
         targets = []
         modifier = ""

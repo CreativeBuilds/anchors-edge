@@ -184,56 +184,46 @@ class EmoteCommandBase(Command):
         Returns the best match above a certain similarity threshold.
         """
         search_term = search_term.lower().strip()
-        possible_targets = self.caller.location.contents
         best_match = None
         best_ratio = 0.01  # Very low threshold for extremely lenient matching
         
         # Debug output
         self.caller.msg("|wStarting search for:|n " + search_term)
-        self.caller.msg("|wChecking all possible targets:|n")
         
-        for obj in possible_targets:
-            if not hasattr(obj, 'db'):  # Skip non-db objects
-                continue
-
-            # Check if object type matches allowed target type
-            is_character = hasattr(obj, 'is_character') and obj.is_character
-            if (self.target_type == TargetableType.CHARACTERS and not is_character) or \
-               (self.target_type == TargetableType.ITEMS and is_character):
-                continue
-            
-            # Get the visible description
-            desc = get_brief_description(obj).lower()
-            
-            # Add name if known
-            known_name = ""
-            if is_character and hasattr(self.caller, 'knows_character') and self.caller.knows_character(obj):
-                known_name = obj.key.lower()
-                desc = f"{known_name} {desc}"
-            
-            # Debug output for this target
-            self.caller.msg("\n|yChecking target:|n")
-            self.caller.msg(f"- Full description: {desc}")
-            if known_name:
-                self.caller.msg(f"- Known name: {known_name}")
+        # Get all characters in the room except the caller
+        characters = [obj for obj in self.caller.location.contents 
+                     if hasattr(obj, 'is_typeclass') and 
+                     obj.is_typeclass('typeclasses.characters.Character') and 
+                     obj != self.caller]
+        
+        self.caller.msg(f"Found {len(characters)} characters in room")
+        
+        for char in characters:
+            # Get either name or description based on relationship
+            if hasattr(self.caller, 'knows_character') and self.caller.knows_character(char):
+                match_string = char.key.lower()
+                self.caller.msg(f"\nChecking known character: {char.key}")
+            else:
+                match_string = get_brief_description(char).lower()
+                self.caller.msg(f"\nChecking unknown character: {match_string}")
             
             # Use sequence matcher for fuzzy matching
-            ratio = SequenceMatcher(None, search_term, desc).ratio()
+            ratio = SequenceMatcher(None, search_term, match_string).ratio()
             self.caller.msg(f"- Base ratio: {ratio:.3f}")
             
             # Check and report substring matches
-            if search_term in desc:
+            if search_term in match_string:
                 self.caller.msg(f"- Found direct substring match!")
                 ratio = max(ratio, 0.6)
             
             # Check and report word start matches
-            matching_words = [word for word in desc.split() if word.startswith(search_term)]
+            matching_words = [word for word in match_string.split() if word.startswith(search_term)]
             if matching_words:
                 self.caller.msg(f"- Words starting with '{search_term}': {', '.join(matching_words)}")
                 ratio = max(ratio, 0.4)
             
             # Check and report substring in word matches
-            containing_words = [word for word in desc.split() if search_term in word]
+            containing_words = [word for word in match_string.split() if search_term in word]
             if containing_words:
                 self.caller.msg(f"- Words containing '{search_term}': {', '.join(containing_words)}")
                 ratio = max(ratio, 0.3)
@@ -242,7 +232,7 @@ class EmoteCommandBase(Command):
                 
             if ratio > best_ratio:
                 best_ratio = ratio
-                best_match = obj
+                best_match = char
                 self.caller.msg(f"|gNew best match!|n Score: {ratio:.3f}")
                     
         return best_match

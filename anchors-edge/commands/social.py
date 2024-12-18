@@ -705,57 +705,12 @@ class CmdEmoteList(Command):
         # Sort commands by key
         emote_commands.sort(key=lambda x: x.key)
         
-        # Get caller's name and pronouns - use key (name) instead of display_name to avoid rstatus
+        # Get caller's name and pronouns
         caller_name = self.caller.key
         their = get_pronoun(self.caller, "possessive")
         they = get_pronoun(self.caller, "subjective")
         them = get_pronoun(self.caller, "objective")
-        themselves = get_pronoun(self.caller, "reflexive")  # Add reflexive pronoun
-        
-        # Example variations for more natural demonstrations
-        examples = {
-            "smile": ("smile Gad warmly", f"{caller_name} smiles at Gad warmly."),
-            "grin": ("grin Gad wickedly", f"{caller_name} grins at Gad wickedly."),
-            "mgrin": ("mgrin Gad", f"{caller_name} grins mischievously at Gad."),
-            "laugh": ("laugh Gad heartily", f"{caller_name} laughs at Gad heartily."),
-            "chuckle": ("chuckle Gad knowingly", f"{caller_name} chuckles at Gad knowingly."),
-            "giggle": ("giggle Gad", f"{caller_name} giggles at Gad."),
-            "wave": ("wave Gad", f"{caller_name} waves at Gad."),
-            "bow": ("bow Gad", f"{caller_name} bows at Gad."),
-            "nod": ("nod Gad", f"{caller_name} nods at Gad."),
-            "wink": ("wink Gad", f"{caller_name} winks at Gad."),
-            "frown": ("frown Gad", f"{caller_name} frowns at Gad."),
-            "shrug": ("shrug Gad", f"{caller_name} shrugs at Gad."),
-            "pout": ("pout Gad", f"{caller_name} pouts at Gad."),
-            "greet": ("greet Gad warmly", f"{caller_name} greets at Gad warmly."),
-            "blush": ("blush Gad", f"{caller_name} blushes at Gad."),
-            "sigh": ("sigh Gad", f"{caller_name} sighs at Gad."),
-            "clap": ("clap Gad", f"{caller_name} claps at Gad."),
-            "applaud": ("applaud Gad", f"{caller_name} applauds at Gad."),
-            "lapplaud": ("lapplaud", f"{caller_name} applauds loudly."),
-            "smirk": ("smirk Gad", f"{caller_name} smirks at Gad."),
-            "sneer": ("sneer Gad", f"{caller_name} sneers at Gad."),
-            "eye": ("eye Gad", f"{caller_name} eyes at Gad."),
-            "chortle": ("chortle Gad", f"{caller_name} chortles at Gad."),
-            "snort": ("snort Gad", f"{caller_name} snorts at Gad."),
-            "beam": ("beam Gad", f"{caller_name} beams at Gad."),
-            "poke": ("poke Gad", f"{caller_name} pokes {them} with {their} finger."),
-            "brow": ("brow", f"{caller_name} arches {their} eyebrow."),
-            "ack": ("ack", f"{caller_name} acks."),
-            "tup": ("tup Gad", f"{caller_name} gives a thumbs up at Gad."),
-            "tdown": ("tdown Gad", f"{caller_name} gives a thumbs down at Gad."),
-            "tongue": ("tongue Gad", f"{caller_name} sticks out {their} tongue at Gad."),
-            "hipcheck": ("hipcheck Gad", f"{caller_name} gives {them} a friendly hipcheck."),
-            "shouldercheck": ("shouldercheck Gad", f"{caller_name} shoulderchecks {them} on {their} way by."),
-            "bounce": ("bounce", f"{caller_name} bounces around excitedly."),
-            "hmm": ("hmm", f"{caller_name} hums thoughtfully to {themselves}."),
-            "yawn": ("yawn", f"{caller_name} covers {their} mouth and yawns."),
-            "agree": ("agree Gad", f"{caller_name} nods {their} head in agreement at Gad."),
-            "facepalm": ("facepalm", f"{caller_name} puts {their} face in {their} hands and sighs."),
-            "headdesk": ("headdesk", f"{caller_name} beats {their} head against the nearest wall."),
-            "tired": ("tired", f"{caller_name} rubs {their} eyes tiredly."),
-            "shh": ("shh Gad", f"{caller_name} puts {their} finger to {their} lips at Gad.")
-        }
+        themselves = get_pronoun(self.caller, "reflexive")
         
         # Create table
         table = evtable.EvTable(
@@ -767,27 +722,39 @@ class CmdEmoteList(Command):
             width=80
         )
         
-        # Get list of actual command keys
-        available_commands = {cmd.key for cmd in emote_commands}
-        
-        # Filter examples to only include available commands
-        filtered_examples = {k: v for k, v in examples.items() if k in available_commands}
-        
         for cmd in emote_commands:
-            # Get example from our filtered dictionary, or generate a default one
-            if cmd.key in filtered_examples:
-                example, other_output = filtered_examples[cmd.key]
+            # Get the emote text and check if it uses targeting
+            emote_text = cmd.emote_text
+            uses_target = "{them}" in emote_text or cmd.uses_target_in_emote
+            needs_target = hasattr(cmd, 'uses_target_in_emote') and cmd.uses_target_in_emote
+            
+            # Format the emote text with pronouns for display
+            display_text = emote_text.format(
+                char=caller_name,
+                their=their,
+                them="Gad" if uses_target else them,
+                they=they,
+                theirs=their,
+                themselves=themselves
+            )
+            
+            # Generate example usage
+            if needs_target:
+                # Command requires a target
+                example = f"{cmd.key} Gad"
+                other_output = f"{caller_name} {display_text}"
+            elif uses_target:
+                # Command can have a target
+                example = f"{cmd.key} Gad"
+                other_output = f"{caller_name} {display_text}"
             else:
-                # Get the docstring for help text
-                doc = cmd.__doc__.strip().split('\n')[0] if cmd.__doc__ else ""
-                
-                # Generate example based on command key and docstring
-                if "at <target>" in doc:
-                    example = f"{cmd.key} Gad"
-                    other_output = f"{caller_name} {cmd.key}s at Gad."
-                else:
-                    example = f"{cmd.key}"
-                    other_output = f"{caller_name} {cmd.key}s."
+                # Command doesn't use targeting
+                example = cmd.key
+                other_output = f"{caller_name} {display_text}"
+            
+            # Add "at" for targeting if not already in emote_text
+            if uses_target and "at" not in emote_text and not needs_target:
+                other_output = other_output.replace(" Gad", " at Gad")
             
             # Add command and examples to table
             table.add_row(

@@ -179,12 +179,6 @@ class EmoteCommandBase(Command):
     def find_target(self, search_term):
         """
         Find a target based on the caller's knowledge of them and allowed target types.
-        
-        Args:
-            search_term (str): The term to search for
-            
-        Returns:
-            Object or None: The found target or None if not found
         """
         search_term = search_term.lower()
         possible_targets = self.caller.location.contents
@@ -206,6 +200,9 @@ class EmoteCommandBase(Command):
             
             # Otherwise check their visible description
             desc = get_brief_description(obj).lower()
+            # Debug output
+            if "kobold" in str(obj):
+                self.caller.msg(f"Debug: Found kobold object, desc: {desc}")
             if search_term in desc:
                 return obj
                 
@@ -257,23 +254,17 @@ class EmoteCommandBase(Command):
 
         # Split args into potential targets and modifier
         args = self.args.strip()
-        targets_str = None
         modifier = None
-        preposition = self.default_preposition
         
         # First try to split off the modifier
         if " " in args:
             parts = args.rsplit(" ", 1)
             if len(parts) == 2 and not any(p in parts[1].lower() for p in self.allowed_prepositions):
-                args, modifier = parts
-            
+                args = parts[0]
+                modifier = parts[1]
+        
         # Now parse for preposition and targets
         preposition, targets_str = self.parse_targets_and_preposition(args)
-        
-        # If we got no targets after a preposition, show usage
-        if not targets_str and preposition != self.default_preposition:
-            self.caller.msg(f"Usage: {self.key} {preposition} <target> [<modifier>]")
-            return
         
         # Split potential targets by commas and handle multi-word names
         if targets_str:
@@ -283,9 +274,7 @@ class EmoteCommandBase(Command):
             
             for target_name in target_names:
                 target = self.find_target(target_name)
-                
                 if target:
-                    # Check for self-targeting
                     if target == self.caller:
                         self.caller.msg("You cannot target yourself with this emote.")
                         return

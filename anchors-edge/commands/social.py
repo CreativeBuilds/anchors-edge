@@ -6,7 +6,7 @@ from evennia import Command
 from typeclasses.relationships import get_brief_description
 from utils.text_formatting import format_sentence
 from .character import get_pronoun
-from .base_social import EmoteCommandBase, TargetType
+from .base_social import EmoteCommandBase, TargetType, TargetableType
 from enum import Enum
 
 # Smile variants
@@ -132,6 +132,7 @@ class CmdBow(EmoteCommandBase):
     emote_text = "bows"
     allowed_prepositions = ["to", "before", "towards"]
     default_preposition = "to"
+    target_type = TargetableType.CHARACTERS  # Can only target characters
 
 class CmdNod(EmoteCommandBase):
     """
@@ -319,6 +320,7 @@ class CmdEye(EmoteCommandBase):
     """
     key = "eye"
     emote_text = "eyes"
+    target_type = TargetableType.BOTH  # Can target both characters and items
 
 class CmdChortle(EmoteCommandBase):
     """
@@ -362,6 +364,7 @@ class CmdPoke(EmoteCommandBase):
     key = "poke"
     emote_text = "pokes {them} with {their} finger"
     targetable = TargetType.REQUIRED
+    target_type = TargetableType.CHARACTERS  # Can only target characters
 
 class CmdBrow(EmoteCommandBase):
     """

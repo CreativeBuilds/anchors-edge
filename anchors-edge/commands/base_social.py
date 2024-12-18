@@ -12,6 +12,11 @@ class TargetType(Enum):
     OPTIONAL = 1  # Can target but not required
     REQUIRED = 2  # Must have a target
 
+class TargetableType(Enum):
+    CHARACTERS = 0  # Can only target characters
+    ITEMS = 1      # Can only target items
+    BOTH = 2       # Can target both characters and items
+
 class EmoteCommandBase(Command):
     """Base class for social emote commands"""
     locks = "cmd:all()"
@@ -20,6 +25,7 @@ class EmoteCommandBase(Command):
     targetable = TargetType.OPTIONAL  # Default to optional targeting
     allowed_prepositions = ["at", "to"]  # Default allowed prepositions
     default_preposition = "at"  # Default preposition if none specified
+    target_type = TargetableType.CHARACTERS  # Default to only targeting characters
     
     def get_pronouns(self, character):
         """
@@ -172,8 +178,7 @@ class EmoteCommandBase(Command):
 
     def find_target(self, search_term):
         """
-        Find a target based on the caller's knowledge of them.
-        Takes into account relationships and knowledge levels.
+        Find a target based on the caller's knowledge of them and allowed target types.
         
         Args:
             search_term (str): The term to search for
@@ -185,11 +190,17 @@ class EmoteCommandBase(Command):
         possible_targets = self.caller.location.contents
         
         for obj in possible_targets:
-            if not hasattr(obj, 'db'):  # Skip non-character objects
+            if not hasattr(obj, 'db'):  # Skip non-db objects
+                continue
+
+            # Check if object type matches allowed target type
+            is_character = hasattr(obj, 'is_character') and obj.is_character
+            if (self.target_type == TargetableType.CHARACTERS and not is_character) or \
+               (self.target_type == TargetableType.ITEMS and is_character):
                 continue
                 
-            # If caller knows the character, check their name
-            if hasattr(self.caller, 'knows_character') and self.caller.knows_character(obj):
+            # If caller knows the character and it's a character, check their name
+            if is_character and hasattr(self.caller, 'knows_character') and self.caller.knows_character(obj):
                 if search_term in obj.key.lower():
                     return obj
             

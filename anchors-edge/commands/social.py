@@ -715,7 +715,6 @@ class CmdEmoteList(Command):
         # Create table
         table = evtable.EvTable(
             "|wCommand|n",
-            "|wUsage|n",
             "|wAppears as|n",
             table=None,
             border="cells",
@@ -734,7 +733,7 @@ class CmdEmoteList(Command):
                 command_name += " |w<target>|n"
             elif uses_target:
                 command_name += " |w[<target>]|n"
-            command_name += " |w[<modifier>]|n"
+            command_name += " |w[<mod>]|n"
             
             # Format the emote text with pronouns for display
             display_text = emote_text.format(
@@ -754,7 +753,6 @@ class CmdEmoteList(Command):
             # Add command and examples to table
             table.add_row(
                 command_name,
-                "",  # Remove example usage column
                 other_output
             )
             
@@ -764,7 +762,6 @@ class CmdEmoteList(Command):
                 if aliases:
                     table.add_row(
                         f"└─ {aliases}",
-                        "",
                         ""
                     )
         
@@ -772,7 +769,7 @@ class CmdEmoteList(Command):
         self.caller.msg("|wSocial Commands:|n")
         self.caller.msg(table)
         self.caller.msg("\nUse |whelp <command>|n for more details on any command.")
-        self.caller.msg("|w<target>|n is required, |w[<target>]|n and |w[<modifier>]|n are optional")
+        self.caller.msg("|w<target>|n is required, |w[<target>]|n and |w[<mod>]|n are optional")
 
 def add_social_commands(cmdset):
     """Add all social commands to a command set"""

@@ -217,9 +217,17 @@ class EmoteCommandBase(Command):
                 display_name = obj.get_display_name(self.caller).lower()
                 match_strings.append(display_name)
                 
-                # Add individual words from display name for partial matching
+                # Add individual words from display name and description for partial matching
                 display_words = display_name.split()
+                desc_words = desc.split()
                 match_strings.extend(display_words)
+                match_strings.extend(desc_words)
+                
+                # Add race/species terms specifically
+                race_terms = ['kobold', 'dwarf', 'human', 'halfling', 'elf', 'orc']
+                for word in display_words + desc_words:
+                    if word in race_terms:
+                        match_strings.append(word)
             
             # Debug output
             self.caller.msg(f"Checking object: {desc}")
@@ -228,9 +236,15 @@ class EmoteCommandBase(Command):
             # Find best match ratio among all possible strings
             for match_string in match_strings:
                 # Check for direct substring match first
-                if search_term in match_string:
-                    ratio = 0.9  # High ratio for substring matches
-                    self.caller.msg(f"Found substring match: {match_string} ({ratio})")
+                if search_term == match_string:
+                    ratio = 1.0  # Exact match gets highest priority
+                    self.caller.msg(f"Found exact match: {match_string}")
+                elif search_term in match_string.split():
+                    ratio = 0.95  # Word match gets very high priority
+                    self.caller.msg(f"Found word match: {match_string}")
+                elif search_term in match_string:
+                    ratio = 0.9  # Substring match gets high priority
+                    self.caller.msg(f"Found substring match: {match_string}")
                 else:
                     # Use sequence matcher for fuzzy matching
                     ratio = SequenceMatcher(None, search_term, match_string).ratio()
@@ -238,7 +252,12 @@ class EmoteCommandBase(Command):
                     # Boost ratio for partial word matches at start
                     if match_string.startswith(search_term):
                         ratio = max(ratio, 0.8)
-                        self.caller.msg(f"Found partial match at start: {match_string} ({ratio})")
+                        self.caller.msg(f"Found partial match at start: {match_string}")
+                    
+                    # Boost ratio for race/species terms
+                    if match_string in race_terms and search_term in match_string:
+                        ratio = max(ratio, 0.85)
+                        self.caller.msg(f"Found race term match: {match_string}")
                         
                 if ratio > best_ratio:
                     best_ratio = ratio

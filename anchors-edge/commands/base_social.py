@@ -6,6 +6,7 @@ from evennia import Command
 from typeclasses.relationships import get_brief_description
 from utils.text_formatting import format_sentence
 from enum import Enum
+from difflib import SequenceMatcher
 
 class TargetType(Enum):
     NONE = 0      # No targeting allowed
@@ -178,10 +179,13 @@ class EmoteCommandBase(Command):
 
     def find_target(self, search_term):
         """
-        Find a target based on the caller's knowledge of them and allowed target types.
+        Find a target using fuzzy string matching.
+        Returns the best match above a certain similarity threshold.
         """
-        search_term = search_term.lower()
+        search_term = search_term.lower().strip()
         possible_targets = self.caller.location.contents
+        best_match = None
+        best_ratio = 0.4  # Lower threshold for more lenient matching
         
         for obj in possible_targets:
             if not hasattr(obj, 'db'):  # Skip non-db objects
@@ -192,21 +196,45 @@ class EmoteCommandBase(Command):
             if (self.target_type == TargetableType.CHARACTERS and not is_character) or \
                (self.target_type == TargetableType.ITEMS and is_character):
                 continue
-                
-            # If caller knows the character and it's a character, check their name
-            if is_character and hasattr(self.caller, 'knows_character') and self.caller.knows_character(obj):
-                if search_term in obj.key.lower():
-                    return obj
             
-            # Otherwise check their visible description
+            # Get all possible names/descriptions to match against
+            match_strings = []
+            
+            # Add character name if known
+            if is_character and hasattr(self.caller, 'knows_character') and self.caller.knows_character(obj):
+                match_strings.append(obj.key.lower())
+            
+            # Add visible description
             desc = get_brief_description(obj).lower()
-            # Debug output
-            if "kobold" in str(obj):
-                self.caller.msg(f"Debug: Found kobold object, desc: {desc}")
-            if search_term in desc:
-                return obj
+            match_strings.append(desc)
+            
+            # Add display name
+            if hasattr(obj, 'get_display_name'):
+                display_name = obj.get_display_name(self.caller).lower()
+                match_strings.append(display_name)
                 
-        return None
+                # Add individual words from display name for partial matching
+                display_words = display_name.split()
+                match_strings.extend(display_words)
+            
+            # Find best match ratio among all possible strings
+            for match_string in match_strings:
+                # Check for direct substring match first
+                if search_term in match_string:
+                    ratio = 0.9  # High ratio for substring matches
+                else:
+                    # Use sequence matcher for fuzzy matching
+                    ratio = SequenceMatcher(None, search_term, match_string).ratio()
+                    
+                    # Boost ratio for partial word matches at start
+                    if match_string.startswith(search_term):
+                        ratio = max(ratio, 0.8)
+                        
+                if ratio > best_ratio:
+                    best_ratio = ratio
+                    best_match = obj
+                
+        return best_match
 
     def parse_targets_and_preposition(self, args):
         """
@@ -254,20 +282,23 @@ class EmoteCommandBase(Command):
 
         # Split args into potential targets and modifier
         args = self.args.strip()
+        
+        # First check for modifier at the end
         modifier = None
-        
-        # First try to split off the modifier
         if " " in args:
-            parts = args.rsplit(" ", 1)
-            if len(parts) == 2 and not any(p in parts[1].lower() for p in self.allowed_prepositions):
-                args = parts[0]
-                modifier = parts[1]
-        
-        # Now parse for preposition and targets
+            last_space_idx = args.rindex(" ")
+            potential_modifier = args[last_space_idx + 1:]
+            # Check if the last word isn't a target name
+            if not any(t.strip().lower() == potential_modifier.lower() 
+                      for t in args[:last_space_idx].split(",")):
+                modifier = potential_modifier
+                args = args[:last_space_idx]
+
+        # Parse preposition and targets
         preposition, targets_str = self.parse_targets_and_preposition(args)
         
-        # Split potential targets by commas and handle multi-word names
         if targets_str:
+            # Split by comma for multiple targets
             target_names = [t.strip() for t in targets_str.split(",")]
             found_targets = []
             failed_targets = []
@@ -281,20 +312,17 @@ class EmoteCommandBase(Command):
                     found_targets.append(target)
                 else:
                     failed_targets.append(target_name)
-                    
+            
             if failed_targets:
                 self.caller.msg(f"Could not find: {', '.join(failed_targets)}")
                 if not found_targets:
                     return
-                    
+            
             # Format the target list
             target_string = self.format_target_list(found_targets)
             
-            # Determine if this emote requires a target or if it's optional
-            requires_target = "{them}" in self.emote_text
-            
-            if requires_target:
-                # Use the emote text as-is since it has {them} built in
+            # Build the emote
+            if "{them}" in self.emote_text:
                 emote = self.emote_text.format(
                     char=self.caller.key,
                     their=get_pronoun(self.caller, "possessive"),
@@ -304,11 +332,10 @@ class EmoteCommandBase(Command):
                     themselves=get_pronoun(self.caller, "reflexive")
                 )
             else:
-                # Use the parsed or default preposition
                 emote = f"{self.emote_text} {preposition} {target_string}"
             
             # Add modifier if present
             if modifier:
                 emote = f"{emote} {modifier}"
-                    
+            
             self.caller.location.msg_contents(format_sentence(f"{self.caller.key} {emote}"))

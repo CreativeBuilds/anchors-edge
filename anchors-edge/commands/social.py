@@ -118,21 +118,67 @@ class CmdBow(EmoteCommandBase):
     Bow, optionally to/before/towards someone and with a modifier.
     
     Usage:
-      bow [<preposition>] [<person>] [<modifier>]
+      bow [<preposition>] [<character_name>] [<modifier>]
       
     Examples:
       bow
-      bow to Gad
-      bow before Gad
-      bow towards Gad
+      bow to Jad
+      bow before Jad
+      bow towards Jad
       bow deeply
-      bow to Gad respectfully
+      bow to Jad respectfully
+      
+    Note: You must use the character's actual name, not their race or description.
     """
     key = "bow"
     emote_text = "bows"
     allowed_prepositions = ["to", "before", "towards"]
     default_preposition = "to"
     target_type = TargetableType.CHARACTERS  # Can only target characters
+
+    def func(self):
+        """Handle the bow command with enhanced target finding."""
+        if not self.args:
+            # If no args, just bow generally
+            super().func()
+            return
+
+        # Parse args
+        args = self.args.strip()
+        
+        # Get all visible characters in the room
+        visible_chars = [char for char in self.caller.location.contents 
+                        if char.is_typeclass('typeclasses.characters.Character') 
+                        and char != self.caller]
+        
+        # Try to find target by name or description
+        found_target = None
+        search_term = args.lower()
+        
+        for char in visible_chars:
+            # Check name match
+            if char.key.lower() == search_term:
+                found_target = char
+                break
+            # Check description match - assuming there's a desc attribute
+            if hasattr(char, 'desc') and char.desc and search_term in char.desc.lower():
+                found_target = char
+                break
+            # Check if search term matches any part of their visible appearance
+            if hasattr(char, 'get_display_name'):
+                display_name = char.get_display_name(self.caller).lower()
+                if search_term in display_name:
+                    found_target = char
+                    break
+
+        if found_target:
+            # Replace the search term with the character's key in the args
+            new_args = args.replace(search_term, found_target.key)
+            self.args = new_args
+            super().func()
+        else:
+            # No target found
+            self.caller.msg(f"Could not find anyone matching: {args}")
 
 class CmdNod(EmoteCommandBase):
     """

@@ -168,6 +168,36 @@ class EmoteCommandBase(Command):
         else:
             return f"{', '.join(target_names[:-1])}, and {target_names[-1]}"
 
+    def find_target(self, search_term):
+        """
+        Find a target based on the caller's knowledge of them.
+        Takes into account relationships and knowledge levels.
+        
+        Args:
+            search_term (str): The term to search for
+            
+        Returns:
+            Object or None: The found target or None if not found
+        """
+        search_term = search_term.lower()
+        possible_targets = self.caller.location.contents
+        
+        for obj in possible_targets:
+            if not hasattr(obj, 'db'):  # Skip non-character objects
+                continue
+                
+            # If caller knows the character, check their name
+            if hasattr(self.caller, 'knows_character') and self.caller.knows_character(obj):
+                if search_term in obj.key.lower():
+                    return obj
+            
+            # Otherwise check their visible description
+            desc = get_brief_description(obj).lower()
+            if search_term in desc:
+                return obj
+                
+        return None
+
     def func(self):
         """Handle the emote command."""
         if not self.args:
@@ -195,29 +225,12 @@ class EmoteCommandBase(Command):
             
         # Split potential targets by commas and handle multi-word names
         if targets_str:
-            # Split by comma but preserve spaces within names
             target_names = [t.strip() for t in targets_str.split(",")]
             found_targets = []
             failed_targets = []
             
             for target_name in target_names:
-                # Get all objects in the room that could be targets
-                possible_targets = self.caller.location.contents
-                target = None
-                
-                # Convert search term to lowercase for case-insensitive matching
-                search_term = target_name.lower()
-                
-                # Try to find a match
-                for obj in possible_targets:
-                    if hasattr(obj, 'key'):  # Make sure it's a valid object
-                        # Get the full name/description of the object
-                        obj_desc = obj.get_display_name(self.caller).lower()
-                        
-                        # Check if search term appears in the full description
-                        if search_term in obj_desc:
-                            target = obj
-                            break
+                target = self.find_target(target_name)
                 
                 if target:
                     # Check for self-targeting

@@ -268,23 +268,22 @@ class EmoteCommandBase(Command):
             self.caller.location.msg_contents(format_sentence(f"{self.caller.key} {emote}"))
             return
 
-        # Split args into potential targets and modifier
         args = self.args.strip()
         
-        # First check for modifier at the end
-        modifier = None
-        if " " in args:
-            last_space_idx = args.rindex(" ")
-            potential_modifier = args[last_space_idx + 1:]
-            # Check if the last word isn't a target name
-            if not any(t.strip().lower() == potential_modifier.lower() 
-                      for t in args[:last_space_idx].split(",")):
-                modifier = potential_modifier
-                args = args[:last_space_idx]
-
-        # Parse preposition and targets
+        # Parse preposition FIRST
         preposition, targets_str = self.parse_targets_and_preposition(args)
         
+        # Then check for modifier at the end of the targets string
+        modifier = None
+        if " " in targets_str:
+            last_space_idx = targets_str.rindex(" ")
+            potential_modifier = targets_str[last_space_idx + 1:]
+            # Check if the last word isn't a target name
+            if not any(t.strip().lower() == potential_modifier.lower() 
+                      for t in targets_str[:last_space_idx].split(",")):
+                modifier = potential_modifier
+                targets_str = targets_str[:last_space_idx]
+
         if targets_str:
             # Split by comma for multiple targets
             target_names = [t.strip() for t in targets_str.split(",")]

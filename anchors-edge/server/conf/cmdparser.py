@@ -34,6 +34,22 @@ def cmdparser(raw_string, cmdset, caller, match_index=None):
             # Return the emote command with everything after ; as args
             return [('emote', raw_string[1:], emote_cmd, 1, 1.0, 'emote')]
 
+    # Special case for say command with no space
+    if raw_string.startswith("'"):
+        say_matches = [cmd for cmd in cmdset if cmd.key == 'say' or "'" in (cmd.aliases or [])]
+        if say_matches:
+            say_cmd = say_matches[0]
+            # Return the say command with everything after ' as args
+            return [('say', raw_string[1:], say_cmd, 1, 1.0, 'say')]
+
+    # Special case for lsay command with no space
+    if raw_string.startswith('"'):
+        lsay_matches = [cmd for cmd in cmdset if cmd.key == 'lsay' or '"' in (cmd.aliases or [])]
+        if lsay_matches:
+            lsay_cmd = lsay_matches[0]
+            # Return the lsay command with everything after " as args
+            return [('lsay', raw_string[1:], lsay_cmd, 1, 1.0, 'lsay')]
+
     # Default parsing for all other commands
     raw_string = raw_string.strip()
     

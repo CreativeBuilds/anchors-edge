@@ -467,3 +467,109 @@ class CmdQuit(Command):
         # Disconnect all sessions for this account
         for session in account.sessions.all():
             session.sessionhandler.disconnect(session)
+
+class CmdIntroList(Command):
+    """
+    List all characters you know at the acquaintance level or higher.
+
+    Usage:
+      intro list
+      introlist
+    """
+    key = "intro list"
+    aliases = ["introlist"]
+    locks = "cmd:all()"
+    help_category = "Social"
+
+    def func(self):
+        """List known characters with brief descriptions."""
+        if not hasattr(self.caller.db, 'known_by') or not self.caller.db.known_by:
+            self.caller.msg("You haven't been introduced to anyone yet.")
+            return
+
+        # Get all characters you know at acquaintance level or higher
+        known_chars = []
+        from evennia.objects.models import ObjectDB
+        for char_id, knowledge_level in self.caller.db.known_by.items():
+            if knowledge_level >= KnowledgeLevel.ACQUAINTANCE:
+                char = ObjectDB.objects.get_id(char_id)
+                if char:
+                    known_chars.append((char, knowledge_level))
+
+        if not known_chars:
+            self.caller.msg("You haven't been introduced to anyone yet.")
+            return
+
+        # Sort by knowledge level (highest first) then name
+        known_chars.sort(key=lambda x: (-x[1], x[0].name if hasattr(x[0], 'name') else ''))
+
+        from evennia.utils.evtable import EvTable
+        table = EvTable("|wName|n", "|wLevel|n", table=None, border="header")
+
+        for char, level in known_chars:
+            level_name = KnowledgeLevel(level).name.capitalize()
+            table.add_row(char.name, level_name)
+
+        self.caller.msg("|wCharacters you know:|n")
+        self.caller.msg(table)
+
+class CmdIntroLongList(Command):
+    """
+    List all characters you know with detailed descriptions.
+
+    Usage:
+      intro long list
+      introlonglist
+    """
+    key = "intro long list"
+    aliases = ["introlonglist", "introlong list"]
+    locks = "cmd:all()"
+    help_category = "Social"
+
+    def func(self):
+        """List known characters with detailed descriptions."""
+        if not hasattr(self.caller.db, 'known_by') or not self.caller.db.known_by:
+            self.caller.msg("You haven't been introduced to anyone yet.")
+            return
+
+        # Get all characters you know at acquaintance level or higher
+        known_chars = []
+        from evennia.objects.models import ObjectDB
+        for char_id, knowledge_level in self.caller.db.known_by.items():
+            if knowledge_level >= KnowledgeLevel.ACQUAINTANCE:
+                char = ObjectDB.objects.get_id(char_id)
+                if char:
+                    known_chars.append((char, knowledge_level))
+
+        if not known_chars:
+            self.caller.msg("You haven't been introduced to anyone yet.")
+            return
+
+        # Sort by knowledge level (highest first) then name
+        known_chars.sort(key=lambda x: (-x[1], x[0].name if hasattr(x[0], 'name') else ''))
+
+        # Display each character with appropriate description based on knowledge level
+        self.caller.msg("|wCharacters you know:|n")
+        for char, level in known_chars:
+            level_name = KnowledgeLevel(level).name.capitalize()
+            
+            # Get appropriate description based on knowledge level
+            if level >= KnowledgeLevel.FRIEND:
+                desc = get_full_description(char)
+            else:
+                desc = get_basic_description(char)
+                
+            # Add roleplay status if available
+            if hasattr(char, 'get_rstatus'):
+                rstatus = char.get_rstatus()
+                if rstatus:
+                    desc += f"\n|w(Currently: {rstatus})|n"
+                    
+            self.caller.msg(f"\n|c{char.name}|n - |w{level_name}|n\n{desc}")
+
+# Add to command set
+def add_character_commands(cmdset):
+    """Add character commands to the command set"""
+    # ... existing commands ...
+    cmdset.add(CmdIntroList())
+    cmdset.add(CmdIntroLongList())

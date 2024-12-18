@@ -14,12 +14,13 @@ def cmdparser(raw_string, cmdset, caller, match_index=None):
                   list of same-named command matches.
 
     Returns:
-     list of tuples: [(cmdname, args, cmdobj, cmdlen, mratio), ...]
+     list of tuples: [(cmdname, args, cmdobj, cmdlen, mratio, raw_cmdname), ...]
             where cmdname is the matching command name and args is
             everything not included in the cmdname. Cmdobj is the actual
             command instance taken from the cmdset, cmdlen is the length
-            of the command name and the mratio is some quality value to
-            separate multiple matches.
+            of the command name, mratio is some quality value to
+            separate multiple matches, and raw_cmdname is the original
+            form of the command name as entered.
     """
     if not raw_string:
         return []
@@ -31,7 +32,7 @@ def cmdparser(raw_string, cmdset, caller, match_index=None):
         if emote_matches:
             emote_cmd = emote_matches[0]
             # Return the emote command with everything after ; as args
-            return [('emote', raw_string[1:], emote_cmd, 1, 1.0)]
+            return [('emote', raw_string[1:], emote_cmd, 1, 1.0, 'emote')]
 
     # Default parsing for all other commands
     raw_string = raw_string.strip()
@@ -42,6 +43,7 @@ def cmdparser(raw_string, cmdset, caller, match_index=None):
     
     parts = raw_string.split(None, 1)
     cmdname = parts[0].lower()
+    raw_cmdname = parts[0]  # Keep the original case
     args = parts[1] if len(parts) > 1 else ''
 
     # Build a list of matching commands
@@ -51,7 +53,7 @@ def cmdparser(raw_string, cmdset, caller, match_index=None):
             # Match command names
             if cmd.key == cmdname or \
                cmdname in [alias.lower() for alias in cmd.aliases]:
-                matches.append((cmdname, args, cmd, len(cmdname), 1.0))
+                matches.append((cmdname, args, cmd, len(cmdname), 1.0, raw_cmdname))
         except Exception:
             continue
 

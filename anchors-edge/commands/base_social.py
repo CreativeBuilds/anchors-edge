@@ -206,8 +206,21 @@ class EmoteCommandBase(Command):
         Returns (preposition, targets_str)
         """
         words = args.split()
-        if len(words) > 1 and words[0].lower() in self.allowed_prepositions:
-            return words[0].lower(), " ".join(words[1:])
+        if not words:
+            return self.default_preposition, ""
+            
+        # Check if first word is a preposition
+        first_word = words[0].lower()
+        if first_word in self.allowed_prepositions:
+            return first_word, " ".join(words[1:])
+            
+        # If first word isn't a preposition, check if it's a compound preposition
+        if len(words) > 1:
+            first_two = " ".join(words[:2]).lower()
+            if first_two in self.allowed_prepositions:
+                return first_two, " ".join(words[2:])
+            
+        # If no preposition is found at the start, treat everything as target string
         return self.default_preposition, args
 
     def func(self):
@@ -231,12 +244,15 @@ class EmoteCommandBase(Command):
         modifier = None
         preposition = self.default_preposition
         
+        # First try to split off the modifier
         if " " in args:
-            first_part, modifier = args.rsplit(" ", 1)
-            preposition, targets_str = self.parse_targets_and_preposition(first_part)
-        else:
-            preposition, targets_str = self.parse_targets_and_preposition(args)
+            parts = args.rsplit(" ", 1)
+            if len(parts) == 2 and not any(p in parts[1].lower() for p in self.allowed_prepositions):
+                args, modifier = parts
             
+        # Now parse for preposition and targets
+        preposition, targets_str = self.parse_targets_and_preposition(args)
+        
         # Split potential targets by commas and handle multi-word names
         if targets_str:
             target_names = [t.strip() for t in targets_str.split(",")]

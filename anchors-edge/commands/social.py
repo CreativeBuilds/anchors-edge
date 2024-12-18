@@ -115,14 +115,22 @@ class CmdWave(EmoteCommandBase):
 
 class CmdBow(EmoteCommandBase):
     """
-    Bow, optionally to/before someone and with a modifier.
+    Bow, optionally to/before/towards someone and with a modifier.
     
     Usage:
       bow [<preposition>] [<person>] [<modifier>]
+      
+    Examples:
+      bow
+      bow to Gad
+      bow before Gad
+      bow towards Gad
+      bow deeply
+      bow to Gad respectfully
     """
     key = "bow"
     emote_text = "bows"
-    allowed_prepositions = ["to", "before"]
+    allowed_prepositions = ["to", "before", "towards"]
     default_preposition = "to"
 
 class CmdNod(EmoteCommandBase):

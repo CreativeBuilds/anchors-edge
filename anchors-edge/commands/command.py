@@ -1183,6 +1183,34 @@ class CmdWhisper(default_cmds.MuxCommand):
     locks = "cmd:all()"
     help_category = "Communication"
 
+    def find_target(self, caller, search_term):
+        """
+        Find target based on name or description depending on knowledge level.
+        Returns a list of potential matches.
+        """
+        matches = []
+        search_term = search_term.lower()
+        
+        # Get all characters in the room
+        for obj in caller.location.contents:
+            if not hasattr(obj, 'is_typeclass') or not obj.is_typeclass('typeclasses.characters.Character'):
+                continue
+                
+            if obj == caller:
+                continue
+                
+            # If caller knows the character, check their name
+            if hasattr(caller, 'knows_character') and caller.knows_character(obj):
+                if search_term in obj.name.lower():
+                    matches.append(obj)
+            # If caller doesn't know them, check their description
+            else:
+                brief_desc = get_brief_description(obj).lower()
+                if search_term in brief_desc:
+                    matches.append(obj)
+        
+        return matches
+
     def func(self):
         """Handle whispering"""
         caller = self.caller
@@ -1202,10 +1230,24 @@ class CmdWhisper(default_cmds.MuxCommand):
             caller.msg("Usage: whisper <person> <message> OR whisper to <person> <message>")
             return
 
-        # Find the target in the same room
-        target = caller.search(target_name, location=caller.location)
-        if not target:
+        # Find potential targets
+        matches = self.find_target(caller, target_name)
+        
+        if not matches:
+            caller.msg(f"Could not find anyone matching '{target_name}' here.")
             return
+            
+        if len(matches) > 1:
+            # List the matches with appropriate descriptions
+            caller.msg("Multiple matches found. Please be more specific:")
+            for match in matches:
+                if hasattr(caller, 'knows_character') and caller.knows_character(match):
+                    caller.msg(f"- {match.name}")
+                else:
+                    caller.msg(f"- {get_brief_description(match)}")
+            return
+
+        target = matches[0]
 
         # Get knowledge levels between characters
         caller_knows_target = hasattr(caller, 'knows_character') and caller.knows_character(target)

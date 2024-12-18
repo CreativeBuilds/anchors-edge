@@ -5,13 +5,19 @@ Base social command module containing the EmoteCommandBase class.
 from evennia import Command
 from typeclasses.relationships import get_brief_description
 from utils.text_formatting import format_sentence
+from enum import Enum
+
+class TargetType(Enum):
+    NONE = 0      # No targeting allowed
+    OPTIONAL = 1  # Can target but not required
+    REQUIRED = 2  # Must have a target
 
 class EmoteCommandBase(Command):
     """Base class for social emote commands"""
     locks = "cmd:all()"
     help_category = "Social"
     auto_help = False  # This will hide all social commands from help
-    uses_target_in_emote = False  # Set to True for emotes that handle their own targeting
+    targetable = TargetType.OPTIONAL  # Default to optional targeting
     
     def get_pronouns(self, character):
         """

@@ -7,6 +7,7 @@ from typeclasses.relationships import get_brief_description
 from utils.text_formatting import format_sentence
 from .character import get_pronoun
 from .base_social import EmoteCommandBase
+from enum import Enum
 
 # Smile variants
 class CmdSmile(EmoteCommandBase):
@@ -358,6 +359,7 @@ class CmdPoke(EmoteCommandBase):
     """
     key = "poke"
     emote_text = "pokes {them} with {their} finger"
+    targetable = TargetType.REQUIRED
 
 class CmdBrow(EmoteCommandBase):
     """
@@ -506,6 +508,7 @@ class CmdHipcheck(EmoteCommandBase):
     """
     key = "hipcheck"
     emote_text = "gives {them} a friendly hipcheck"
+    targetable = TargetType.REQUIRED
 
 class CmdShouldercheck(EmoteCommandBase):
     """
@@ -520,7 +523,7 @@ class CmdShouldercheck(EmoteCommandBase):
     """
     key = "shouldercheck"
     emote_text = "shoulderchecks {them} on {their} way by"
-    uses_target_in_emote = True  # This emote requires a target
+    targetable = TargetType.REQUIRED
     
     def func(self):
         """Handle the shouldercheck command."""
@@ -558,6 +561,7 @@ class CmdBounce(EmoteCommandBase):
     """
     key = "bounce"
     emote_text = "bounces around excitedly"
+    targetable = TargetType.NONE
 
 class CmdHmm(EmoteCommandBase):
     """
@@ -637,6 +641,7 @@ class CmdHeaddesk(EmoteCommandBase):
     """
     key = "headdesk"
     emote_text = "beats {their} head against the nearest wall"
+    targetable = TargetType.NONE
 
 class CmdTired(EmoteCommandBase):
     """
@@ -722,16 +727,15 @@ class CmdEmoteList(Command):
         )
         
         for cmd in emote_commands:
-            # Get the emote text and check if it uses targeting
+            # Get the emote text and check targeting type
             emote_text = cmd.emote_text
-            uses_target = "{them}" in emote_text or cmd.uses_target_in_emote
-            needs_target = hasattr(cmd, 'uses_target_in_emote') and cmd.uses_target_in_emote
+            target_type = getattr(cmd, 'targetable', TargetType.OPTIONAL)
             
             # Format command name with usage indicators
             command_name = f"|c{cmd.key}|n"
-            if uses_target and needs_target:
+            if target_type == TargetType.REQUIRED:
                 command_name += " |w<target>|n"
-            elif uses_target:
+            elif target_type == TargetType.OPTIONAL:
                 command_name += " |w[<target>]|n"
             command_name += " |w[<mod>]|n"
             
@@ -739,7 +743,7 @@ class CmdEmoteList(Command):
             display_text = emote_text.format(
                 char=caller_name,
                 their=their,
-                them="<target>" if uses_target else them,
+                them="<target>" if target_type == TargetType.REQUIRED else them,
                 they=they,
                 theirs=their,
                 themselves=themselves
@@ -747,8 +751,10 @@ class CmdEmoteList(Command):
             
             # Format the display text
             other_output = f"{caller_name} {display_text}"
-            if uses_target and "at" not in emote_text and not needs_target:
-                other_output = other_output.replace(" <target>", " at <target>")
+            
+            # Add target text for optional targets
+            if target_type == TargetType.OPTIONAL:
+                other_output += " (at/to <target>)"
             
             # Add command and examples to table
             table.add_row(

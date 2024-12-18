@@ -1210,6 +1210,11 @@ class CmdWhisper(default_cmds.MuxCommand):
         matches = []
         search_term = search_term.lower()
         
+        # Send debug info to admin users
+        if caller.check_permstring("Admin"):
+            caller.msg(f"|yDEBUG: Searching for target '{search_term}' in room {caller.location}|n")
+            caller.msg(f"|yDEBUG: Room contents: {[obj for obj in caller.location.contents if hasattr(obj, 'is_typeclass') and obj.is_typeclass('typeclasses.characters.Character')]}|n")
+        
         # Get all characters in the room
         for obj in caller.location.contents:
             if not hasattr(obj, 'is_typeclass') or not obj.is_typeclass('typeclasses.characters.Character'):

@@ -1181,15 +1181,12 @@ class CmdWhisper(default_cmds.MuxCommand):
     Whisper a message to a person.
 
     Usage:
-      whisper <person> <message>
-      whisper to <person> <message>
+      whisper <person> = <message>
+      whisper to <person> = <message>
 
     Examples:
-      whisper gad ya like jazz
-      You whisper to gad, "ya like jazz?"
-
-      whisper to gad ya like jazz?
-      You whisper to gad, "Ya like jazz?"
+      whisper gad = ya like jazz?
+      whisper to gad = ya like jazz?
     
     Whispering is different from the say command 
     in that others in the room won't be able to hear 
@@ -1198,74 +1195,24 @@ class CmdWhisper(default_cmds.MuxCommand):
     as you.
     """
     key = "whisper"
+    aliases = []
     locks = "cmd:all()"
     help_category = "Communication"
-
-    def find_target(self, caller, search_term):
-        """
-        Find target based on name or description using fuzzy matching.
-        Returns a list of potential matches.
-        """
-        matches = []
-        search_term = search_term.lower()
-        
-        # Get all characters in the room
-        for obj in caller.location.contents:
-            if not hasattr(obj, 'is_typeclass') or not obj.is_typeclass('typeclasses.characters.Character'):
-                continue
-                
-            # Skip self as a target
-            if obj == caller:
-                continue
-                
-            # If caller knows the character, check their name with fuzzy matching
-            if hasattr(caller, 'knows_character') and caller.knows_character(obj):
-                name = obj.name.lower()
-                # Direct substring match gets highest priority
-                if search_term in name:
-                    matches.append((obj, 1.0))
-                else:
-                    # Try fuzzy matching without spaces for abbreviations
-                    name_no_spaces = name.replace(" ", "")
-                    search_no_spaces = search_term.replace(" ", "")
-                    ratio = SequenceMatcher(None, search_no_spaces, name_no_spaces).ratio()
-                    if ratio > 0.6:  # Threshold for fuzzy matches
-                        matches.append((obj, ratio))
-            # If caller doesn't know them, check their description with fuzzy matching
-            else:
-                brief_desc = get_brief_description(obj).lower()
-                # Direct substring match gets highest priority
-                if search_term in brief_desc:
-                    matches.append((obj, 1.0))
-                else:
-                    # Try fuzzy matching without spaces
-                    desc_no_spaces = brief_desc.replace(" ", "")
-                    search_no_spaces = search_term.replace(" ", "")
-                    ratio = SequenceMatcher(None, search_no_spaces, desc_no_spaces).ratio()
-                    if ratio > 0.6:  # Threshold for fuzzy matches
-                        matches.append((obj, ratio))
-        
-        # Sort matches by ratio (highest first) and return just the objects
-        return [obj for obj, ratio in sorted(matches, key=lambda x: x[1], reverse=True)]
+    arg_regex = r"\s|$"
 
     def func(self):
         """Handle whispering"""
         caller = self.caller
 
-        if not self.args:
-            caller.msg("Usage: whisper <person> <message> OR whisper to <person> <message>")
+        if not self.args or not self.rhs:
+            caller.msg("Usage: whisper <person> = <message>")
             return
 
-        # Parse the input to get target and message
-        args = self.args.strip()
-        if args.lower().startswith("to "):
-            args = args[3:]  # Remove "to " prefix
+        target_name = self.lhs.strip()
+        message = self.rhs.strip()
 
-        try:
-            target_name, message = args.split(" ", 1)
-        except ValueError:
-            caller.msg("Usage: whisper <person> <message> OR whisper to <person> <message>")
-            return
+        if target_name.lower().startswith("to "):
+            target_name = target_name[3:].strip()
 
         # Check if trying to whisper to self
         if target_name.lower() in ["me", "self", "myself"] or (
@@ -1274,24 +1221,14 @@ class CmdWhisper(default_cmds.MuxCommand):
             caller.msg("You can't whisper to yourself!")
             return
 
-        # Find potential targets
-        matches = self.find_target(caller, target_name)
-        
-        if not matches:
-            caller.msg(f"Could not find anyone matching '{target_name}' here.")
+        # Find the target
+        target = caller.search(
+            target_name,
+            location=caller.location,
+            typeclass='typeclasses.characters.Character'
+        )
+        if not target:
             return
-            
-        if len(matches) > 1:
-            # List the matches with appropriate descriptions
-            caller.msg("Multiple matches found. Please be more specific:")
-            for match in matches:
-                if hasattr(caller, 'knows_character') and caller.knows_character(match):
-                    caller.msg(f"- {match.name}")
-                else:
-                    caller.msg(f"- {get_brief_description(match)}")
-            return
-
-        target = matches[0]
 
         # Get knowledge levels between characters
         caller_knows_target = hasattr(caller, 'knows_character') and caller.knows_character(target)

@@ -264,21 +264,33 @@ class EmoteCommandBase(Command):
                     # Get the caller's pronouns
                     pronouns = self.get_pronouns(self.caller)
                     
-                    # Format the emote text with the caller's pronouns
-                    formatted_emote = self.emote_text.format(
-                        char=caller_name,
-                        their=pronouns["possessive"],
-                        them=pronouns["objective"],
-                        they=pronouns["subjective"],
-                        theirs=pronouns["possessive"],
-                        themselves=pronouns["reflexive"]
-                    )
-                    
                     if observer == self.caller:
-                        # For the caller, use "You" instead of their name
-                        msg = f"You {formatted_emote.format(char='you')}"
+                        # For the caller, conjugate the verb and use "your"
+                        # Split the emote text to get the verb
+                        words = self.emote_text.split()
+                        if words and words[0].endswith('s'):
+                            words[0] = words[0][:-1]  # Remove 's' from verb
+                        conjugated_emote = ' '.join(words)
+                        
+                        # Format with "your" instead of possessive pronoun
+                        msg = f"You {conjugated_emote.format(
+                            char='you',
+                            their='your',
+                            them='you',
+                            they='you',
+                            theirs='yours',
+                            themselves='yourself'
+                        )}"
                     else:
-                        # For observers, use the caller's name/description
+                        # For observers, use the caller's name/description and pronouns
+                        formatted_emote = self.emote_text.format(
+                            char=caller_name,
+                            their=pronouns["possessive"],
+                            them=pronouns["objective"],
+                            they=pronouns["subjective"],
+                            theirs=pronouns["possessive"],
+                            themselves=pronouns["reflexive"]
+                        )
                         msg = f"{caller_name} {formatted_emote}"
                 
                 # Add modifier if present

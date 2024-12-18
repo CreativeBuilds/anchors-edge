@@ -1135,11 +1135,29 @@ class CmdLook(default_cmds.CmdLook):
             else:
                 full_desc = obj.name.lower()
             
-            # If search term appears in either name or description, it's a match
+            # Direct substring match gets highest priority
             if search_term in full_desc or search_term in obj.key.lower():
-                matches.append(obj)
+                matches.append((obj, 1.0))
+            else:
+                # Try fuzzy matching without spaces for abbreviations
+                desc_no_spaces = full_desc.replace(" ", "")
+                key_no_spaces = obj.key.lower().replace(" ", "")
+                search_no_spaces = search_term.replace(" ", "")
+                
+                # Try matching against both description and key
+                desc_ratio = SequenceMatcher(None, search_no_spaces, desc_no_spaces).ratio()
+                key_ratio = SequenceMatcher(None, search_no_spaces, key_no_spaces).ratio()
+                
+                # Use the better match
+                ratio = max(desc_ratio, key_ratio)
+                if ratio > 0.6:  # Threshold for fuzzy matches
+                    matches.append((obj, ratio))
             
-        logger.log_info(f"Matches for '{search_term}': {[obj.name for obj in matches]}")
+        logger.log_info(f"Matches for '{search_term}': {[obj.name for obj, ratio in matches]}")
+        
+        # Sort matches by ratio and extract just the objects
+        matches.sort(key=lambda x: x[1], reverse=True)
+        matches = [obj for obj, ratio in matches]
         
         if len(matches) == 1:
             # If we have exactly one match, use it
@@ -1185,7 +1203,7 @@ class CmdWhisper(default_cmds.MuxCommand):
 
     def find_target(self, caller, search_term):
         """
-        Find target based on name or description depending on knowledge level.
+        Find target based on name or description using fuzzy matching.
         Returns a list of potential matches.
         """
         matches = []
@@ -1200,17 +1218,35 @@ class CmdWhisper(default_cmds.MuxCommand):
             if obj == caller:
                 continue
                 
-            # If caller knows the character, check their name
+            # If caller knows the character, check their name with fuzzy matching
             if hasattr(caller, 'knows_character') and caller.knows_character(obj):
-                if search_term in obj.name.lower():
-                    matches.append(obj)
-            # If caller doesn't know them, check their description
+                name = obj.name.lower()
+                # Direct substring match gets highest priority
+                if search_term in name:
+                    matches.append((obj, 1.0))
+                else:
+                    # Try fuzzy matching without spaces for abbreviations
+                    name_no_spaces = name.replace(" ", "")
+                    search_no_spaces = search_term.replace(" ", "")
+                    ratio = SequenceMatcher(None, search_no_spaces, name_no_spaces).ratio()
+                    if ratio > 0.6:  # Threshold for fuzzy matches
+                        matches.append((obj, ratio))
+            # If caller doesn't know them, check their description with fuzzy matching
             else:
                 brief_desc = get_brief_description(obj).lower()
+                # Direct substring match gets highest priority
                 if search_term in brief_desc:
-                    matches.append(obj)
+                    matches.append((obj, 1.0))
+                else:
+                    # Try fuzzy matching without spaces
+                    desc_no_spaces = brief_desc.replace(" ", "")
+                    search_no_spaces = search_term.replace(" ", "")
+                    ratio = SequenceMatcher(None, search_no_spaces, desc_no_spaces).ratio()
+                    if ratio > 0.6:  # Threshold for fuzzy matches
+                        matches.append((obj, ratio))
         
-        return matches
+        # Sort matches by ratio (highest first) and return just the objects
+        return [obj for obj, ratio in sorted(matches, key=lambda x: x[1], reverse=True)]
 
     def func(self):
         """Handle whispering"""

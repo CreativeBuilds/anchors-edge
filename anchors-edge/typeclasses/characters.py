@@ -31,6 +31,7 @@ from evennia.utils import inherits_from
 from utils.text_formatting import format_sentence
 from django.utils.translation import gettext as _
 from utils.text_formatting import capitalize_first_letter
+from difflib import SequenceMatcher
 
 # Load environment variables from .env file
 load_dotenv()
@@ -860,7 +861,7 @@ class Character(ObjectParent, DefaultCharacter):
 
     def find_targets(self, target_string, location=None, quiet=False):
         """
-        Find targets by name or description using simple string matching.
+        Find targets by name or description using fuzzy string matching.
         """
         if not target_string:
             return [], []
@@ -896,8 +897,20 @@ class Character(ObjectParent, DefaultCharacter):
                 # Match against name if we know them, description if we don't
                 match_text = obj.name.lower() if self.knows_character(obj) else get_brief_description(obj).lower()
                 
+                # Direct substring match gets highest priority
                 if search_term in match_text:
-                    matches.append(obj)
+                    matches.append((obj, 1.0))
+                else:
+                    # Try fuzzy matching without spaces for abbreviations
+                    match_no_spaces = match_text.replace(" ", "")
+                    search_no_spaces = search_term.replace(" ", "")
+                    ratio = SequenceMatcher(None, search_no_spaces, match_no_spaces).ratio()
+                    if ratio > 0.6:  # Threshold for fuzzy matches
+                        matches.append((obj, ratio))
+            
+            # Sort matches by ratio
+            matches.sort(key=lambda x: x[1], reverse=True)
+            matches = [obj for obj, ratio in matches]  # Extract just the objects
             
             # If we found exactly one match, use it
             if len(matches) == 1:

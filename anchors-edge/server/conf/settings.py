@@ -36,6 +36,9 @@ from pathlib import Path
 # This is the name of your game. Make it catchy!
 SERVERNAME = "anchors-edge"
 
+# Use our custom command parser that handles no-space emotes
+COMMAND_PARSER = "server.conf.cmdparser.cmdparser"
+
 # Path to the default room typeclass
 BASE_ROOM_TYPECLASS = "typeclasses.rooms.WeatherAwareRoom"
 
@@ -190,6 +193,10 @@ with open(GAME_DATA_PATH / "body_parts.json", 'r') as f:
 # Load race heights
 with open(GAME_DATA_PATH / "race_heights.json", 'r') as f:
     RACE_HEIGHT_RANGES = json.load(f)
+
+# Load race ages
+with open(GAME_DATA_PATH / "race_ages.json", 'r') as f:
+    RACE_AGE_RANGES = json.load(f)
 
 # Command set configuration
 CMDSET_CHARACTER = "commands.default_cmdsets.CharacterCmdSet"

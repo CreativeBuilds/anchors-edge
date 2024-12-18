@@ -531,7 +531,10 @@ class CmdLsay(CmdSay):
         # Send message to other observers
         if observer_message:
             exclude = [caller] + (list(target_messages.keys()) if target_messages else [])
-            caller.location.msg_contents(observer_message, exclude=exclude)
+            # For each observer, format the message with their specific view
+            for observer in caller.location.contents:
+                if observer not in exclude and hasattr(observer, 'msg'):
+                    observer.msg(observer_message(observer))
 
         # Handle NPC responses
         if targets:

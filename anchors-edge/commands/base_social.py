@@ -223,13 +223,19 @@ class EmoteCommandBase(Command):
         # Check if first word is a preposition
         first_word = words[0].lower()
         if first_word in self.allowed_prepositions:
-            return first_word, " ".join(words[1:])
+            # Make sure there's something after the preposition
+            if len(words) > 1:
+                return first_word, " ".join(words[1:])
+            return first_word, ""
             
         # If first word isn't a preposition, check if it's a compound preposition
         if len(words) > 1:
             first_two = " ".join(words[:2]).lower()
             if first_two in self.allowed_prepositions:
-                return first_two, " ".join(words[2:])
+                # Make sure there's something after the compound preposition
+                if len(words) > 2:
+                    return first_two, " ".join(words[2:])
+                return first_two, ""
             
         # If no preposition is found at the start, treat everything as target string
         return self.default_preposition, args
@@ -263,6 +269,11 @@ class EmoteCommandBase(Command):
             
         # Now parse for preposition and targets
         preposition, targets_str = self.parse_targets_and_preposition(args)
+        
+        # If we got no targets after a preposition, show usage
+        if not targets_str and preposition != self.default_preposition:
+            self.caller.msg(f"Usage: {self.key} {preposition} <target> [<modifier>]")
+            return
         
         # Split potential targets by commas and handle multi-word names
         if targets_str:

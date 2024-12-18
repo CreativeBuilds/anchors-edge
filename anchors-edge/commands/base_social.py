@@ -186,7 +186,7 @@ class EmoteCommandBase(Command):
         search_term = search_term.lower().strip()
         possible_targets = self.caller.location.contents
         best_match = None
-        best_ratio = 0.4  # Lower threshold for more lenient matching
+        best_ratio = 0.01  # Very low threshold for extremely lenient matching
         
         # Debug output
         self.caller.msg(f"Searching for: {search_term}")
@@ -216,7 +216,11 @@ class EmoteCommandBase(Command):
             
             # Boost ratio for substring matches
             if search_term in desc:
-                ratio = max(ratio, 0.85)
+                ratio = max(ratio, 0.6)  # Lower boost for substring matches
+            elif any(word.startswith(search_term) for word in desc.split()):
+                ratio = max(ratio, 0.4)  # Lower boost for word starts with search term
+            elif any(search_term in word for word in desc.split()):
+                ratio = max(ratio, 0.3)  # Lower boost for substring in any word
                 
             if ratio > best_ratio:
                 best_ratio = ratio

@@ -128,7 +128,7 @@ class CmdBow(EmoteCommandBase):
       bow deeply
       bow to Jad respectfully
       
-    Note: You can use character names, races, or descriptions to target.
+    Note: You must use the character's actual name, not their race or description.
     """
     key = "bow"
     emote_text = "bows"

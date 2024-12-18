@@ -201,68 +201,27 @@ class EmoteCommandBase(Command):
                (self.target_type == TargetableType.ITEMS and is_character):
                 continue
             
-            # Get all possible names/descriptions to match against
-            match_strings = []
-            
-            # Add character name if known
-            if is_character and hasattr(self.caller, 'knows_character') and self.caller.knows_character(obj):
-                match_strings.append(obj.key.lower())
-            
-            # Add visible description
+            # Get the visible description
             desc = get_brief_description(obj).lower()
-            match_strings.append(desc)
             
-            # Add display name
-            if hasattr(obj, 'get_display_name'):
-                display_name = obj.get_display_name(self.caller).lower()
-                match_strings.append(display_name)
-                
-                # Add individual words from display name and description for partial matching
-                display_words = display_name.split()
-                desc_words = desc.split()
-                match_strings.extend(display_words)
-                match_strings.extend(desc_words)
-                
-                # Add race/species terms specifically
-                race_terms = ['kobold', 'dwarf', 'human', 'halfling', 'elf', 'orc']
-                for word in display_words + desc_words:
-                    if word in race_terms:
-                        match_strings.append(word)
+            # Add name if known
+            if is_character and hasattr(self.caller, 'knows_character') and self.caller.knows_character(obj):
+                desc = f"{obj.key.lower()} {desc}"
             
             # Debug output
             self.caller.msg(f"Checking object: {desc}")
-            self.caller.msg(f"Match strings: {match_strings}")
             
-            # Find best match ratio among all possible strings
-            for match_string in match_strings:
-                # Check for direct substring match first
-                if search_term == match_string:
-                    ratio = 1.0  # Exact match gets highest priority
-                    self.caller.msg(f"Found exact match: {match_string}")
-                elif search_term in match_string.split():
-                    ratio = 0.95  # Word match gets very high priority
-                    self.caller.msg(f"Found word match: {match_string}")
-                elif search_term in match_string:
-                    ratio = 0.9  # Substring match gets high priority
-                    self.caller.msg(f"Found substring match: {match_string}")
-                else:
-                    # Use sequence matcher for fuzzy matching
-                    ratio = SequenceMatcher(None, search_term, match_string).ratio()
-                    
-                    # Boost ratio for partial word matches at start
-                    if match_string.startswith(search_term):
-                        ratio = max(ratio, 0.8)
-                        self.caller.msg(f"Found partial match at start: {match_string}")
-                    
-                    # Boost ratio for race/species terms
-                    if match_string in race_terms and search_term in match_string:
-                        ratio = max(ratio, 0.85)
-                        self.caller.msg(f"Found race term match: {match_string}")
-                        
-                if ratio > best_ratio:
-                    best_ratio = ratio
-                    best_match = obj
-                    self.caller.msg(f"New best match: {desc} ({ratio})")
+            # Use sequence matcher for fuzzy matching
+            ratio = SequenceMatcher(None, search_term, desc).ratio()
+            
+            # Boost ratio for substring matches
+            if search_term in desc:
+                ratio = max(ratio, 0.85)
+                
+            if ratio > best_ratio:
+                best_ratio = ratio
+                best_match = obj
+                self.caller.msg(f"New best match: {desc} ({ratio})")
                     
         return best_match
 

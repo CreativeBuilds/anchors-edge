@@ -279,9 +279,15 @@ class EmoteCommandBase(Command):
                             themselves=pronouns["reflexive"]
                         )
                         msg = f"{caller_name} {formatted_emote}"
+                else:
+                    # No targets - just show the emote
+                    if observer == self.caller:
+                        msg = f"You {self.format_emote_text(is_self=True, observer=observer)}"
+                    else:
+                        msg = f"{caller_name} {self.format_emote_text(char=self.caller, observer=observer)}"
                 
                 # Add modifier if present
                 if modifier:
                     msg = f"{msg} {modifier}"
                 
-                observer.msg(msg) 
+                observer.msg(msg)

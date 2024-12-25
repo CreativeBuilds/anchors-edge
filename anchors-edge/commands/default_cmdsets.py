@@ -18,7 +18,7 @@ from evennia.commands.cmdset import CmdSet
 from commands.build_world import CmdBuildWorld
 from commands.character import (
     CmdCharList, CmdCharSelect, CmdSignout,
-    CmdIntro, CmdIntroLong, CmdIntroList, CmdQuit
+    CmdIntro, CmdIntroLong, CmdQuit
 )
 from commands.chargen import CmdCreateCharacter
 from commands.admin import (
@@ -57,7 +57,6 @@ class CharacterCmdSet(DefaultCharacterCmdSet):
         # Add intro commands
         self.add(CmdIntro())
         self.add(CmdIntroLong())
-        self.add(CmdIntroList())
         self.add(CmdQuit())
         self.add(CmdWho())
         # Add the emote commands
